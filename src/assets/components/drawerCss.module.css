@@ -1,0 +1,113 @@
+* {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+
+
+.content {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+.drawer {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  position: relative;
+  transition: transform 0.3s ease;
+  height: 100%;
+position: absolute;
+}
+
+.sidebar {
+  width: 15%;
+  height: 100%;
+  background-color: #FFE2F0;
+  color: #000000;
+  transition: transform 0.3s ease;
+}
+
+.drawer.open .sidebar {
+  transform: translateX(0%);
+}
+
+.drawer .sidebar {
+  transform: translateX(-70%);
+  text-overflow: none;
+}
+
+.sidebarContent {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.icons::selection {
+  color: rgb(255, 255, 255);
+}
+
+.sidebarList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  padding: 0;
+  flex-grow: 1;
+}
+
+.imgLogo {
+  width: 30%;
+  justify-content: center;
+  margin-right: 6%;
+}
+
+.sidebarListItem {
+  display: flex;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebarListItem:hover {
+  background-color: #ffa8e8;
+  color: #ffffff;
+  border: none;
+  user-select: none;
+}
+
+.sidebarListItem a {
+  text-decoration: none;
+  color: inherit; /* Hereda el color del padre */
+  display: flex;
+  align-items: center;
+}
+
+.icons {
+  display: flex;
+  margin-left: 15%;
+  justify-content: end;
+  margin: 5%;
+  font-size: 34px;
+}
+
+
+li::selection {
+  background-color: white;
+  color: black;
+}
+
+li::-moz-selection {
+  background-color: white;
+  color: black;
+}
+
+li::-webkit-selection {
+  background-color: white;
+  color: black;
+}

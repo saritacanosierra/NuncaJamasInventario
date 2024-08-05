@@ -1,0 +1,29 @@
+.buttons {
+    margin-top: 10%; 
+    background-color: #fbd9e9;
+    width: 100%;
+    padding: 10px; 
+    border: none;
+    border-radius: 10px; 
+    text-align: center;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+    margin-bottom: 4%;
+}
+
+.buttons:hover {
+    background-color: #faafe7;
+    border: #ef09b6;
+    color: #ffffff;
+}
+.buttons:focus,
+.buttons:active {
+    border-color: #fa6ed5; 
+    outline: none;
+}
+.buttonContent{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

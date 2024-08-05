@@ -1,0 +1,70 @@
+* {
+    width: 100%;
+    padding: 0%;
+    margin: 0%;
+
+}
+
+.contentAll {
+    width: 100%;
+    display: flex;
+    position: relative;
+
+}
+
+nav {
+    width: 0%;
+}
+
+.content {
+    width: 120%;
+    margin-left: 10%;
+}
+
+h1 {
+    display: flex;
+    margin-top: 3%;
+    text-align: center;
+    color: #ea93bd;
+}
+
+.filter {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-left: -10%;
+}
+
+.addProductButton {
+    display: flex;
+    font-size: larger;
+    width: 40%;
+    
+}
+
+.searchInput {
+    width: 100%;
+    height: 30%;
+    margin-right: 10%;
+ 
+ 
+
+
+   
+}
+
+.searchButton {
+    background-color: transparent;
+}
+
+
+
+
+
+
+
+
+.table {
+    display: flex;
+
+}
