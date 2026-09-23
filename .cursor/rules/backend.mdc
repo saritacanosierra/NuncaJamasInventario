@@ -1,0 +1,25 @@
+---
+description: Estándar PHP del back del inventario
+globs: index.php,controllers/**/*.php,models/**/*.php,helpers/**/*.php,config/**/*.php
+alwaysApply: false
+---
+
+# Back PHP
+
+- `index.php` solo enruta. No contiene consultas ni HTML.
+- El controlador no arma marcado ni abre SQL que pertenezca al modelo.
+- El modelo no lee `$_GET`, `$_POST` ni `$_SESSION`, y no hace `echo` de pantallas.
+- Toda consulta lleva parámetros enlazados. No concatenes entrada del usuario al SQL.
+- Valida permiso con las funciones ya existentes (`requireAuth`, `canAccess`, `canPerform`) antes de mutar datos.
+- Un método hace una acción. Si necesita más de un motivo, extrae otro método en el mismo módulo.
+- Los errores de base se registran. No muestres credenciales ni trazas al usuario con `ENVIRONMENT` en `production`.
+
+```php
+// Mal
+$stmt = $db->query("SELECT * FROM productos WHERE nombre LIKE '%$q%'");
+echo '<tr>' . $row['nombre'] . '</tr>';
+
+// Bien
+$productos = $this->producto->buscarPorNombre($q);
+require BASE_DIR . '/views/productos/index.php';
+```

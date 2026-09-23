@@ -1,0 +1,104 @@
+/* Estilos específicos de la vista de Ventas (Punto de Venta) */
+
+.card-producto-oculto {
+    display: none;
+}
+
+.img-producto-pos {
+    max-width: 200px;
+    display: none;
+}
+
+.table-carrito-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.input-descuento-ancho {
+    width: 150px;
+}
+
+/* Pestañas de ventas múltiples */
+.ventas-tabs-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.ventas-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.venta-tab {
+    cursor: pointer;
+}
+
+.venta-tab.active {
+    background-color: #FFB6D9;
+    color: #000000;
+}
+
+/* Imagen de producto en punto de venta */
+.img-producto-venta {
+    max-width: 100px;
+}
+
+/* Div de observaciones de domicilio oculto por defecto */
+#div_observaciones_domicilio {
+    display: none;
+}
+
+/* Lista de historial con scroll */
+.historial-scroll {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Estilos para factura y rótulo */
+.logo-fallback {
+    display: none;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-fallback-icon {
+    font-size: 50px;
+    color: #FF69B4;
+}
+
+.logo-fallback-text {
+    font-family: 'Dancing Script', cursive;
+    font-size: 32px;
+    font-weight: 700;
+    color: #FF69B4;
+}
+
+.logo-fallback-subtitle {
+    font-size: 14px;
+    color: #666;
+}
+
+/* Rótulo específico */
+.logo-fallback-rotulo-icon {
+    font-size: 50px;
+    color: white;
+}
+
+/* Sección de remitente en rótulo */
+.section-title-remitente {
+    color: #FFB6C1;
+    border-color: #FFB6C1;
+}
+
+/* Observaciones de domicilio en edición */
+#div_observaciones_domicilio.show {
+    display: block !important;
+}
+
+#div_observaciones_domicilio.hide {
+    display: none !important;
+}
+

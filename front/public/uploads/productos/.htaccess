@@ -1,0 +1,6 @@
+# Permitir acceso a imágenes. No ejecutar scripts subidos.
+Options -Indexes
+<FilesMatch "(?i)\.(php|phtml|phar|cgi|pl)$">
+    Require all denied
+</FilesMatch>
+

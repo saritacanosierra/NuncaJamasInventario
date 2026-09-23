@@ -1,0 +1,728 @@
+/* ============================================
+   SISTEMA DE INVENTARIO - ROPA INFANTIL
+   Paleta de Colores Pastel Tierna
+   ============================================ */
+
+:root {
+    /* Paleta de colores pastel tierna para bebés */
+    --color-primary: #FFB6D9;        /* Rosa pastel suave */
+    --color-primary-dark: #FF9CC7;   /* Rosa más intenso */
+    --color-secondary: #B5E5CF;      /* Verde menta suave */
+    --color-accent: #FFD9B5;         /* Melocotón suave */
+    --color-info: #B5D9FF;           /* Azul cielo pastel */
+    --color-success: #C8E6C9;        /* Verde pastel */
+    --color-warning: #FFE0B2;        /* Amarillo pastel */
+    --color-danger: #FFCCBC;          /* Coral pastel */
+    
+    /* Colores de texto */
+    --text-primary: #000000;         /* Negro para máximo contraste */
+    --text-secondary: #333333;       /* Gris oscuro */
+    --text-light: #666666;           /* Gris medio */
+    
+    /* Colores de fondo */
+    --bg-primary: #FFF8F5;            /* Crema muy suave */
+    --bg-secondary: #FFFFFF;         /* Blanco puro */
+    --bg-card: #FFFFFF;               /* Blanco para tarjetas */
+    --bg-hover: #FFF0F5;              /* Rosa muy suave para hover */
+    
+    /* Sombras suaves */
+    --shadow-sm: 0 2px 8px rgba(255, 182, 217, 0.1);
+    --shadow-md: 0 4px 16px rgba(255, 182, 217, 0.15);
+    --shadow-lg: 0 8px 24px rgba(255, 182, 217, 0.2);
+    
+    /* Bordes */
+    --border-radius: 16px;
+    --border-radius-sm: 12px;
+    --border-color: #FFE5F1;          /* Rosa muy claro */
+    
+    /* Espaciado */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+    
+    /* Tipografía */
+    --font-family: 'Segoe UI', 'Comic Sans MS', 'Trebuchet MS', Tahoma, Geneva, Verdana, sans-serif;
+    --font-size-base: 16px;
+    --font-size-sm: 14px;
+    --font-size-lg: 18px;
+    --font-size-xl: 24px;
+}
+
+/* ============================================
+   RESET Y BASE
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    background: linear-gradient(135deg, #FFF8F5 0%, #FFE5F1 100%);
+    background-attachment: fixed;
+    color: #000000;
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Asegurar que todo el texto sea negro para contraste y usabilidad */
+h1, h2, h3, h4, h5, h6,
+p, span, div, label, td, th, li,
+.card-body, .card-title, .card-subtitle,
+.metric-card h3, .metric-card h6,
+.card-header, .table thead th,
+.btn-primary, .btn-success, .btn-warning, .btn-danger, .btn-info,
+strong, b, .h5, .h4, .h3, .h2, .h1 {
+    color: #000000 !important;
+}
+
+/* Texto muted en gris oscuro para mejor contraste */
+.text-muted {
+    color: #333333 !important;
+}
+
+/* Asegurar contraste en todos los elementos */
+* {
+    color: inherit;
+}
+
+body, .main-container, .container-fluid {
+    color: #000000;
+}
+
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
+
+.main-container {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-sm);
+    width: 100%;
+}
+
+.container-fluid {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+    width: 100%;
+}
+
+/* ============================================
+   NAVBAR - Mejorado
+   ============================================ */
+
+.navbar {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%) !important;
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-sm) 0;
+    border-bottom: 3px solid var(--color-primary-dark);
+    width: 100%;
+}
+
+.navbar .main-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #000000 !important;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+    transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+    color: #000000 !important;
+}
+
+.navbar-nav .nav-link {
+    color: #000000 !important;
+    font-weight: 600;
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+    margin: 0 var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+    transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #000000 !important;
+    transform: translateY(-2px);
+}
+
+.navbar-nav .nav-link i {
+    margin-right: 0.5rem;
+}
+
+/* ============================================
+   COMPONENTES REUTILIZABLES - CARDS
+   ============================================ */
+
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    background: var(--bg-card);
+    margin-bottom: var(--spacing-md);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: #000000;
+    border: none;
+    padding: var(--spacing-md);
+    font-weight: 600;
+    font-size: var(--font-size-lg);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.card-body {
+    padding: var(--spacing-md);
+}
+
+/* Cards de métricas */
+.metric-card {
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    color: #FFFFFF;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    transition: all 0.5s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+}
+
+.metric-card:hover::before {
+    transform: rotate(45deg);
+}
+
+.metric-card-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: #000000 !important;
+}
+
+.metric-card-success {
+    background: linear-gradient(135deg, var(--color-success) 0%, #A5D6A7 100%);
+    color: #000000 !important;
+}
+
+.metric-card-warning {
+    background: linear-gradient(135deg, var(--color-warning) 0%, #FFCC80 100%);
+    color: #000000 !important;
+}
+
+.metric-card-danger {
+    background: linear-gradient(135deg, var(--color-danger) 0%, #FFAB91 100%);
+    color: #000000 !important;
+}
+
+.metric-card-info {
+    background: linear-gradient(135deg, var(--color-info) 0%, #90CAF9 100%);
+    color: #000000 !important;
+}
+
+/* ============================================
+   COMPONENTES REUTILIZABLES - BOTONES
+   ============================================ */
+
+.btn {
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: #000000;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+    color: #000000;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--color-success) 0%, #A5D6A7 100%);
+    color: var(--text-primary);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--color-warning) 0%, #FFCC80 100%);
+    color: var(--text-primary);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--color-danger) 0%, #FFAB91 100%);
+    color: var(--text-primary);
+}
+
+.btn-outline-primary {
+    border: 2px solid var(--color-primary);
+    color: #000000;
+    background: transparent;
+    font-weight: 600;
+}
+
+.btn-outline-primary:hover {
+    background: var(--color-primary);
+    color: #000000;
+}
+
+/* ============================================
+   COMPONENTES REUTILIZABLES - FORMULARIOS
+   ============================================ */
+
+.form-control,
+.form-select {
+    border-radius: var(--border-radius-sm);
+    border: 2px solid var(--border-color);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    transition: all 0.3s ease;
+    background: var(--bg-secondary);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(255, 182, 217, 0.25);
+    background: #FFFFFF;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: var(--spacing-xs);
+}
+
+/* ============================================
+   COMPONENTES REUTILIZABLES - TABLAS
+   ============================================ */
+
+.table {
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+}
+
+.table thead {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: #000000;
+}
+
+.table thead th {
+    border: none;
+    padding: var(--spacing-md);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--font-size-sm);
+    letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:hover {
+    background: var(--bg-hover);
+    transform: scale(1.01);
+}
+
+.table tbody td {
+    padding: var(--spacing-md);
+    vertical-align: middle;
+}
+
+
+/* ============================================
+   COMPONENTES REUTILIZABLES - BADGES
+   ============================================ */
+
+.badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+}
+
+.bg-primary {
+    background: var(--color-primary) !important;
+    color: #000000 !important;
+}
+
+.bg-success {
+    background: var(--color-success) !important;
+    color: var(--text-primary);
+}
+
+.bg-warning {
+    background: var(--color-warning) !important;
+    color: var(--text-primary);
+}
+
+.bg-danger {
+    background: var(--color-danger) !important;
+    color: var(--text-primary);
+}
+
+.bg-info {
+    background: var(--color-info) !important;
+    color: var(--text-primary);
+}
+
+.bg-secondary {
+    background: var(--color-secondary) !important;
+    color: var(--text-primary);
+}
+
+/* ============================================
+   COMPONENTES REUTILIZABLES - ALERTAS
+   ============================================ */
+
+.alert {
+    border-radius: var(--border-radius-sm);
+    border: none;
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-md);
+    color: #000000;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: var(--color-success);
+    color: #000000;
+    border-left: 4px solid #66BB6A;
+}
+
+.alert-danger {
+    background: var(--color-danger);
+    color: #000000;
+    border-left: 4px solid #FF7043;
+}
+
+.alert-warning {
+    background: var(--color-warning);
+    color: #000000;
+    border-left: 4px solid #FFA726;
+}
+
+.alert-info {
+    background: var(--color-info);
+    color: #000000;
+    border-left: 4px solid #42A5F5;
+}
+
+/* ============================================
+   UTILIDADES
+   ============================================ */
+
+.text-primary {
+    color: #000000 !important;
+}
+
+.text-white {
+    color: #000000 !important;
+}
+
+.text-muted {
+    color: #333333 !important;
+}
+
+.text-success,
+.text-warning,
+.text-danger,
+.text-info {
+    color: #000000 !important;
+}
+
+/* Espaciado */
+.mb-4 {
+    margin-bottom: var(--spacing-lg) !important;
+}
+
+.mt-4 {
+    margin-top: var(--spacing-lg) !important;
+}
+
+/* ============================================
+   PÁGINA DE LOGIN
+   ============================================ */
+
+.min-vh-100 {
+    background: linear-gradient(135deg, #FFF8F5 0%, #FFE5F1 50%, #E8F5E9 100%);
+    padding: var(--spacing-xl) 0;
+}
+
+.card.shadow-lg {
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    border: 2px solid var(--border-color);
+    background: var(--bg-card);
+}
+
+/* ============================================
+   SCROLLBAR PERSONALIZADO
+   ============================================ */
+
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    border-radius: var(--border-radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-dark);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .main-container,
+    .container-fluid {
+        padding: 0 var(--spacing-sm);
+    }
+    
+    .card {
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .metric-card {
+        margin-bottom: var(--spacing-sm);
+    }
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* ============================================
+   MEJORAS ESPECÍFICAS
+   ============================================ */
+
+code {
+    background: var(--bg-hover);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9em;
+    color: #000000;
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+.img-thumbnail {
+    border-radius: var(--border-radius-sm);
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.img-thumbnail:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+/* Lista de productos con stock bajo */
+.list-group-item {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-xs);
+    transition: all 0.3s ease;
+    background: var(--bg-card);
+}
+
+.list-group-item:hover {
+    background: var(--bg-hover);
+    transform: translateX(5px);
+    border-color: var(--color-primary);
+}
+
+
+/* Input groups */
+.input-group-text {
+    background: var(--color-primary);
+    color: #000000;
+    font-weight: 600;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm);
+}
+
+/* Dropdown */
+.dropdown-menu {
+    border-radius: var(--border-radius-sm);
+    border: 2px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    background: var(--bg-card);
+}
+
+.dropdown-item {
+    color: #000000;
+    font-weight: 500;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-hover);
+    color: #000000;
+}
+
+/* ============================================
+   MODALES
+   ============================================ */
+
+.modal-content {
+    border-radius: var(--border-radius);
+    border: 2px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    background: var(--bg-card);
+    z-index: 1055 !important;
+    position: relative;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: #000000;
+    border-bottom: 2px solid var(--color-primary-dark);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    padding: var(--spacing-md);
+}
+
+.modal-title {
+    font-weight: 700;
+    color: #000000 !important;
+}
+
+.modal-body {
+    padding: var(--spacing-md);
+    color: #000000;
+}
+
+.modal-body label,
+.modal-body input,
+.modal-body select,
+.modal-body textarea,
+.modal-body small {
+    color: #000000 !important;
+}
+
+.modal-body .form-label {
+    font-weight: 600;
+    color: #000000 !important;
+}
+
+.modal-body .text-muted {
+    color: #333333 !important;
+}
+
+.modal-footer {
+    border-top: 2px solid var(--border-color);
+    padding: var(--spacing-md);
+    background: var(--bg-primary);
+}
+
+.btn-close {
+    filter: brightness(0);
+}
+
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    opacity: 1 !important;
+    z-index: 1040 !important;
+}
+
+.modal-backdrop.show {
+    opacity: 1 !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.modal-backdrop.fade {
+    opacity: 0;
+}
+
+.modal-backdrop.fade.show {
+    opacity: 1 !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+}

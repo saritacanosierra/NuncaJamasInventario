@@ -1,0 +1,15 @@
+---
+description: No reescribir ni pisar archivos existentes del inventario PHP
+alwaysApply: true
+---
+
+# No sobrescribir
+
+Estas reglas valen solo para `C:\xampp\htdocs\inventario`. No las uses para cambiar el prototipo React de este repositorio.
+
+- Cambia únicamente el bloque que pide la tarea. Conserva nombres, rutas y comportamiento ajeno al pedido.
+- No reemplaces un archivo entero para ordenarlo, partirlo o “dejarlo limpio”.
+- No muevas controladores, modelos, vistas, CSS ni JS salvo que el mensaje lo pida.
+- Un módulo nuevo va en archivos nuevos, dentro de la carpeta que ya usa ese tipo de pieza.
+- No dejes la lógica vieja y una copia nueva. Si extraes un método, el llamador anterior pasa a usarlo.
+- No borres código en el mismo cambio si el usuario no pidió esa limpieza.

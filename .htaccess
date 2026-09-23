@@ -1,0 +1,30 @@
+# Configuración de Apache para el Sistema de Inventario
+
+# Habilitar rewrite engine
+RewriteEngine On
+
+# El back, las vistas y los metadatos de Git no se abren por URL.
+RewriteRule ^back/ - [F,L]
+RewriteRule ^front/views/ - [F,L]
+RewriteRule ^\.git - [F,L]
+RewriteRule ^\.cursor - [F,L]
+
+# Redirigir a index.php si el archivo no existe
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Proteger archivos sensibles
+<FilesMatch "\.(sql|log|ini)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Configuración de PHP
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
+

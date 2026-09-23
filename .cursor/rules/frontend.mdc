@@ -1,0 +1,24 @@
+---
+description: Estándar de vistas, CSS y JS del inventario
+globs: views/**/*.php,public/**/*.js,public/**/*.css
+alwaysApply: false
+---
+
+# Front
+
+- La vista imprime datos ya preparados. No abre `Database`, no escribe SQL y no decide permisos de negocio.
+- Cada pantalla vive en `views/{modulo}/`. El layout común sigue en `views/layout/` y `views/components/`.
+- El CSS del módulo va en `public/css/{modulo}.css`. No agregues un `<style>` largo dentro de la vista.
+- El JS del módulo va en `public/js/{modulo}.js`. La vista solo declara `window.BASE_URL` y enlaza ese archivo.
+- No copies un manejador de otra pantalla. Si dos módulos necesitan lo mismo, extrae una función en `public/js/main.js` y úsala desde ambos.
+- Escapa la salida con `htmlspecialchars` cuando el dato viene de la base o del usuario.
+
+```php
+// Mal, en la vista
+$db->query('DELETE FROM productos WHERE id = ' . $_GET['id']);
+
+// Bien
+<?php foreach ($productos as $producto): ?>
+  <td><?php echo htmlspecialchars($producto['nombre']); ?></td>
+<?php endforeach; ?>
+```

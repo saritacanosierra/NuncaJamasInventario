@@ -1,0 +1,26 @@
+---
+description: Módulos por vista, back y front separados, sin duplicar ni espagueti
+alwaysApply: true
+---
+
+# Arquitectura
+
+Un módulo es una vista de negocio: `auth`, `dashboard`, `productos`, `ventas`, `clientes`, `gastos`, `agenda`, `produccion`, `usuarios`.
+
+Back, sin HTML ni CSS:
+
+- `controllers/` recibe la petición, valida permiso y delega.
+- `models/` ejecuta SQL con PDO preparado y devuelve datos.
+- Una regla que no es SQL ni HTTP es un método con un solo motivo. No la pongas en la vista.
+
+Front, sin SQL y sin reglas de negocio:
+
+- `views/{modulo}/` solo marcado.
+- `public/css/{modulo}.css` solo presentación.
+- `public/js/{modulo}.js` solo el comportamiento de esa pantalla.
+
+No abras un árbol `backend/` o `frontend/` paralelo. El proyecto ya separa las capas en esas carpetas.
+
+Antes de crear una función, busca si ya existe en el módulo, en `models/` o en `helpers/`. Reutilízala.
+
+Un archivo no mezcla dos módulos. Un cambio que necesite otro módulo lo llama; no reimplementa su lógica.

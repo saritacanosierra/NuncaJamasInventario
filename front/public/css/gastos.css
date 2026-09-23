@@ -1,0 +1,15 @@
+/* Estilos específicos de la vista de Gastos */
+
+/* Contenedor de gráficos */
+.chart-container {
+    position: relative;
+    height: 300px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Formulario de categoría oculto por defecto */
+#formCategoriaGasto {
+    display: none;
+}
+
