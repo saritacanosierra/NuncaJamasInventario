@@ -23,7 +23,17 @@ class Mailer {
             return [];
         }
         $config = require $archivo;
-        return is_array($config) ? $config : [];
+        if (!is_array($config)) {
+            return [];
+        }
+        $local = BASE_DIR . '/back/config/mail.local.php';
+        if (is_file($local)) {
+            $extra = require $local;
+            if (is_array($extra)) {
+                $config = array_merge($config, $extra);
+            }
+        }
+        return $config;
     }
 
     private static function encabezado($nombre, $email) {

@@ -108,17 +108,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Imprimir código de barras desde el modal de edición
-    function imprimirCodigoBarras(codigo) {
-        if (!codigo) return;
-        const url = 'https://barcode.tec-it.com/barcode.ashx?data=' + encodeURIComponent(codigo) + '&code=EAN13';
-        const ventana = window.open('', '_blank', 'width=400,height=300');
-        if (!ventana) return;
+    function abrirCodigoBarras(origen) {
+        const codigo = origen.getAttribute('data-codigo');
+        const nombre = origen.getAttribute('data-nombre') || '';
+        const src = origen.getAttribute('src');
+        const img = document.getElementById('imgVistaCodigo');
+        const modalEl = document.getElementById('modalVerCodigoProducto');
+        if (!codigo || !src || !img || !modalEl) return;
+        img.src = src;
+        const nombreEl = document.getElementById('nombreCodigoProducto');
+        const textoEl = document.getElementById('textoCodigoProducto');
+        const btnDescarga = document.getElementById('btnDescargarCodigo');
+        const btnImprimir = document.getElementById('btnImprimirCodigoModal');
+        if (nombreEl) nombreEl.textContent = nombre;
+        if (textoEl) textoEl.textContent = codigo;
+        if (btnDescarga) {
+            btnDescarga.href = src;
+            btnDescarga.setAttribute('download', 'codigo-' + codigo + '.svg');
+        }
+        if (btnImprimir) {
+            btnImprimir.setAttribute('data-codigo', codigo);
+            btnImprimir.setAttribute('data-nombre', nombre);
+            btnImprimir.setAttribute('data-src', src);
+        }
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
 
+    function imprimirCodigoBarras(src, nombre) {
+        if (!src) return;
+        const ventana = window.open('', '_blank', 'width=480,height=360');
+        if (!ventana) return;
+        const titulo = (nombre || 'Código de barras').replace(/</g, '');
         ventana.document.write(
-            '<html><head><title>Imprimir código</title></head>' +
-            '<body>' +
-            '<img src="' + url + '" alt="Código de barras">' +
+            '<html><head><title>' + titulo + '</title></head>' +
+            '<body style="text-align:center;font-family:sans-serif;">' +
+            '<p>' + titulo + '</p>' +
+            '<img src="' + src + '" alt="Código de barras" style="width:420px;height:auto;">' +
             '<script>window.onload=function(){window.print();};<\/script>' +
             '</body></html>'
         );
@@ -126,10 +151,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.addEventListener('click', function(e) {
-        const btnPrint = e.target.closest('.btnImprimirCodigo');
+        const caja = e.target.closest('.img-barcode-tabla');
+        if (caja) {
+            e.preventDefault();
+            abrirCodigoBarras(caja);
+            return;
+        }
+        const btnPrint = e.target.closest('#btnImprimirCodigoModal, .btnImprimirCodigo');
         if (btnPrint) {
-            const codigo = btnPrint.getAttribute('data-codigo');
-            imprimirCodigoBarras(codigo);
+            imprimirCodigoBarras(btnPrint.getAttribute('data-src'), btnPrint.getAttribute('data-nombre'));
         }
     });
     
@@ -192,30 +222,29 @@ document.addEventListener('DOMContentLoaded', function() {
                                 +   '<img src="' + rutaFoto + '" alt="Foto actual"'
                                 +        ' class="img-thumbnail img-producto-thumb"'
                                 +        ' onerror="this.onerror=null; this.style.display=\'none\'; this.nextElementSibling && (this.nextElementSibling.style.display=\'block\');">'
-                                +   '<span style="display:none; color:#999;"><i class="bi bi-image"></i> Imagen no disponible</span>'
+                                +   '<span style="display:none; color:#9a918e;"><i class="bi bi-image"></i> Imagen no disponible</span>'
                                 +   '<a href="' + rutaFoto + '" target="_blank" style="display:inline;">Ver grande</a>'
                                 + '</div>';
                         }
 
                         let barcodeHtml = '';
                         if (p.codigo_barras) {
-                            const codigo = encodeURIComponent(p.codigo_barras);
-                            const barcodeUrl = 'https://barcode.tec-it.com/barcode.ashx?data=' + codigo + '&code=EAN13';
+                            const barcodeUrl = 'https://barcode.tec-it.com/barcode.ashx?data=' + encodeURIComponent(p.codigo_barras) + '&code=EAN13';
+                            const nombreCodigo = String(p.nombre || '').replace(/"/g, '&quot;');
                             barcodeHtml = ''
                                 + '<div class="mt-2 text-center">'
                                 +   '<img src="' + barcodeUrl + '" alt="Código de barras"'
-                                +        ' class="img-fluid mb-2 img-barcode-tabla">'
-                                +   '<br>'
-                                +   '<button type="button" class="btn btn-sm btn-outline-secondary btnImprimirCodigo" '
-                                +           'data-codigo="' + (p.codigo_barras || '') + '">'
-                                +       '<i class="bi bi-printer"></i> Imprimir código'
-                                +   '</button>'
+                                +        ' class="img-fluid img-barcode-tabla"'
+                                +        ' data-codigo="' + p.codigo_barras + '"'
+                                +        ' data-nombre="' + nombreCodigo + '"'
+                                +        ' title="Ver código de barras">'
                                 + '</div>';
                         }
                         
                         const baseUrl = BASE_URL_PRODUCTOS || window.BASE_URL || '';
                         modalBody.innerHTML = `
                             <form id="formEditarProducto" method="POST" action="${baseUrl}index.php?action=productos&method=update&id=${p.id}" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="${window.CSRF_TOKEN || ''}">
                                 <input type="hidden" name="id" value="${p.id}">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -428,15 +457,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            if (!confirm('¿Eliminar categoría "' + nombre + '"?')) return;
-            
-            // Deshabilitar el botón mientras se procesa
+            if (typeof pedirDobleConfirmacion !== 'function') return;
+            pedirDobleConfirmacion({
+                titulo: 'Eliminar categoría',
+                detalle: 'Se borra la categoría y no se puede recuperar.',
+                codigo: nombre,
+                alConfirmar: function (escrito) {
             btn.disabled = true;
             const textoOriginal = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Eliminando...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
             
             const formData = new FormData();
             formData.append('id', idNum);
+            formData.append('codigo_confirmacion', escrito);
             
             fetch((BASE_URL_PRODUCTOS || window.BASE_URL || '') + 'index.php?action=productos&method=eliminarCategoria', {
                 method: 'POST',
@@ -478,6 +511,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Error al eliminar categoría. Por favor, intente nuevamente.');
                 btn.disabled = false;
                 btn.innerHTML = textoOriginal;
+            });
+                }
             });
         });
     }

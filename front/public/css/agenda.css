@@ -16,10 +16,10 @@
     padding: 10px;
     text-align: center;
     font-weight: 600;
-    background: #f8f9fa;
+    background: #f4f0ef;
     border-radius: 4px;
     font-size: 0.9rem;
-    color: #495057;
+    color: #6d6562;
 }
 
 .calendario-dias {
@@ -32,7 +32,7 @@
     min-height: 100px;
     padding: 8px;
     background: #ffffff;
-    border: 2px solid #e9ecef;
+    border: 2px solid #ece2e1;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -40,8 +40,8 @@
 }
 
 .calendario-dia:hover {
-    background: #f8f9fa;
-    border-color: #FFB6C1;
+    background: #f4f0ef;
+    border-color: #ece2e1;
     transform: translateY(-2px);
     box-shadow: 0 2px 8px rgba(255, 182, 193, 0.3);
 }
@@ -53,14 +53,14 @@
 }
 
 .calendario-dia.hoy {
-    background: #E3F2FD;
-    border-color: #2196F3;
+    background: var(--tono-agua);
+    border-color: var(--tono-teal);
     font-weight: bold;
 }
 
 .calendario-dia.seleccionado {
-    background: #FFE0E6;
-    border-color: #FF69B4;
+    background: #f4f0ef;
+    border-color: #ece2e1;
     box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.2);
 }
 
@@ -68,7 +68,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 4px;
-    color: #333;
+    color: #3c3534;
 }
 
 .dia-tareas {
@@ -86,23 +86,23 @@
 
 /* Lista de tareas */
 .tarea-item {
-    border-left: 4px solid #dee2e6;
+    border-left: 4px solid #ece2e1;
     transition: all 0.2s ease;
 }
 
 .tarea-item:hover {
-    border-left-color: #FF69B4;
-    background: #f8f9fa;
+    border-left-color: #fcd1d1;
+    background: #f4f0ef;
 }
 
 .tarea-item.tarea-completada {
     opacity: 0.6;
-    background: #f0f0f0;
+    background: #f4f0ef;
 }
 
 .tarea-item.tarea-completada .tarea-titulo {
     text-decoration: line-through;
-    color: #6c757d;
+    color: #6d6562;
 }
 
 .tarea-titulo {
@@ -117,16 +117,19 @@
 
 /* Badges de prioridad */
 .badge.bg-danger {
-    background-color: #dc3545 !important;
+    background-color: var(--tono-rosa) !important;
+    color: var(--tinta-rosa) !important;
 }
 
 .badge.bg-warning {
-    background-color: #ffc107 !important;
-    color: #000 !important;
+    background-color: var(--tono-arena) !important;
+    color: var(--tinta-arena) !important;
 }
 
 .badge.bg-secondary {
-    background-color: #6c757d !important;
+    background-color: var(--tono-teal) !important;
+    color: var(--tinta-teal) !important;
+}
 }
 
 /* Responsive */

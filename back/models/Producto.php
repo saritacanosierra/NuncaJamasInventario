@@ -218,18 +218,20 @@ class Producto {
                   WHERE p.estado = 'Disponible'
                     AND p.stock > 0
                     AND (p.nombre LIKE :term1
-                         OR p.color LIKE :term2
-                         OR p.talla LIKE :term3
-                         OR c.nombre LIKE :term4)
+                         OR p.codigo_barras LIKE :term2
+                         OR p.color LIKE :term3
+                         OR p.talla LIKE :term4
+                         OR c.nombre LIKE :term5)
                   ORDER BY p.fecha_creacion DESC
                   LIMIT 10";
 
         $stmt = $this->conn->prepare($query);
         $like = '%' . $termino . '%';
-        $stmt->bindParam(':term1', $like);
-        $stmt->bindParam(':term2', $like);
-        $stmt->bindParam(':term3', $like);
-        $stmt->bindParam(':term4', $like);
+        $stmt->bindValue(':term1', $like);
+        $stmt->bindValue(':term2', $like);
+        $stmt->bindValue(':term3', $like);
+        $stmt->bindValue(':term4', $like);
+        $stmt->bindValue(':term5', $like);
         $stmt->execute();
 
         return $stmt->fetchAll();
@@ -254,8 +256,13 @@ class Producto {
         $stmt->bindParam(':cantidad2', $cantidad);
         $stmt->bindParam(':cantidad3', $cantidad);
         $stmt->bindParam(':cantidad4', $cantidad);
-        
-        return $stmt->execute();
+        $stmt->execute();
+
+        if ($stmt->rowCount() < 1) {
+            throw new Exception('No hay stock suficiente para completar la venta');
+        }
+
+        return true;
     }
     
     /**
@@ -263,16 +270,17 @@ class Producto {
      */
     public function aumentarStock($id, $cantidad) {
         $query = "UPDATE " . $this->table . " 
-                  SET stock = stock + :cantidad,
+                  SET stock = stock + :cantidad1,
                       estado = CASE 
-                          WHEN stock > 0 AND estado = 'Agotado' THEN 'Disponible'
+                          WHEN (stock + :cantidad2) > 0 AND estado = 'Agotado' THEN 'Disponible'
                           ELSE estado
                       END
                   WHERE id = :id";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
-        $stmt->bindParam(':cantidad', $cantidad);
+        $stmt->bindParam(':cantidad1', $cantidad);
+        $stmt->bindParam(':cantidad2', $cantidad);
         
         return $stmt->execute();
     }

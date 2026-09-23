@@ -41,11 +41,11 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <td><code><?php echo htmlspecialchars($compra['numero_factura']); ?></code></td>
                                     <td><?php echo date('d/m/Y H:i', strtotime($compra['fecha_venta'])); ?></td>
                                     <td><?php echo htmlspecialchars($compra['vendedor']); ?></td>
-                                    <td><strong>$<?php echo number_format($compra['total'], 2); ?></strong></td>
+                                    <td><strong><?php echo pesos($compra['total']); ?></strong></td>
                                     <td>
                                         <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=factura&id=<?php echo $compra['id']; ?>" 
                                            class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-receipt"></i> Ver Factura
+                                            <i class="bi bi-eye"></i> Ver Factura
                                         </a>
                                     </td>
                                 </tr>

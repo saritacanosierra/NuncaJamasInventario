@@ -36,7 +36,7 @@ class ProduccionController {
             }
             
             // Verificar que el operario tenga nombre configurado
-            if (isOperario()) {
+            if (!ve_produccion_ajena()) {
                 $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
                 if (empty($nombreUsuario) || trim($nombreUsuario) === '') {
                     $_SESSION['error'] = 'Error: El nombre del usuario operario no está configurado. Por favor, contacte al administrador para configurar su nombre en el sistema.';
@@ -47,7 +47,7 @@ class ProduccionController {
             $operariaSeleccionada = $_GET['operaria'] ?? '';
             
             // Si es operario, solo puede ver su propia operaria
-            if (isOperario()) {
+            if (!ve_produccion_ajena()) {
                 $nombreUsuario = trim($_SESSION['usuario_nombre'] ?? '');
                 if (!empty($nombreUsuario)) {
                     $operariaSeleccionada = $nombreUsuario;
@@ -57,7 +57,7 @@ class ProduccionController {
             // Obtener todas las operarias del día
             // Si es administrador, mostrar todos los registros. Si es operario, solo los suyos.
             try {
-                $soloPropios = !isAdmin(); // Los administradores ven todos, los demás solo los suyos
+                $soloPropios = !ve_produccion_ajena();
                 $operariasDelDia = $this->produccionModel->getOperariasDelDia($fecha, $_SESSION['usuario_id'], $soloPropios);
             } catch (PDOException $e) {
                 error_log('Error de base de datos obteniendo operarias del día: ' . $e->getMessage());
@@ -76,7 +76,7 @@ class ProduccionController {
             }
             
             // Si es operario, filtrar solo su operaria
-            if (isOperario()) {
+            if (!ve_produccion_ajena()) {
                 $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
                 if (!empty($nombreUsuario)) {
                     $operariasDelDia = array_filter($operariasDelDia, function($op) use ($nombreUsuario) {
@@ -95,7 +95,7 @@ class ProduccionController {
             
             if ($operariaSeleccionada) {
                 try {
-                    $registro = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaSeleccionada, $_SESSION['usuario_id']);
+                    $registro = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaSeleccionada, $_SESSION['usuario_id'], ve_produccion_ajena());
                     
                     if ($registro) {
                         $operaciones = $this->produccionModel->getOperaciones($registro['id']);
@@ -134,7 +134,7 @@ class ProduccionController {
             if (!file_exists($vistaPath)) {
                 error_log("Error: La vista $vistaPath no existe");
                 $_SESSION['error'] = 'Error: La vista de producción no se encuentra';
-                redirect('index.php?action=' . (isAdmin() ? 'dashboard' : (isCajero() ? 'ventas' : 'login')));
+                redirect(permisos_url_inicio());
                 return;
             }
             
@@ -181,6 +181,7 @@ class ProduccionController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $fecha = $_POST['fecha'] ?? date('Y-m-d');
         $operariaNombre = trim($_POST['operaria_nombre'] ?? '');
@@ -190,8 +191,8 @@ class ProduccionController {
             exit;
         }
         
-        // Si es operario, verificar que solo pueda crear/editar su propio registro
-        if (isOperario()) {
+        // Sin permiso de jornada ajena, el día solo se abre con el propio nombre
+        if (!ve_produccion_ajena() || !tienePermiso('produccion_jornada:create')) {
             $nombreUsuario = trim($_SESSION['usuario_nombre'] ?? '');
             if (empty($nombreUsuario) || strtolower($nombreUsuario) !== strtolower($operariaNombre)) {
                 echo json_encode(['success' => false, 'error' => 'Solo puede crear o editar registros con su propio nombre']);
@@ -199,7 +200,7 @@ class ProduccionController {
             }
             
             // Verificar si ya existe un registro para este operario en esta fecha
-        $registroExistente = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id']);
+        $registroExistente = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id'], ve_produccion_ajena());
             
             // Si ya existe un registro, permitir actualizarlo pero no crear uno nuevo con otro nombre
             if ($registroExistente && $registroExistente['operaria_nombre'] !== $operariaNombre) {
@@ -208,7 +209,7 @@ class ProduccionController {
             }
         } else {
             // Para no-operarios, buscar registro existente normalmente
-            $registroExistente = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id']);
+            $registroExistente = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id'], ve_produccion_ajena());
         }
         
         $data = [
@@ -233,6 +234,7 @@ class ProduccionController {
         }
         
         if ($result) {
+            $this->recalcularEstadisticas($registroId);
             $registro = $this->produccionModel->getRegistroById($registroId);
             echo json_encode(['success' => true, 'registro' => $registro, 'message' => 'Registro guardado exitosamente']);
         } else {
@@ -253,6 +255,7 @@ class ProduccionController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $fecha = $_POST['fecha'] ?? date('Y-m-d');
         $operariaNombre = trim($_POST['operaria_nombre'] ?? '');
@@ -263,15 +266,15 @@ class ProduccionController {
         }
         
         // Si es operario, solo puede trabajar con operaciones de su nombre
-        if (isOperario()) {
-            $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
-            if ($operariaNombre !== $nombreUsuario) {
+        if (!ve_produccion_ajena()) {
+            $nombreUsuario = trim($_SESSION['usuario_nombre'] ?? '');
+            if (strtolower($operariaNombre) !== strtolower($nombreUsuario)) {
                 echo json_encode(['success' => false, 'error' => 'Solo puede agregar operaciones para su propio nombre']);
                 exit;
             }
         }
         
-        $registro = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id']);
+        $registro = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id'], ve_produccion_ajena());
         
         if (!$registro) {
             echo json_encode(['success' => false, 'error' => 'Debe crear primero el registro del día para esta operaria']);
@@ -359,7 +362,7 @@ class ProduccionController {
         header('Content-Type: application/json');
         
         // Obtener la fecha de la operación para verificar si el día está finalizado
-        $operacionId = $_POST['operacion_id'] ?? 0;
+        $operacionId = $_POST['operacion_id'] ?? ($_POST['id'] ?? 0);
         if ($operacionId) {
             $operacion = $this->produccionModel->getOperacionById($operacionId);
             if ($operacion) {
@@ -378,8 +381,21 @@ class ProduccionController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $id = intval($_POST['id'] ?? 0);
+        $operacionBorrar = $this->produccionModel->getOperacionById($id);
+        if (!$operacionBorrar) {
+            echo json_encode(['success' => false, 'error' => 'Operación no encontrada']);
+            exit;
+        }
+        $esperado = trim($operacionBorrar['codigo_operacion'] ?? '') !== ''
+            ? $operacionBorrar['codigo_operacion']
+            : ($operacionBorrar['nombre_operacion'] ?? '');
+        if (!codigo_eliminacion_valido($esperado)) {
+            echo json_encode(['success' => false, 'error' => 'La confirmación no coincide. No se eliminó.']);
+            exit;
+        }
         
         if ($this->produccionModel->eliminarOperacion($id)) {
             echo json_encode(['success' => true, 'message' => 'Operación eliminada exitosamente']);
@@ -401,6 +417,7 @@ class ProduccionController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $fecha = $_POST['fecha'] ?? date('Y-m-d');
         $operariaNombre = trim($_POST['operaria_nombre'] ?? '');
@@ -417,7 +434,7 @@ class ProduccionController {
         }
         
         // Buscar registro específico de la operaria
-        $registro = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id']);
+        $registro = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id'], ve_produccion_ajena());
         
         if (!$registro) {
             echo json_encode(['success' => false, 'error' => 'Debe crear primero el registro del día para esta operaria']);
@@ -475,7 +492,7 @@ class ProduccionController {
             exit;
         }
         
-        $registro = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id']);
+        $registro = $this->produccionModel->getRegistroPorOperaria($fecha, $operariaNombre, $_SESSION['usuario_id'], ve_produccion_ajena());
         
         if (!$registro) {
             echo json_encode(['success' => true, 'operaciones' => []]);
@@ -496,7 +513,7 @@ class ProduccionController {
         header('Content-Type: application/json');
         
         $fecha = $_GET['fecha'] ?? date('Y-m-d');
-        $soloPropios = !isAdmin(); // Los administradores ven todos, los demás solo los suyos
+        $soloPropios = !ve_produccion_ajena();
         $operarias = $this->produccionModel->getOperariasDelDia($fecha, $_SESSION['usuario_id'], $soloPropios);
         
         echo json_encode(['success' => true, 'operarias' => $operarias]);
@@ -571,7 +588,8 @@ class ProduccionController {
         header('Content-Type: application/json');
         
         $busqueda = $_GET['busqueda'] ?? '';
-        $operarias = $this->produccionModel->getOperariasUnicas($busqueda, $_SESSION['usuario_id']);
+        $usuarioBusqueda = ve_produccion_ajena() ? null : $_SESSION['usuario_id'];
+        $operarias = $this->produccionModel->getOperariasUnicas($busqueda, $usuarioBusqueda);
         
         echo json_encode(['success' => true, 'operarias' => $operarias]);
         exit;
@@ -612,7 +630,7 @@ class ProduccionController {
         
         try {
             $fecha = $_GET['fecha'] ?? date('Y-m-d');
-            $soloPropios = !isAdmin(); // Los administradores ven todos, los demás solo los suyos
+            $soloPropios = !ve_produccion_ajena();
             $resumen = $this->produccionModel->getResumenDia($fecha, $_SESSION['usuario_id'], $soloPropios);
             
             $response = [
@@ -656,6 +674,7 @@ class ProduccionController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $fecha = $_POST['fecha'] ?? date('Y-m-d');
         $prendasTerminadas = intval($_POST['prendas_terminadas'] ?? 0);
@@ -666,6 +685,11 @@ class ProduccionController {
         // Validar datos
         if ($prendasTerminadas < 0 || $prendasEmpezadas < 0) {
             echo json_encode(['success' => false, 'error' => 'Los valores de prendas no pueden ser negativos']);
+            exit;
+        }
+
+        if ($this->produccionModel->diaFinalizado($fecha)) {
+            echo json_encode(['success' => false, 'error' => 'Este día ya está cerrado. Solo se puede cerrar una vez.']);
             exit;
         }
         
@@ -690,6 +714,43 @@ class ProduccionController {
                 'success' => false, 
                 'error' => 'Error al guardar el cierre del día: ' . $e->getMessage()
             ]);
+        }
+        exit;
+    }
+
+    /**
+     * Abre de nuevo un día cerrado. Solo quien puede cerrar el día.
+     */
+    public function reabrirDia() {
+        if (!isset($_SESSION['usuario_id'])) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'No autenticado']);
+            exit;
+        }
+
+        if (ob_get_level()) {
+            ob_clean();
+        }
+
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            exit;
+        }
+        exigir_csrf_json();
+
+        $fecha = $_POST['fecha'] ?? date('Y-m-d');
+
+        if (!$this->produccionModel->diaFinalizado($fecha)) {
+            echo json_encode(['success' => false, 'error' => 'Este día ya está abierto.']);
+            exit;
+        }
+
+        if ($this->produccionModel->reabrirDia($fecha)) {
+            echo json_encode(['success' => true, 'message' => 'El día quedó abierto de nuevo.']);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'No se pudo abrir el día.']);
         }
         exit;
     }
@@ -739,9 +800,10 @@ class ProduccionController {
         $fechaFin = $_GET['fecha_fin'] ?? date('Y-m-t');
         
         // Obtener datos para el dashboard
-        $resumenGeneral = $this->produccionModel->getResumenGeneral($fechaInicio, $fechaFin, $_SESSION['usuario_id']);
-        $operariasRendimiento = $this->produccionModel->getRendimientoOperarias($fechaInicio, $fechaFin, $_SESSION['usuario_id']);
-        $bitacoraDias = $this->produccionModel->getBitacoraDias($fechaInicio, $fechaFin, $_SESSION['usuario_id']);
+        $verTodas = ve_produccion_ajena();
+        $resumenGeneral = $this->produccionModel->getResumenGeneral($fechaInicio, $fechaFin, $_SESSION['usuario_id'], $verTodas);
+        $operariasRendimiento = $this->produccionModel->getRendimientoOperarias($fechaInicio, $fechaFin, $_SESSION['usuario_id'], $verTodas);
+        $bitacoraDias = $this->produccionModel->getBitacoraDias($fechaInicio, $fechaFin, $_SESSION['usuario_id'], $verTodas);
         
         require_once BASE_DIR . '/front/views/produccion/dashboard_operaciones.php';
     }

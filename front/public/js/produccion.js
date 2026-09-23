@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Si es operario, primero intentar cargar operarias del día (que incluirá la suya si existe)
     // Si no es operario, cargar todas las operarias del día normalmente
-    if (window.USUARIO_ROL === 'operario' && window.USUARIO_NOMBRE) {
+    if (window.PRODUCCION_SOLO_PROPIOS && window.USUARIO_NOMBRE) {
         // Para operarios, primero intentar cargar las operarias del día
         // Esto cargará su operaria si ya tiene un registro guardado
         const fecha = window.FECHA_ACTUAL || new Date().toISOString().split('T')[0];
@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Cargar operarias del día y luego verificar si se encontró la del operario
         cargarOperariasDelDiaParaOperario(fecha, nombreOperario);
     } else {
-        // Para no-operarios, cargar normalmente
         cargarOperariasDelDia();
     }
     
@@ -124,8 +123,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Cargar operarias existentes del día
-    cargarOperariasDelDia();
 });
 
 // ==== Gestión de operarias múltiples ====
@@ -156,7 +153,7 @@ function crearNuevaOperaria() {
     document.getElementById('btnCrearNuevaOperaria').onclick = function() {
         const nombre = inputBuscar.value.trim();
         if (!nombre) {
-            alert('Por favor, ingresa el nombre de la operaria');
+            aviso('Por favor, ingresa el nombre de la operaria');
             return;
         }
         modal.hide();
@@ -207,6 +204,10 @@ function buscarOperarias(termino) {
 }
 
 function crearOperariaConNombre(nombre) {
+    if (window.DIA_FINALIZADO === true) {
+        aviso('Este día está cerrado. Ábrelo primero si necesitas sumar a alguien.');
+        return;
+    }
     if (!nombre || nombre.trim() === '') {
         return;
     }
@@ -378,7 +379,7 @@ function crearContenidoOperaria(id, operaria) {
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-calendar-day"></i> Datos del Día - ${operaria.nombre}
+                    <i class="bi bi-calendar-day"></i> En el día — ${operaria.nombre}
                 </h5>
             </div>
             <div class="card-body">
@@ -409,7 +410,7 @@ function crearContenidoOperaria(id, operaria) {
                                    value="${registro.meta_dia || 0}" min="0">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Especialidad </label>
+                            <label class="form-label">Máquina *</label>
                             <select class="form-select maquina_asignada" name="maquina_asignada" required>
                                 <option value="">Seleccione...</option>
                                 <option value="Bordadora" ${registro.maquina_asignada === 'Bordadora' ? 'selected' : ''}>Bordadora</option>
@@ -423,7 +424,7 @@ function crearContenidoOperaria(id, operaria) {
                     </div>
                     <div class="mt-3">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save"></i> Guardar Registro del Día
+                            <i class="bi bi-save"></i> Guardar en el día
                         </button>
                     </div>
                 </form>
@@ -435,7 +436,7 @@ function crearContenidoOperaria(id, operaria) {
             <div class="col-md-3">
                 <div class="card bg-info text-white">
                     <div class="card-body">
-                        <h6><i class="bi bi-clock-history"></i> Tiempo Total Trabajado</h6>
+                        <h6><i class="bi bi-clock-history"></i> Tiempo trabajado</h6>
                         <h3 class="tiempo-total">${registro.tiempo_total_trabajado} min</h3>
                     </div>
                 </div>
@@ -443,7 +444,7 @@ function crearContenidoOperaria(id, operaria) {
             <div class="col-md-3">
                 <div class="card bg-warning text-dark">
                     <div class="card-body">
-                        <h6><i class="bi bi-exclamation-triangle"></i> Tiempo Perdido</h6>
+                        <h6><i class="bi bi-exclamation-triangle"></i> Tiempo perdido</h6>
                         <h3 class="tiempo-perdido">${registro.tiempo_perdido_retrocesos} min</h3>
                     </div>
                 </div>
@@ -451,7 +452,7 @@ function crearContenidoOperaria(id, operaria) {
             <div class="col-md-3">
                 <div class="card bg-success text-white">
                     <div class="card-body">
-                        <h6><i class="bi bi-box-seam"></i> Piezas Producidas</h6>
+                        <h6><i class="bi bi-box-seam"></i> Piezas</h6>
                         <h3 class="piezas-producidas">${registro.piezas_producidas}</h3>
                     </div>
                 </div>
@@ -459,7 +460,7 @@ function crearContenidoOperaria(id, operaria) {
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
                     <div class="card-body">
-                        <h6><i class="bi bi-graph-up"></i> Eficiencia Promedio</h6>
+                        <h6><i class="bi bi-graph-up"></i> Ritmo</h6>
                         <h3 class="eficiencia-promedio">${(parseFloat(registro.eficiencia_promedio) || 0).toFixed(2)}%</h3>
                     </div>
                 </div>
@@ -469,22 +470,22 @@ function crearContenidoOperaria(id, operaria) {
         <!-- Tabla de Operaciones -->
         <div class="card" id="cardOperaciones_${id}">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-list-task"></i> Operaciones del Día</h5>
+                <h5 class="mb-0"><i class="bi bi-list-task"></i> Trabajos del día</h5>
                 <button type="button" class="btn btn-success" id="btnNuevaOperacion_${id}" 
+                        data-en-dia="${operaria.registro && operaria.registro.id ? '1' : '0'}"
                         data-bs-toggle="modal" data-bs-target="#modalCronometro" 
                         onclick="abrirModalCronometro('${id}')"
-                        ${!operaria.registro || !operaria.registro.id || (typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled' : ''}
-                        ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'title="Día finalizado - No se pueden agregar nuevas operaciones"' : ''}>
-                    <i class="bi bi-play-circle"></i> Nueva Operación
+                        ${!operaria.registro || !operaria.registro.id || (typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled' : ''}>
+                    <i class="bi bi-play-circle"></i> Nueva operación
                 </button>
             </div>
             <div class="card-body">
                 ${!operaria.registro || !operaria.registro.id ? `
                     <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.5rem;"></i>
+                        <i class="bi bi-exclamation-triangle me-2" style="font-size: 1.5rem;"></i>
                         <div>
-                            <strong>Registro del día no guardado</strong><br>
-                            <small>Debe guardar primero el "Registro del Día" antes de poder agregar operaciones.</small>
+                            <strong>Esta persona todavía no está en el día</strong><br>
+                            <small>Elige el turno y la máquina, y toca Guardar en el día. Después podrás anotar sus trabajos.</small>
                         </div>
                     </div>
                 ` : ''}
@@ -528,7 +529,8 @@ function habilitarSeccionOperaciones(id) {
     const cardOperaciones = document.getElementById(`cardOperaciones_${id}`);
     
     if (btnNuevaOperacion) {
-        btnNuevaOperacion.disabled = false;
+        btnNuevaOperacion.disabled = window.DIA_FINALIZADO === true;
+        btnNuevaOperacion.setAttribute('data-en-dia', '1');
     }
     
     if (cardOperaciones) {
@@ -549,7 +551,7 @@ function habilitarSeccionOperaciones(id) {
 
 function renderizarOperaciones(operaciones) {
     if (!operaciones || operaciones.length === 0) {
-        return '<tr><td colspan="10" class="text-center text-muted">No hay operaciones registradas. Haga clic en "Nueva Operación" para comenzar.</td></tr>';
+        return '<tr><td colspan="10" class="text-center text-muted">Todavía no hay trabajos. Cuando la persona esté en el día, toca Nueva operación.</td></tr>';
     }
     
     return operaciones.map(op => {
@@ -598,23 +600,23 @@ function renderizarOperaciones(operaciones) {
                 ${tiempoPausasMinutos > 0 ? `<strong class="text-warning">${tiempoPausasFormateado}</strong>` : '<span class="text-muted">-</span>'}
             </td>
             <td>
-                <button class="btn btn-sm btn-outline-info" onclick="verHistorialOperacion(${op.id})" title="Historial">
+                <button class="btn btn-sm btn-outline-info btn-icono" onclick="verHistorialOperacion(${op.id})" title="Historial">
                     <i class="bi bi-clock-history"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-primary ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled' : ''}" 
+                <button class="btn btn-sm btn-outline-primary ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled' : ''} btn-icono" 
                         onclick="${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'return false;' : `editarOperacion(${op.id})`}" 
                         title="${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'Día finalizado - No se puede editar' : 'Editar'}"
                         ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-warning ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled' : ''}" 
+                <button class="btn btn-sm btn-outline-warning ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled' : ''} btn-icono" 
                         onclick="${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'return false;' : `abrirModalRetroceso(${op.id}, '${operariaActivaId}')`}" 
                         title="${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'Día finalizado - No se pueden agregar retrocesos' : 'Retrocesos'}"
                         ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
                     <i class="bi bi-exclamation-triangle"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled' : ''}" 
-                        onclick="${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'return false;' : `eliminarOperacion(${op.id}, '${operariaActivaId}')`}" 
+                <button class="btn btn-sm btn-outline-danger ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled' : ''} btn-icono" 
+                        onclick="${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'return false;' : `eliminarOperacion(${op.id}, '${operariaActivaId}', '${encodeURIComponent(op.codigo_operacion || op.nombre_operacion || '')}')`}" 
                         title="${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'Día finalizado - No se puede eliminar' : 'Eliminar'}"
                         ${(typeof window.DIA_FINALIZADO !== 'undefined' && window.DIA_FINALIZADO) ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
                     <i class="bi bi-trash"></i>
@@ -804,7 +806,7 @@ function cargarOperariasDelDiaContinuacion(fecha) {
                     console.log('No hay operarias para mostrar');
                 }
             } else {
-                console.log('No se encontraron operarias guardadas para esta fecha');
+                mostrarGuiaDia();
             }
             return data;
         })
@@ -941,7 +943,7 @@ function guardarRegistroDia(id) {
     
     if (!operariasAbiertas[id]) {
         console.error('Operaria no encontrada:', id);
-        alert('Error: Operaria no encontrada');
+        aviso('Error: Operaria no encontrada');
         return;
     }
     
@@ -964,7 +966,7 @@ function guardarRegistroDia(id) {
         document.querySelectorAll('[data-operaria-id]').forEach(el => {
             console.log('Elemento encontrado:', el.getAttribute('data-operaria-id'), el);
         });
-        alert('Error: No se encontró el contenedor de la operaria. ID: ' + id);
+        aviso('Error: No se encontró el contenedor de la operaria. ID: ' + id);
         return;
     }
     
@@ -994,7 +996,7 @@ function guardarRegistroDia(id) {
         console.log('Contenedor:', contenedor);
         console.log('Contenedor HTML (primeros 1000 caracteres):', contenedor.innerHTML.substring(0, 1000));
         console.log('Todos los formularios en el documento:', document.querySelectorAll('form').length);
-        alert('Error: No se encontró el formulario. Por favor, recarga la página o intenta guardar nuevamente.');
+        aviso('Error: No se encontró el formulario. Por favor, recarga la página o intenta guardar nuevamente.');
         return;
     }
     
@@ -1053,7 +1055,7 @@ function guardarRegistroDia(id) {
     console.log('Enviando datos del registro:', datosEnvio);
     
     if (!datosEnvio.operaria_nombre || !datosEnvio.fecha) {
-        alert('Error: Faltan datos obligatorios. Operaria: ' + datosEnvio.operaria_nombre + ', Fecha: ' + datosEnvio.fecha);
+        aviso('Error: Faltan datos obligatorios. Operaria: ' + datosEnvio.operaria_nombre + ', Fecha: ' + datosEnvio.fecha);
         console.error('Datos incompletos:', datosEnvio);
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -1125,7 +1127,7 @@ function guardarRegistroDia(id) {
         } else {
             // Restaurar contenido anterior en caso de error
             contenedor.innerHTML = contenidoAnterior;
-            alert('Error: ' + (data.error || 'No se pudo guardar el registro'));
+            aviso('Error: ' + (data.error || 'No se pudo guardar el registro'));
         }
     })
     .catch(error => {
@@ -1136,7 +1138,7 @@ function guardarRegistroDia(id) {
         }
         // Restaurar contenido anterior en caso de error
         contenedor.innerHTML = contenidoAnterior;
-        alert('Error al guardar el registro. Por favor, intenta nuevamente.');
+        aviso('Error al guardar el registro. Por favor, intenta nuevamente.');
     });
 }
 
@@ -1149,7 +1151,7 @@ function abrirModalCronometro(operariaId, esEdicion = false) {
     const tiempoInput = document.getElementById('tiempo_total_minutos');
     if (tiempoInput && !esEdicion) {
         tiempoInput.setAttribute('readonly', 'readonly');
-        tiempoInput.style.backgroundColor = '#e9ecef';
+        tiempoInput.style.backgroundColor = '#ece2e1';
     }
     
     if (!esEdicion) {
@@ -1553,7 +1555,7 @@ function guardarOperacion() {
     
     const operariaId = window.operariaIdCronometro || operariaActivaId;
     if (!operariaId || !operariasAbiertas[operariaId]) {
-        alert('Debe seleccionar una operaria primero');
+        aviso('Debe seleccionar una operaria primero');
         return;
     }
     
@@ -1633,35 +1635,46 @@ function guardarOperacion() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Operación guardada exitosamente');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('modalCronometro'));
-            modal.hide();
+            if (window.PISO_OPERARIO && typeof window.pisoOperarioAlGuardar === 'function') {
+                window.pisoOperarioAlGuardar(true, data);
+            } else {
+                mostrarAviso({
+                    titulo: 'Trabajo guardado',
+                    mensaje: 'La operación quedó guardada.',
+                    alCerrar: function () {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('modalCronometro'));
+                        if (modal) modal.hide();
+                    }
+                });
+            }
             cargarDatosOperaria(operariaId);
+        } else if (window.PISO_OPERARIO && typeof window.pisoOperarioAlGuardar === 'function') {
+            window.pisoOperarioAlGuardar(false, data);
         } else {
-            alert('Error: ' + (data.error || 'No se pudo guardar la operación'));
+            aviso('Error: ' + (data.error || 'No se pudo guardar la operación'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al guardar la operación');
+        aviso('Error al guardar la operación');
     });
 }
 
 function editarOperacion(operacionId) {
     // Verificar si el día está finalizado
     if (window.DIA_FINALIZADO) {
-        alert('No se puede editar operaciones de un día que ya está finalizado');
+        aviso('No se puede editar operaciones de un día que ya está finalizado');
         return;
     }
     if (!operacionId) {
-        alert('ID de operación no válido');
+        aviso('ID de operación no válido');
         return;
     }
     
     // Cargar datos de la operación existente
     const operariaId = operariaActivaId;
     if (!operariaId || !operariasAbiertas[operariaId]) {
-        alert('No se encontró la operaria activa');
+        aviso('No se encontró la operaria activa');
         return;
     }
     
@@ -1669,7 +1682,7 @@ function editarOperacion(operacionId) {
     const operacion = operaria.operaciones.find(op => op.id == operacionId);
     
     if (!operacion) {
-        alert('No se encontró la operación');
+        aviso('No se encontró la operación');
         return;
     }
     
@@ -1756,18 +1769,34 @@ function editarOperacion(operacionId) {
     }
 }
 
-function eliminarOperacion(operacionId, operariaId) {
+function eliminarOperacion(operacionId, operariaId, codigo) {
     // Verificar si el día está finalizado
     if (window.DIA_FINALIZADO) {
-        alert('No se puede eliminar operaciones de un día que ya está finalizado');
+        aviso('No se puede eliminar operaciones de un día que ya está finalizado');
         return;
     }
-    if (!confirm('¿Está seguro de eliminar esta operación?')) {
+    let clave = String(codigo || '');
+    if (clave.indexOf('%') !== -1) {
+        try { clave = decodeURIComponent(clave); } catch (e) {}
+    }
+    clave = clave.trim();
+    if (!clave || typeof pedirDobleConfirmacion !== 'function') {
         return;
     }
-    
+    pedirDobleConfirmacion({
+        titulo: 'Eliminar trabajo',
+        detalle: 'Se borra este trabajo y no se puede recuperar.',
+        codigo: clave,
+        alConfirmar: function (escrito) {
+            enviarEliminarOperacion(operacionId, operariaId, escrito);
+        }
+    });
+}
+
+function enviarEliminarOperacion(operacionId, operariaId, codigo) {
     const formData = new FormData();
     formData.append('id', operacionId);
+    formData.append('codigo_confirmacion', codigo);
     
     fetch(`${BASE_URL_PROD}index.php?action=produccion&method=eliminarOperacion`, {
         method: 'POST',
@@ -1776,21 +1805,21 @@ function eliminarOperacion(operacionId, operariaId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Operación eliminada exitosamente');
+            aviso('Operación eliminada exitosamente');
             cargarDatosOperaria(operariaId);
         } else {
-            alert('Error: ' + (data.error || 'No se pudo eliminar la operación'));
+            aviso('Error: ' + (data.error || 'No se pudo eliminar la operación'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al eliminar la operación');
+        aviso('Error al eliminar la operación');
     });
 }
 
 function verHistorialOperacion(operacionId) {
     if (!operacionId) {
-        alert('ID de operación no válido');
+        aviso('ID de operación no válido');
         return;
     }
     
@@ -1941,7 +1970,7 @@ function guardarRetroceso() {
     
     const operariaId = window.operariaIdRetroceso || operariaActivaId;
     if (!operariaId || !operariasAbiertas[operariaId]) {
-        alert('Debe seleccionar una operaria primero');
+        aviso('Debe seleccionar una operaria primero');
         return;
     }
     
@@ -1957,17 +1986,22 @@ function guardarRetroceso() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Retroceso registrado exitosamente');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('modalRetroceso'));
-            modal.hide();
+            mostrarAviso({
+                titulo: 'Problema guardado',
+                mensaje: 'El retroceso quedó registrado.',
+                alCerrar: function () {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalRetroceso'));
+                    if (modal) modal.hide();
+                }
+            });
             cargarDatosOperaria(operariaId);
         } else {
-            alert('Error: ' + (data.error || 'No se pudo registrar el retroceso'));
+            aviso('Error: ' + (data.error || 'No se pudo registrar el retroceso'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al registrar el retroceso');
+        aviso('Error al registrar el retroceso');
     });
 }
 
@@ -2026,18 +2060,21 @@ function actualizarBotonesEstadoFinalizado() {
     // Deshabilitar botón "Nueva Operación" si el día está finalizado
     const botonesNuevaOperacion = document.querySelectorAll('[id^="btnNuevaOperacion_"]');
     botonesNuevaOperacion.forEach(btn => {
-        if (esFinalizado) {
+        const enDia = btn.getAttribute('data-en-dia') !== '0';
+        if (esFinalizado || !enDia) {
             btn.disabled = true;
             btn.classList.add('disabled');
             btn.style.opacity = '0.5';
             btn.style.cursor = 'not-allowed';
-            btn.title = 'Día finalizado - No se pueden agregar nuevas operaciones';
+            btn.title = esFinalizado
+                ? 'El día está cerrado. No se pueden anotar trabajos.'
+                : 'Primero guarda a la persona en el día.';
         } else {
             btn.disabled = false;
             btn.classList.remove('disabled');
             btn.style.opacity = '';
             btn.style.cursor = '';
-            btn.title = '';
+            btn.title = 'Anota un trabajo de esta persona.';
         }
     });
     
@@ -2075,7 +2112,7 @@ function actualizarBotonesEstadoFinalizado() {
                     // Cambiar onclick para prevenir acción
                     const originalOnclick = btn.getAttribute('onclick');
                     btn.setAttribute('data-original-onclick', originalOnclick);
-                    btn.setAttribute('onclick', 'alert("No se puede realizar esta acción en un día finalizado"); return false;');
+                    btn.setAttribute('onclick', 'aviso("No se puede realizar esta acción en un día finalizado"); return false;');
                 } else {
                     btn.disabled = false;
                     btn.classList.remove('disabled');
@@ -2092,11 +2129,50 @@ function actualizarBotonesEstadoFinalizado() {
         });
     }
     
+    const btnCerrarEmpresa = document.getElementById('btnFinalizarDia');
+    if (btnCerrarEmpresa) {
+        btnCerrarEmpresa.hidden = esFinalizado;
+        btnCerrarEmpresa.disabled = esFinalizado;
+        btnCerrarEmpresa.title = 'Cierra el día de toda la empresa. Solo se puede hacer una vez.';
+    }
+
+    const btnAbrirEmpresa = document.getElementById('btnReabrirDia');
+    if (btnAbrirEmpresa) {
+        btnAbrirEmpresa.hidden = !esFinalizado;
+        btnAbrirEmpresa.disabled = !esFinalizado;
+    }
+
+    const btnNuevaOperaria = document.getElementById('btnNuevaOperaria');
+    if (btnNuevaOperaria) {
+        btnNuevaOperaria.disabled = esFinalizado;
+        btnNuevaOperaria.title = esFinalizado
+            ? 'El día está cerrado. Ábrelo para sumar a alguien.'
+            : 'Suma una persona a este día.';
+    }
+
+    document.querySelectorAll('.formRegistroDia').forEach(form => {
+        form.querySelectorAll('.turno, .meta_dia, .maquina_asignada, .fecha, button[type="submit"]').forEach(campo => {
+            campo.disabled = esFinalizado;
+        });
+    });
+
+    const estadoDia = document.getElementById('estadoDia');
+    if (estadoDia) {
+        estadoDia.className = 'estado-dia ' + (esFinalizado ? 'estado-cerrado' : 'estado-abierto');
+        estadoDia.innerHTML = esFinalizado
+            ? '<i class="bi bi-lock"></i><div><strong>Día cerrado</strong><span>Nadie puede registrar trabajo. Solo un administrador puede abrirlo de nuevo.</span></div>'
+            : '<i class="bi bi-unlock"></i><div><strong>Día abierto</strong><span>Las operarias pueden registrar su trabajo. Cerrar el día bloquea a toda la empresa y solo se hace una vez.</span></div>';
+    }
+
     console.log('Botones actualizados. Día finalizado:', esFinalizado);
 }
 
 // ==== Funciones para Finalizar Día ====
 function abrirModalFinalizarDia() {
+    if (window.DIA_FINALIZADO === true) {
+        aviso('Este día ya está cerrado. Solo se cierra una vez. Si hace falta, usa Abrir el día.');
+        return;
+    }
     const fecha = document.getElementById('fechaSeleccionada').value || window.FECHA_ACTUAL;
     
     // Establecer la fecha en el formulario
@@ -2166,12 +2242,12 @@ function guardarCierreDia() {
     
     // Validar campos requeridos
     if (!fecha) {
-        alert('Error: No se pudo obtener la fecha');
+        aviso('Error: No se pudo obtener la fecha');
         return;
     }
     
     if (prendasTerminadas < 0 || prendasEmpezadas < 0) {
-        alert('Por favor, ingrese valores válidos para las prendas');
+        aviso('Por favor, ingrese valores válidos para las prendas');
         return;
     }
     
@@ -2206,24 +2282,100 @@ function guardarCierreDia() {
     })
     .then(data => {
         if (data.success) {
-            alert('Día finalizado exitosamente. El resumen se ha guardado en la bitácora. Las operaciones de este día ahora están bloqueadas.');
-            // Actualizar estado
             window.DIA_FINALIZADO = true;
-            // Cerrar modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('modalFinalizarDia'));
-            modal.hide();
-            // Recargar página para ver los cambios
-            window.location.reload();
+            const formulario = document.getElementById('modalFinalizarDia');
+            const abierto = bootstrap.Modal.getInstance(formulario);
+            const decir = function () {
+                mostrarAviso({
+                    titulo: 'Día cerrado',
+                    mensaje: 'El día de la empresa quedó cerrado. Las operaciones de esta fecha quedan bloqueadas.',
+                    alCerrar: function () {
+                        window.location.reload();
+                    }
+                });
+            };
+            if (abierto) {
+                formulario.addEventListener('hidden.bs.modal', function unaVez() {
+                    formulario.removeEventListener('hidden.bs.modal', unaVez);
+                    decir();
+                });
+                abierto.hide();
+            } else {
+                decir();
+            }
         } else {
-            alert('Error al finalizar el día: ' + (data.error || 'Error desconocido'));
+            aviso('Error al finalizar el día: ' + (data.error || 'Error desconocido'));
             btnGuardar.disabled = false;
-            btnGuardar.innerHTML = '<i class="bi bi-save"></i> Guardar y Finalizar Día';
+            btnGuardar.innerHTML = '<i class="bi bi-lock"></i> Cerrar el día';
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al finalizar el día: ' + error.message);
+        aviso('Error al finalizar el día: ' + error.message);
         btnGuardar.disabled = false;
-        btnGuardar.innerHTML = '<i class="bi bi-save"></i> Guardar y Finalizar Día';
+        btnGuardar.innerHTML = '<i class="bi bi-lock"></i> Cerrar el día';
+    });
+}
+
+function mostrarGuiaDia() {
+    if (window.PRODUCCION_SOLO_PROPIOS) {
+        return;
+    }
+    const contenedor = document.getElementById('contenedorOperarias');
+    if (!contenedor) {
+        return;
+    }
+    const cerrado = window.DIA_FINALIZADO === true;
+    contenedor.innerHTML = cerrado
+        ? '<div class="prod-vacia"><strong>Este día está cerrado.</strong><p>No hay personas para anotar. Si falta alguien, abre el día y luego usa Nueva operaria.</p></div>'
+        : '<div class="prod-vacia"><strong>Nadie está en este día.</strong><p>1. Toca <strong>Nueva operaria</strong> y elige a la persona.<br>2. Elige el turno y la máquina.<br>3. Toca <strong>Guardar en el día</strong>.<br>Después anota cada trabajo con <strong>Nueva operación</strong>.</p></div>';
+}
+
+function reabrirDiaEmpresa() {
+    if (window.DIA_FINALIZADO !== true) {
+        return;
+    }
+    pedirConfirmacion({
+        titulo: 'Abrir el día',
+        mensaje: 'Vas a abrir de nuevo el día de la empresa. Las operarias podrán registrar trabajo otra vez.',
+        boton: 'Abrir el día',
+        alConfirmar: enviarReaperturaDia
+    });
+}
+
+function enviarReaperturaDia() {
+    const fecha = document.getElementById('fechaSeleccionada').value || window.FECHA_ACTUAL;
+    const datos = new FormData();
+    datos.append('fecha', fecha);
+    const boton = document.getElementById('btnReabrirDia');
+    if (boton) {
+        boton.disabled = true;
+    }
+    fetch(`${BASE_URL_PROD}index.php?action=produccion&method=reabrirDia`, {
+        method: 'POST',
+        body: datos
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarAviso({
+                titulo: 'Día abierto',
+                mensaje: 'El día quedó abierto. Las operarias pueden registrar trabajo otra vez.',
+                alCerrar: function () {
+                    window.location.reload();
+                }
+            });
+            return;
+        }
+        aviso(data.error || 'No se pudo abrir el día');
+        if (boton) {
+            boton.disabled = false;
+        }
+    })
+    .catch(() => {
+        aviso('No se pudo abrir el día. Revisa tu conexión e intenta otra vez.');
+        if (boton) {
+            boton.disabled = false;
+        }
     });
 }

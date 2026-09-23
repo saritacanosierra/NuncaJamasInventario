@@ -61,7 +61,7 @@ class Usuario {
      */
     public function getById($id) {
         try {
-            $query = "SELECT id, nombre, email, rol, activo 
+            $query = "SELECT id, nombre, email, rol, role_id, activo 
                       FROM " . $this->table . " 
                       WHERE id = :id";
             
@@ -95,9 +95,11 @@ class Usuario {
      * Listar todos los usuarios
      */
     public function getAll() {
-        $query = "SELECT id, nombre, email, rol, activo, fecha_creacion 
-                  FROM " . $this->table . " 
-                  ORDER BY nombre";
+        $query = "SELECT u.id, u.nombre, u.email, u.rol, u.role_id, u.activo, u.fecha_creacion,
+                         r.name AS rol_nombre
+                  FROM " . $this->table . " u
+                  LEFT JOIN roles r ON r.id = u.role_id
+                  ORDER BY u.nombre";
         
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -110,9 +112,9 @@ class Usuario {
      */
     public function create($data) {
         $query = "INSERT INTO " . $this->table . " 
-                  (nombre, email, password, rol, activo) 
+                  (nombre, email, password, rol, role_id, activo) 
                   VALUES 
-                  (:nombre, :email, :password, :rol, :activo)";
+                  (:nombre, :email, :password, :rol, :role_id, :activo)";
         
         try {
             $stmt = $this->conn->prepare($query);
@@ -122,6 +124,7 @@ class Usuario {
             $stmt->bindParam(':email', $data['email']);
             $stmt->bindValue(':password', $hash);
             $stmt->bindParam(':rol', $data['rol']);
+            $stmt->bindValue(':role_id', $data['role_id'], PDO::PARAM_INT);
             $stmt->bindParam(':activo', $data['activo']);
             
             if ($stmt->execute()) {
@@ -143,6 +146,7 @@ class Usuario {
                   nombre = :nombre,
                   email = :email,
                   rol = :rol,
+                  role_id = :role_id,
                   activo = :activo";
         
         // Si se proporciona una nueva contraseña, incluirla en la actualización
@@ -159,6 +163,7 @@ class Usuario {
             $stmt->bindParam(':nombre', $data['nombre']);
             $stmt->bindParam(':email', $data['email']);
             $stmt->bindParam(':rol', $data['rol']);
+            $stmt->bindValue(':role_id', $data['role_id'], PDO::PARAM_INT);
             $stmt->bindParam(':activo', $data['activo']);
             
             if (isset($data['password']) && !empty($data['password'])) {

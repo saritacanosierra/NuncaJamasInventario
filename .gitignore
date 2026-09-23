@@ -13,6 +13,7 @@ logs/
 dist
 dist-ssr
 *.local
+back/config/mail.local.php
 
 # Editor directories and files
 .vscode/*

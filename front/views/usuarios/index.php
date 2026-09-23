@@ -5,10 +5,17 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-people"></i> Gestión de Usuarios</h2>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoUsuario">
-            <i class="bi bi-plus-circle"></i> Nuevo Usuario
-        </button>
+        <h2><i class="bi bi-people"></i> Usuarios</h2>
+        <div>
+            <?php if (tienePermiso('roles_matriz:view')): ?>
+                <a class="btn btn-outline-secondary me-2" href="<?php echo BASE_URL; ?>index.php?action=roles">Roles</a>
+            <?php endif; ?>
+            <?php if (tienePermiso('usuarios_lista:create')): ?>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoUsuario">
+                <i class="bi bi-plus-circle"></i> Nuevo Usuario
+            </button>
+            <?php endif; ?>
+        </div>
     </div>
     
     <!-- Tabla de usuarios -->
@@ -39,11 +46,8 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <td><?php echo htmlspecialchars($usuario['nombre']); ?></td>
                                     <td><?php echo htmlspecialchars($usuario['email']); ?></td>
                                     <td>
-                                        <span class="badge <?php 
-                                            echo $usuario['rol'] == 'admin' ? 'bg-danger' : 
-                                                ($usuario['rol'] == 'cajero' ? 'bg-primary' : 'bg-info'); 
-                                        ?>">
-                                            <?php echo htmlspecialchars(ucfirst($usuario['rol'])); ?>
+                                        <span class="badge bg-secondary">
+                                            <?php echo htmlspecialchars($usuario['rol_nombre'] ?? $usuario['rol']); ?>
                                         </span>
                                     </td>
                                     <td>
@@ -53,17 +57,19 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     </td>
                                     <td><?php echo date('d/m/Y', strtotime($usuario['fecha_creacion'])); ?></td>
                                     <td>
+                                        <?php if (tienePermiso('usuarios_lista:edit')): ?>
                                         <button type="button" 
-                                                class="btn btn-sm btn-outline-primary btnEditarUsuario" 
+                                                class="btn btn-sm btn-outline-primary btn-icono btnEditarUsuario" 
                                                 data-id="<?php echo $usuario['id']; ?>"
                                                 title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <?php if ($usuario['id'] != $_SESSION['usuario_id']): ?>
-                                        <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=usuarios&method=delete" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este usuario?')">
+                                        <?php endif; ?>
+                                        <?php if (tienePermiso('usuarios_lista:delete') && $usuario['id'] != $_SESSION['usuario_id']): ?>
+                                        <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=usuarios&method=delete" class="d-inline form-doble-eliminar" data-titulo="Eliminar usuario" data-detalle="Se borra el usuario y no se puede recuperar." data-codigo="<?php echo htmlspecialchars($usuario['nombre']); ?>">
                                             <?php echo csrf_field(); ?>
                                             <input type="hidden" name="id" value="<?php echo (int) $usuario['id']; ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
@@ -81,15 +87,16 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 
 <!-- Modal Nuevo Usuario -->
 <div class="modal fade" id="modalNuevoUsuario" tabindex="-1" aria-labelledby="modalNuevoUsuarioLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalNuevoUsuarioLabel">
-                    <i class="bi bi-person-plus"></i> Nuevo Usuario
+                    <i class="bi bi-plus-circle"></i> Nuevo Usuario
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="formNuevoUsuario" method="POST" action="<?php echo BASE_URL; ?>index.php?action=usuarios&method=store">
+                <?php echo csrf_field(); ?>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="nombre" class="form-label">Nombre *</label>
@@ -106,11 +113,14 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <div class="mb-3">
                         <label for="rol" class="form-label">Rol *</label>
                         <select class="form-select" id="rol" name="rol" required>
-                            <option value="cajero">Cajero</option>
-                            <option value="operario">Operario</option>
-                            <option value="admin">Administrador</option>
+                            <?php foreach ($roles as $rolItem): ?>
+                                <option value="<?php echo htmlspecialchars($rolItem['key']); ?>" data-id="<?php echo (int) $rolItem['id']; ?>">
+                                    <?php echo htmlspecialchars($rolItem['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
+                    <?php $prefijo = 'nuevo'; require BASE_DIR . '/front/views/configuracion/overrides.php'; ?>
                     <div class="mb-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="activo" name="activo" checked>
@@ -131,15 +141,16 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 
 <!-- Modal Editar Usuario -->
 <div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-labelledby="modalEditarUsuarioLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalEditarUsuarioLabel">
-                    <i class="bi bi-pencil-square"></i> Editar Usuario
+                    <i class="bi bi-pencil"></i> Editar Usuario
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="formEditarUsuario" method="POST" action="<?php echo BASE_URL; ?>index.php?action=usuarios&method=update">
+                <?php echo csrf_field(); ?>
                 <input type="hidden" id="usuario_id" name="id">
                 <div class="modal-body">
                     <div class="mb-3">
@@ -158,11 +169,14 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <div class="mb-3">
                         <label for="rol_edit" class="form-label">Rol *</label>
                         <select class="form-select" id="rol_edit" name="rol" required>
-                            <option value="cajero">Cajero</option>
-                            <option value="operario">Operario</option>
-                            <option value="admin">Administrador</option>
+                            <?php foreach ($roles as $rolItem): ?>
+                                <option value="<?php echo htmlspecialchars($rolItem['key']); ?>" data-id="<?php echo (int) $rolItem['id']; ?>">
+                                    <?php echo htmlspecialchars($rolItem['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
+                    <?php $prefijo = 'edit'; require BASE_DIR . '/front/views/configuracion/overrides.php'; ?>
                     <div class="mb-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="activo_edit" name="activo">
@@ -184,9 +198,18 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 <!-- Pasar BASE_URL al JavaScript -->
 <script>
     window.BASE_URL = '<?php echo BASE_URL; ?>';
+    window.CATALOGO_ETIQUETAS = <?php
+        $etiquetas = [];
+        foreach (permisos_catalogo() as $grupo) {
+            foreach ($grupo['items'] as $item) {
+                $etiquetas[$item['slug']] = $grupo['title'] . ' · ' . $item['label'];
+            }
+        }
+        echo json_encode($etiquetas, JSON_UNESCAPED_UNICODE);
+    ?>;
 </script>
 <!-- JavaScript del módulo de usuarios -->
-<script src="<?php echo BASE_URL; ?>front/public/js/usuarios.js"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/usuarios.js?v=4"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>
 

@@ -20,16 +20,19 @@ class Gasto {
                   VALUES 
                   (:concepto, :monto, :categoria, :fecha, :descripcion, :usuario_id)";
         
-        $stmt = $this->conn->prepare($query);
-        
-        $stmt->bindParam(':concepto', $data['concepto']);
-        $stmt->bindParam(':monto', $data['monto']);
-        $stmt->bindParam(':categoria', $data['categoria']);
-        $stmt->bindParam(':fecha', $data['fecha']);
-        $stmt->bindParam(':descripcion', $data['descripcion']);
-        $stmt->bindParam(':usuario_id', $data['usuario_id']);
-        
-        return $stmt->execute();
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(':concepto', $data['concepto']);
+            $stmt->bindValue(':monto', $data['monto']);
+            $stmt->bindValue(':categoria', $data['categoria']);
+            $stmt->bindValue(':fecha', $data['fecha']);
+            $stmt->bindValue(':descripcion', $data['descripcion']);
+            $stmt->bindValue(':usuario_id', $data['usuario_id'], PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log('Error en Gasto::create(): ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**

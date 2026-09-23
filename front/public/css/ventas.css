@@ -37,8 +37,9 @@
 }
 
 .venta-tab.active {
-    background-color: #FFB6D9;
-    color: #000000;
+    background: var(--degradado-agua);
+    color: var(--tinta-agua);
+    box-shadow: 0 8px 18px rgba(151, 207, 207, 0.25);
 }
 
 /* Imagen de producto en punto de venta */
@@ -66,31 +67,31 @@
 
 .logo-fallback-icon {
     font-size: 50px;
-    color: #FF69B4;
+    color: var(--tinta-rosa);
 }
 
 .logo-fallback-text {
     font-family: 'Dancing Script', cursive;
     font-size: 32px;
     font-weight: 700;
-    color: #FF69B4;
+    color: var(--tinta-rosa);
 }
 
 .logo-fallback-subtitle {
     font-size: 14px;
-    color: #666;
+    color: #6d6562;
 }
 
 /* Rótulo específico */
 .logo-fallback-rotulo-icon {
     font-size: 50px;
-    color: white;
+    color: #3c3534;
 }
 
 /* Sección de remitente en rótulo */
 .section-title-remitente {
-    color: #FFB6C1;
-    border-color: #FFB6C1;
+    color: #6d6562;
+    border-color: #ece2e1;
 }
 
 /* Observaciones de domicilio en edición */

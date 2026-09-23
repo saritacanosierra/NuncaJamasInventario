@@ -6,9 +6,11 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-people"></i> Gestión de Clientes</h2>
+        <?php if (tienePermiso('clientes_lista:create')): ?>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
-            <i class="bi bi-person-plus"></i> Nuevo Cliente
+            <i class="bi bi-plus-circle"></i> Nuevo Cliente
         </button>
+        <?php endif; ?>
     </div>
     
     <!-- Buscador -->
@@ -59,22 +61,26 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <td><?php echo htmlspecialchars($cliente['telefono'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($cliente['email'] ?? 'N/A'); ?></td>
                                     <td><span class="badge bg-info"><?php echo $cliente['total_compras'] ?? 0; ?></span></td>
-                                    <td><strong>$<?php echo number_format($cliente['total_gastado'] ?? 0, 2); ?></strong></td>
+                                    <td><strong><?php echo pesos($cliente['total_gastado'] ?? 0); ?></strong></td>
                                     <td>
+                                        <?php if (tienePermiso('clientes_historial:view')): ?>
                                         <a href="<?php echo BASE_URL; ?>index.php?action=clientes&method=historial&id=<?php echo $cliente['id']; ?>" 
-                                           class="btn btn-sm btn-outline-info" title="Ver Historial">
+                                           class="btn btn-sm btn-outline-info btn-icono" title="Ver Historial">
                                             <i class="bi bi-clock-history"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        <?php endif; ?>
+                                        <?php if (tienePermiso('clientes_lista:edit')): ?>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-icono" 
                                                 title="Editar" 
                                                 onclick="editarCliente(<?php echo $cliente['id']; ?>)">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <?php if ($cliente['id'] != 1): ?>
-                                            <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=clientes&method=delete" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este cliente?')">
+                                        <?php endif; ?>
+                                        <?php if (tienePermiso('clientes_lista:delete') && $cliente['id'] != 1): ?>
+                                            <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=clientes&method=delete" class="d-inline form-doble-eliminar" data-titulo="Eliminar cliente" data-detalle="Se borra el cliente y no se puede recuperar." data-codigo="<?php echo htmlspecialchars(trim($cliente['cedula_nit'] ?? '') !== '' ? $cliente['cedula_nit'] : $cliente['nombre_completo']); ?>">
                                                 <?php echo csrf_field(); ?>
                                                 <input type="hidden" name="id" value="<?php echo (int) $cliente['id']; ?>">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
@@ -96,7 +102,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalNuevoClienteLabel">
-                    <i class="bi bi-person-plus"></i> Nuevo Cliente
+                    <i class="bi bi-plus-circle"></i> Nuevo Cliente
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -160,6 +166,6 @@ require_once BASE_DIR . '/front/views/layout/header.php';
     window.BASE_URL = '<?php echo BASE_URL; ?>';
 </script>
 <!-- JavaScript del módulo de clientes -->
-<script src="<?php echo BASE_URL; ?>front/public/js/clientes.js"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/clientes.js?v=3"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>

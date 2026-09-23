@@ -7,7 +7,7 @@
     max-height: 80px;
     object-fit: cover;
     cursor: pointer;
-    border: 1px solid #ddd;
+    border: 1px solid #ece2e1;
 }
 
 .icon-foto-tabla {
@@ -16,11 +16,18 @@
 
 .img-barcode-tabla {
     max-height: 60px;
+    cursor: pointer;
+}
+
+.img-codigo-modal {
+    max-width: 100%;
+    height: auto;
+    background: #fff;
 }
 
 /* Productos - categorías dentro de modal */
 .categorias-text-muted {
-    color: #333333;
+    color: #3c3534;
 }
 
 .categorias-text-strong {

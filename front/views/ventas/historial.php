@@ -11,7 +11,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                 <i class="bi bi-bar-chart"></i> Historial
             </button>
             <a href="<?php echo BASE_URL; ?>index.php?action=ventas" class="btn btn-primary">
-                <i class="bi bi-cart-plus"></i> Nueva Venta
+                <i class="bi bi-plus-circle"></i> Nueva Venta
             </a>
         </div>
     </div>
@@ -97,20 +97,33 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <td><?php echo date('d/m/Y H:i', strtotime($venta['fecha_venta'])); ?></td>
                                     <td><?php echo htmlspecialchars($venta['cliente_nombre']); ?></td>
                                     <td><?php echo htmlspecialchars($venta['vendedor']); ?></td>
-                                    <td>$<?php echo number_format(round($venta['subtotal']), 0, ',', '.'); ?></td>
-                                    <td>$<?php echo number_format(round($venta['descuento']), 0, ',', '.'); ?></td>
-                                    <td><strong>$<?php echo number_format(round($venta['total']), 0, ',', '.'); ?></strong></td>
+                                    <td><?php echo pesos($venta['subtotal']); ?></td>
+                                    <td><?php echo pesos($venta['descuento']); ?></td>
+                                    <td><strong><?php echo pesos($venta['total']); ?></strong></td>
                                     <td><span class="badge bg-info"><?php echo htmlspecialchars($venta['metodo_pago']); ?></span></td>
                                     <td>
+                                        <?php if (tienePermiso('ventas_factura:view')): ?>
                                         <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=factura&id=<?php echo $venta['id']; ?>" 
                                            class="btn btn-sm btn-outline-primary" title="Ver factura">
-                                            <i class="bi bi-receipt"></i> Ver
+                                            <i class="bi bi-eye"></i> Ver
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (tienePermiso('ventas_historial:edit')): ?>
                                         <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=edit&id=<?php echo $venta['id']; ?>" 
                                            class="btn btn-sm btn-outline-warning" title="Editar venta">
                                             <i class="bi bi-pencil"></i> Editar
                                         </a>
-                                        <?php if (!empty($venta['con_domicilio'])): ?>
+                                        <?php endif; ?>
+                                        <?php if (tienePermiso('ventas_historial:delete')): ?>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger btn-icono btnEliminarVenta"
+                                                data-id="<?php echo (int) $venta['id']; ?>"
+                                                data-codigo="<?php echo htmlspecialchars($venta['numero_factura']); ?>"
+                                                title="Eliminar venta">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        <?php endif; ?>
+                                        <?php if (!empty($venta['con_domicilio']) && tienePermiso('ventas_rotulo:view')): ?>
                                             <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=rotuloEnvio&id=<?php echo $venta['id']; ?>" 
                                                class="btn btn-sm btn-outline-info" title="Imprimir rótulo de envío" target="_blank">
                                                 <i class="bi bi-truck"></i> Rótulo
@@ -127,8 +140,62 @@ require_once BASE_DIR . '/front/views/layout/header.php';
     </div>
 </div>
 
+<div class="modal fade" id="modalEliminarVenta" tabindex="-1" aria-labelledby="modalEliminarVentaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=ventas&method=delete" id="formEliminarVenta">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="id" id="eliminar_venta_id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEliminarVentaLabel">Eliminar venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Esta acción devuelve el stock y borra la factura <strong id="eliminar_venta_codigo_texto"></strong>.</p>
+                    <p class="mb-2">Escribe el código de la venta para confirmar.</p>
+                    <label for="eliminar_venta_codigo" class="form-label">Código de la venta</label>
+                    <input type="text" class="form-control" name="codigo_venta" id="eliminar_venta_codigo" autocomplete="off" required>
+                    <p class="text-danger small mt-2 d-none" id="eliminar_venta_aviso">El código no coincide.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger" id="btnConfirmarEliminarVenta" disabled>Eliminar venta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 const BASE_URL = '<?php echo BASE_URL; ?>';
+let codigoVentaEsperado = '';
+
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btnEliminarVenta');
+    if (!btn) return;
+    codigoVentaEsperado = btn.getAttribute('data-codigo') || '';
+    document.getElementById('eliminar_venta_id').value = btn.getAttribute('data-id') || '';
+    document.getElementById('eliminar_venta_codigo_texto').textContent = codigoVentaEsperado;
+    const campo = document.getElementById('eliminar_venta_codigo');
+    campo.value = '';
+    document.getElementById('eliminar_venta_aviso').classList.add('d-none');
+    document.getElementById('btnConfirmarEliminarVenta').disabled = true;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEliminarVenta')).show();
+});
+
+document.getElementById('eliminar_venta_codigo').addEventListener('input', function() {
+    const coincide = this.value.trim().toLowerCase() === codigoVentaEsperado.trim().toLowerCase() && this.value.trim() !== '';
+    document.getElementById('btnConfirmarEliminarVenta').disabled = !coincide;
+    document.getElementById('eliminar_venta_aviso').classList.toggle('d-none', this.value.trim() === '' || coincide);
+});
+
+document.getElementById('formEliminarVenta').addEventListener('submit', function(e) {
+    const escrito = document.getElementById('eliminar_venta_codigo').value.trim().toLowerCase();
+    if (escrito === '' || escrito !== codigoVentaEsperado.trim().toLowerCase()) {
+        e.preventDefault();
+        document.getElementById('eliminar_venta_aviso').classList.remove('d-none');
+    }
+});
 
 // Búsqueda de cliente en historial
 let timeoutClienteHistorial;
@@ -335,9 +402,9 @@ function cargarHistorialVentas() {
                         htmlVentasMes += `
                             <tr>
                                 <td><strong>${escapeHtml(mesNombre)}</strong></td>
-                                <td class="text-end"><strong class="text-success">$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
-                                <td class="text-end">$${parseFloat(item.subtotal || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                                <td class="text-end text-danger">$${parseFloat(item.descuento || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="text-end"><strong class="text-success">$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
+                                <td class="text-end">$${parseFloat(item.subtotal || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
+                                <td class="text-end text-danger">$${parseFloat(item.descuento || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
                                 <td class="text-center"><span class="badge bg-primary">${item.cantidad || 0}</span></td>
                             </tr>
                         `;
@@ -354,9 +421,9 @@ function cargarHistorialVentas() {
                         htmlVentasAnio += `
                             <tr>
                                 <td><strong>${item.anio || ''}</strong></td>
-                                <td class="text-end"><strong class="text-success">$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
-                                <td class="text-end">$${parseFloat(item.subtotal || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                                <td class="text-end text-danger">$${parseFloat(item.descuento || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="text-end"><strong class="text-success">$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
+                                <td class="text-end">$${parseFloat(item.subtotal || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
+                                <td class="text-end text-danger">$${parseFloat(item.descuento || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
                                 <td class="text-center"><span class="badge bg-primary">${item.cantidad || 0}</span></td>
                             </tr>
                         `;

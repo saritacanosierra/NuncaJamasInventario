@@ -200,6 +200,9 @@ spl_autoload_register(function ($class) {
     }
 });
 
+require_once BASE_DIR . '/back/config/permisos_catalogo.php';
+require_once BASE_DIR . '/back/helpers/Permisos.php';
+
 /**
  * Redirige a una URL
  * 
@@ -209,6 +212,12 @@ spl_autoload_register(function ($class) {
 function redirect($url) {
     header("Location: " . BASE_URL . $url);
     exit();
+}
+
+function pesos($valor) {
+    $numero = round((float) $valor);
+    $signo = $numero < 0 ? '-' : '';
+    return $signo . '$' . number_format(abs($numero), 0, ',', '.');
 }
 
 /**
@@ -233,6 +242,28 @@ function csrf_valid() {
     $guardado = $_SESSION['csrf_token'] ?? '';
     $enviado = $_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
     return is_string($enviado) && $guardado !== '' && hash_equals($guardado, $enviado);
+}
+
+function exigir_csrf_json() {
+    if (csrf_valid()) {
+        return;
+    }
+    echo json_encode(['success' => false, 'error' => 'La solicitud no es válida. Recargue la página e intente de nuevo.']);
+    exit;
+}
+
+function exigir_csrf_redirect($destino) {
+    if (csrf_valid()) {
+        return;
+    }
+    $_SESSION['error'] = 'La solicitud no es válida. Recargue la página e intente de nuevo.';
+    redirect($destino);
+}
+
+function codigo_eliminacion_valido($esperado) {
+    $escrito = trim((string) ($_POST['codigo_confirmacion'] ?? ''));
+    $esperado = trim((string) $esperado);
+    return $escrito !== '' && $esperado !== '' && strcasecmp($escrito, $esperado) === 0;
 }
 
 function requireAuth() {
@@ -318,26 +349,10 @@ function isOperario() {
  * @return bool
  */
 function canAccess($action) {
-    // Si no hay sesión, no tiene acceso
     if (!isset($_SESSION['usuario_id'])) {
         return false;
     }
-    
-    $rol = $_SESSION['usuario_rol'] ?? '';
-    
-    // Administrador tiene acceso a todo
-    if ($rol === 'admin') {
-        return true;
-    }
-    
-    // Definir permisos por rol
-    $permisos = [
-        'cajero' => ['productos', 'ventas'],
-        'operario' => ['produccion'],
-        'admin' => ['dashboard', 'productos', 'ventas', 'clientes', 'gastos', 'agenda', 'produccion']
-    ];
-    
-    return isset($permisos[$rol]) && in_array($action, $permisos[$rol]);
+    return puedeVerModulo($action);
 }
 
 /**
@@ -349,34 +364,16 @@ function canAccess($action) {
  */
 function canPerform($action, $resource = null) {
     requireAuth();
-    $rol = $_SESSION['usuario_rol'] ?? '';
-    
-    // Administrador puede hacer todo
-    if ($rol === 'admin') {
-        return true;
+    if ($resource === 'producto') {
+        $mapa = [
+            'create' => 'productos_catalogo:create',
+            'store' => 'productos_catalogo:create',
+            'update' => 'productos_catalogo:edit',
+            'delete' => 'productos_catalogo:delete',
+            'crearCategoria' => 'productos_categorias:create',
+            'eliminarCategoria' => 'productos_categorias:delete',
+        ];
+        return isset($mapa[$action]) && tienePermiso($mapa[$action]);
     }
-    
-    // Restricciones para cajero
-    if ($rol === 'cajero') {
-        // Cajero NO puede crear/editar/eliminar productos ni categorías
-        if ($resource === 'producto' && in_array($action, ['create', 'store', 'update', 'delete', 'crearCategoria', 'eliminarCategoria'])) {
-            return false;
-        }
-    }
-    
-    // Restricciones para operario
-    if ($rol === 'operario') {
-        // Operario NO puede agregar operarias, ver dashboard de operaciones, ni finalizar día
-        if (in_array($action, ['guardarRegistro', 'dashboardOperaciones', 'finalizarDia'])) {
-            return false;
-        }
-        // Operario solo puede agregar operaciones para su nombre
-        if ($action === 'guardarOperacion' && $resource !== null) {
-            // Verificar que la operaria sea la misma que el nombre del usuario
-            $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
-            return $resource === $nombreUsuario;
-        }
-    }
-    
-    return true;
+    return false;
 }

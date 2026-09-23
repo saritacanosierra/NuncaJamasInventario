@@ -39,6 +39,15 @@ class VentaController {
             }
             redirect('index.php?action=ventas');
         }
+        if (!csrf_valid()) {
+            if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => 'La solicitud no es válida. Recargue la página e intente de nuevo.']);
+                exit;
+            }
+            $_SESSION['error'] = 'La solicitud no es válida. Recargue la página e intente de nuevo.';
+            redirect('index.php?action=ventas');
+        }
         
         $carrito = json_decode($_POST['carrito'] ?? '[]', true);
         $clienteId = intval($_POST['cliente_id'] ?? 1);
@@ -256,6 +265,7 @@ class VentaController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=ventas&method=historial');
         }
+        exigir_csrf_redirect('index.php?action=ventas&method=historial');
         
         $id = intval($_POST['venta_id'] ?? 0);
         $venta = $this->ventaModel->getById($id);
@@ -335,5 +345,39 @@ class VentaController {
             $_SESSION['error'] = 'Error al actualizar la venta: ' . ($resultado['error'] ?? 'Error desconocido');
             redirect('index.php?action=ventas&method=edit&id=' . $id);
         }
+    }
+
+    /**
+     * Eliminar venta solo si el código escrito coincide con la factura.
+     */
+    public function delete() {
+        requireAuth();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_valid()) {
+            $_SESSION['error'] = 'La solicitud no es válida. Recargue la página e intente de nuevo.';
+            redirect('index.php?action=ventas&method=historial');
+        }
+
+        $id = intval($_POST['id'] ?? 0);
+        $codigo = trim($_POST['codigo_venta'] ?? '');
+        $venta = $this->ventaModel->getById($id);
+
+        if (!$venta) {
+            $_SESSION['error'] = 'Venta no encontrada';
+            redirect('index.php?action=ventas&method=historial');
+        }
+
+        if ($codigo === '' || strcasecmp($codigo, $venta['numero_factura']) !== 0) {
+            $_SESSION['error'] = 'El código no coincide con la venta. No se eliminó.';
+            redirect('index.php?action=ventas&method=historial');
+        }
+
+        if ($this->ventaModel->eliminar($id)) {
+            $_SESSION['success'] = 'Venta ' . $venta['numero_factura'] . ' eliminada. El stock volvió al inventario.';
+        } else {
+            $_SESSION['error'] = 'No se pudo eliminar la venta';
+        }
+
+        redirect('index.php?action=ventas&method=historial');
     }
 }

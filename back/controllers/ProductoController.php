@@ -82,6 +82,7 @@ class ProductoController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=productos');
         }
+        exigir_csrf_redirect('index.php?action=productos');
         
         // Validar y sanitizar datos
         $data = [
@@ -200,7 +201,8 @@ class ProductoController {
             echo json_encode([
                 'success' => true, 
                 'producto' => $producto,
-                'categorias' => $categorias
+                'categorias' => $categorias,
+                'codigo_svg' => BarcodeGenerator::svg($producto['codigo_barras'] ?? '')
             ]);
         } catch (Exception $e) {
             ob_clean();
@@ -221,6 +223,7 @@ class ProductoController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=productos');
         }
+        exigir_csrf_redirect('index.php?action=productos');
         
         $id = intval($_POST['id'] ?? 0);
         $producto = $this->productoModel->getById($id);
@@ -281,6 +284,12 @@ class ProductoController {
         
         if (!$producto) {
             $_SESSION['error'] = 'Producto no encontrado';
+            redirect('index.php?action=productos');
+        }
+
+        $esperado = trim($producto['codigo_barras'] ?? '') !== '' ? $producto['codigo_barras'] : ($producto['nombre'] ?? '');
+        if (!codigo_eliminacion_valido($esperado)) {
+            $_SESSION['error'] = 'La confirmación no coincide. No se eliminó.';
             redirect('index.php?action=productos');
         }
         
@@ -415,6 +424,7 @@ class ProductoController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $nombre = trim($_POST['nombre'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
@@ -541,6 +551,7 @@ class ProductoController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         // Obtener el ID y validar
         $idRaw = $_POST['id'] ?? null;
@@ -572,6 +583,10 @@ class ProductoController {
                 'success' => false, 
                 'error' => 'La categoría no existe'
             ]);
+            exit;
+        }
+        if (!codigo_eliminacion_valido($categoria['nombre'] ?? '')) {
+            echo json_encode(['success' => false, 'error' => 'La confirmación no coincide. No se eliminó.']);
             exit;
         }
         

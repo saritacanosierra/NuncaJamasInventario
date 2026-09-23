@@ -398,4 +398,39 @@ class Venta {
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    /**
+     * Elimina la venta, sus líneas y devuelve el stock.
+     */
+    public function eliminar($id) {
+        $this->conn->beginTransaction();
+
+        try {
+            $venta = $this->getById($id);
+            if (!$venta) {
+                $this->conn->rollBack();
+                return false;
+            }
+
+            $productoModel = new Producto($this->conn);
+            foreach ($venta['detalles'] as $detalle) {
+                $productoModel->aumentarStock($detalle['producto_id'], $detalle['cantidad']);
+            }
+
+            $stmtDetalle = $this->conn->prepare('DELETE FROM detalle_venta WHERE venta_id = :id');
+            $stmtDetalle->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmtDetalle->execute();
+
+            $stmt = $this->conn->prepare('DELETE FROM ' . $this->table . ' WHERE id = :id');
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            error_log('Error al eliminar venta: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

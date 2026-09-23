@@ -31,9 +31,11 @@ foreach ($tareasMes as $tarea) {
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-calendar-check"></i> Agenda y Tareas</h2>
+        <?php if (tienePermiso('agenda_tareas:create')): ?>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaTarea">
             <i class="bi bi-plus-circle"></i> Nueva Tarea
         </button>
+        <?php endif; ?>
     </div>
     
     <!-- Estadísticas rápidas -->
@@ -79,12 +81,12 @@ foreach ($tareasMes as $tarea) {
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
                         <a href="<?php echo BASE_URL; ?>index.php?action=agenda&mes=<?php echo date('Y-m', strtotime("$year-$month-01 -1 month")); ?>" 
-                           class="btn btn-sm btn-outline-secondary">
+                           class="btn btn-sm btn-outline-secondary btn-icono">
                             <i class="bi bi-chevron-left"></i>
                         </a>
                         <span class="mx-3"><strong><?php echo $meses[$month - 1] . ' ' . $year; ?></strong></span>
                         <a href="<?php echo BASE_URL; ?>index.php?action=agenda&mes=<?php echo date('Y-m', strtotime("$year-$month-01 +1 month")); ?>" 
-                           class="btn btn-sm btn-outline-secondary">
+                           class="btn btn-sm btn-outline-secondary btn-icono">
                             <i class="bi bi-chevron-right"></i>
                         </a>
                     </div>
@@ -166,6 +168,7 @@ foreach ($tareasMes as $tarea) {
                                                 <div class="d-flex align-items-center gap-2 mb-1">
                                                     <input type="checkbox" class="form-check-input tarea-checkbox" 
                                                            <?php echo $tarea['estado'] == 'completada' ? 'checked' : ''; ?>
+                                                           <?php echo tienePermiso('agenda_tareas:decide') ? '' : 'disabled'; ?>
                                                            onchange="toggleTarea(<?php echo $tarea['id']; ?>, this.checked)">
                                                     <h6 class="mb-0 tarea-titulo"><?php echo htmlspecialchars($tarea['titulo']); ?></h6>
                                                 </div>
@@ -188,14 +191,20 @@ foreach ($tareasMes as $tarea) {
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
+                                            <?php if (tienePermiso('agenda_tareas:edit') || tienePermiso('agenda_tareas:delete')): ?>
                                             <div class="btn-group-vertical btn-group-sm">
-                                                <button class="btn btn-outline-primary" onclick="editarTarea(<?php echo $tarea['id']; ?>)" title="Editar">
+                                                <?php if (tienePermiso('agenda_tareas:edit')): ?>
+                                                <button class="btn btn-outline-primary btn-icono" onclick="editarTarea(<?php echo $tarea['id']; ?>)" title="Editar">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
-                                                <button class="btn btn-outline-danger" onclick="eliminarTarea(<?php echo $tarea['id']; ?>)" title="Eliminar">
+                                                <?php endif; ?>
+                                                <?php if (tienePermiso('agenda_tareas:delete')): ?>
+                                                <button type="button" class="btn btn-outline-danger btn-icono" data-codigo="<?php echo htmlspecialchars($tarea['titulo']); ?>" onclick="eliminarTarea(<?php echo $tarea['id']; ?>, this)" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
+                                                <?php endif; ?>
                                             </div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -273,7 +282,7 @@ foreach ($tareasMes as $tarea) {
     window.FECHA_SELECCIONADA = '<?php echo $fechaSeleccionada; ?>';
 </script>
 <!-- JavaScript del módulo de agenda -->
-<script src="<?php echo BASE_URL; ?>front/public/js/agenda.js"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/agenda.js?v=2"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>
 

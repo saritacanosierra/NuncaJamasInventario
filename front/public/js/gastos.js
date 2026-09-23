@@ -386,7 +386,7 @@ function inicializarGastos() {
             const fechaInput = document.getElementById('inversion_fecha');
             if (fechaInput) fechaInput.value = '';
             esEdicionInversion = false;
-            if (modalInversionTitle) modalInversionTitle.innerHTML = '<i class="bi bi-graph-up"></i> Nueva Inversión';
+            if (modalInversionTitle) modalInversionTitle.innerHTML = '<i class="bi bi-plus-circle"></i> Nueva Inversión';
             if (btnGuardarInversionTexto) btnGuardarInversionTexto.textContent = 'Guardar Inversión';
             if (btnGuardarInversion) {
                 btnGuardarInversion.disabled = false;
@@ -447,7 +447,7 @@ function inicializarGastos() {
                             htmlGastosMes += `
                                 <tr>
                                     <td>${escapeHtml(mesNombre)}</td>
-                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
+                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
                                     <td class="text-center"><span class="badge bg-secondary">${item.cantidad || 0}</span></td>
                                 </tr>
                             `;
@@ -466,7 +466,7 @@ function inicializarGastos() {
                             htmlInversionesMes += `
                                 <tr>
                                     <td>${escapeHtml(mesNombre)}</td>
-                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
+                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
                                     <td class="text-center"><span class="badge bg-secondary">${item.cantidad || 0}</span></td>
                                 </tr>
                             `;
@@ -484,7 +484,7 @@ function inicializarGastos() {
                             htmlGastosAnio += `
                                 <tr>
                                     <td><strong>${item.anio || ''}</strong></td>
-                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
+                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
                                     <td class="text-center"><span class="badge bg-secondary">${item.cantidad || 0}</span></td>
                                 </tr>
                             `;
@@ -502,7 +502,7 @@ function inicializarGastos() {
                             htmlInversionesAnio += `
                                 <tr>
                                     <td><strong>${item.anio || ''}</strong></td>
-                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
+                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
                                     <td class="text-center"><span class="badge bg-secondary">${item.cantidad || 0}</span></td>
                                 </tr>
                             `;
@@ -558,12 +558,12 @@ function inicializarGastos() {
                                     <td><strong>${escapeHtml(cat.nombre || '')}</strong></td>
                                     <td>${escapeHtml(cat.descripcion || '')}</td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-icono" 
                                                 onclick="editarCategoriaGasto(${cat.id})" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                onclick="eliminarCategoriaGasto(${cat.id})" title="Eliminar">
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-icono" 
+                                                data-id="${cat.id}" data-codigo="${escapeHtml(cat.nombre || '')}" onclick="eliminarCategoriaGasto(this)" title="Eliminar">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </td>
@@ -648,13 +648,20 @@ function inicializarGastos() {
             });
     };
     
-    window.eliminarCategoriaGasto = function(id) {
-        if (!confirm('¿Está seguro de eliminar esta categoría?')) {
+    window.eliminarCategoriaGasto = function(boton) {
+        const id = boton && boton.getAttribute ? boton.getAttribute('data-id') : boton;
+        const codigo = boton && boton.getAttribute ? (boton.getAttribute('data-codigo') || '') : '';
+        if (!id || !codigo || typeof pedirDobleConfirmacion !== 'function') {
             return;
         }
-        
+        pedirDobleConfirmacion({
+            titulo: 'Eliminar categoría',
+            detalle: 'Se borra la categoría y no se puede recuperar.',
+            codigo: codigo,
+            alConfirmar: function (escrito) {
         const formData = new FormData();
         formData.append('id', id);
+        formData.append('codigo_confirmacion', escrito);
         
         fetch((BASE_URL_GASTOS || window.BASE_URL || '') + 'index.php?action=gastos&method=eliminarCategoria', {
             method: 'POST',
@@ -672,6 +679,8 @@ function inicializarGastos() {
         .catch(error => {
             console.error('Error:', error);
             alert('Error al eliminar la categoría');
+        });
+            }
         });
     };
     

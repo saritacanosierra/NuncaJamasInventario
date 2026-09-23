@@ -29,7 +29,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                         <div class="input-group">
                             <input type="text" class="form-control" id="codigo_barras_input" 
                                    placeholder="Escanear o ingresar código">
-                            <button class="btn btn-primary" id="btn_buscar_codigo">
+                            <button class="btn btn-primary btn-icono" id="btn_buscar_codigo">
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
@@ -62,7 +62,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                        min="1" value="1">
                             </div>
                             <button class="btn btn-success w-100 mt-2" id="btn_agregar_carrito">
-                                <i class="bi bi-cart-plus"></i> Agregar al Carrito
+                                <i class="bi bi-plus-circle"></i> Agregar al Carrito
                             </button>
                         </div>
                     </div>
@@ -106,18 +106,22 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                 </div>
                 <div class="card-body">
                     <input type="hidden" id="cliente_id" value="1">
+                    <div id="cliente_seleccionado" class="mb-3">
+                        <p class="mb-0"><strong>Cliente:</strong> Cliente General</p>
+                    </div>
+                    <?php if (tieneAlgunPermiso(permisos_lista('buscar_cliente'))): ?>
                     <div class="mb-3">
                         <label for="buscar_cliente" class="form-label">Buscar Cliente</label>
                         <input type="text" class="form-control" id="buscar_cliente" 
                                placeholder="Nombre o cédula/NIT">
                         <div id="resultados_cliente" class="mt-2"></div>
                     </div>
-                    <div id="cliente_seleccionado" class="mb-3">
-                        <p class="mb-0"><strong>Cliente:</strong> Cliente General</p>
-                    </div>
+                    <?php endif; ?>
+                    <?php if (tieneAlgunPermiso(permisos_lista('crear_cliente'))): ?>
                     <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoClienteRapido">
-                        <i class="bi bi-person-plus"></i> Nuevo cliente rápido
+                        <i class="bi bi-plus-circle"></i> Nuevo cliente rápido
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
             
@@ -184,12 +188,16 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                 <p class="mb-2"><strong>Descuento:</strong> <span id="descuento_aplicado">$0</span></p>
                                 <hr>
                                 <h4 class="mb-3"><strong>Total:</strong> <span id="total_carrito">$0</span></h4>
+                                <?php if (tienePermiso('ventas_punto:create')): ?>
                                 <button class="btn btn-success btn-lg w-100 mb-2" id="btn_procesar_venta" disabled>
                                     <i class="bi bi-check-circle"></i> Procesar Venta
                                 </button>
+                                <?php endif; ?>
+                                <?php if (tienePermiso('ventas_historial:view')): ?>
                                 <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=historial" class="btn btn-outline-secondary w-100">
                                     <i class="bi bi-clock-history"></i> Ver Historial
                                 </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -254,7 +262,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
     window.BASE_URL = '<?php echo BASE_URL; ?>';
 </script>
 <!-- JavaScript del módulo de ventas -->
-<script src="<?php echo BASE_URL; ?>front/public/js/ventas.js"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/ventas.js?v=2"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>
 

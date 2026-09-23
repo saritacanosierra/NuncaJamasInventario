@@ -1,0 +1,16 @@
+---
+description: Botones, modales y piezas repetidas son componentes reutilizables
+alwaysApply: true
+---
+
+# Componentes reutilizables
+
+Un botón, un modal o cualquier bloque que se repite en más de una pantalla es un componente. No se copia el marcado en cada vista.
+
+- El marcado compartido vive en `front/views/components/`. El modal genérico ya es `modal.php`: se preparan `$modalId`, `$title`, `$body`, `$footer`, `$size` y `$scrollable`, y se incluye. Un modal nuevo usa ese archivo. No abras otro `modal fade` a mano.
+- Un botón que se repite (guardar, cancelar, icono de editar, icono de borrar, abrir modal) usa las clases de `front/public/css/style.css` (`btn`, `btn-icono`, `cristal-*`, `tono-*`). No le inventes un estilo local en el CSS del módulo.
+- Un control que solo muestra un icono es siempre un círculo: clase `btn-icono` o `border-radius: 50%`. No uses esquinas de 8px ni de 14px en iconos. El botón que además lleva texto sigue en pastilla (`border-radius: 999px`).
+- El comportamiento compartido (aviso, confirmación, borrado con doble validación) vive en `front/public/js/main.js`. La vista del módulo solo lo llama.
+- Antes de crear el bloque, busca si ya existe en `views/components/`, en `style.css` o en `main.js`. Si existe, úsalo. Si no existe y hace falta en dos pantallas, créalo ahí y haz que ambas lo usen.
+- El componente nuevo va en un archivo nuevo dentro de `views/components/`. No reemplaces la vista entera para extraerlo: saca solo el bloque repetido y deja el resto igual.
+- El componente no lleva SQL ni permisos. Recibe datos ya preparados y pinta.

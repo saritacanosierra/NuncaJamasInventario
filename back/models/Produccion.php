@@ -88,15 +88,25 @@ class Produccion {
     /**
      * Obtener registro por operaria específica
      */
-    public function getRegistroPorOperaria($fecha, $operariaNombre, $usuarioId) {
+    public function getRegistroPorOperaria($fecha, $operariaNombre, $usuarioId, $cualquierUsuario = false) {
         try {
-            $query = "SELECT * FROM " . $this->tableRegistros . " 
-                      WHERE fecha = :fecha AND operaria_nombre = :operaria_nombre AND usuario_id = :usuario_id 
-                      ORDER BY fecha_creacion DESC LIMIT 1";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':fecha', $fecha);
-            $stmt->bindParam(':operaria_nombre', $operariaNombre);
-            $stmt->bindParam(':usuario_id', $usuarioId);
+            if ($cualquierUsuario) {
+                $query = "SELECT r.* FROM " . $this->tableRegistros . " r
+                          WHERE r.fecha = :fecha AND LOWER(r.operaria_nombre) = LOWER(:operaria_nombre)
+                          ORDER BY (SELECT COUNT(*) FROM " . $this->tableOperaciones . " o WHERE o.registro_id = r.id) DESC, r.id ASC
+                          LIMIT 1";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':fecha', $fecha);
+                $stmt->bindParam(':operaria_nombre', $operariaNombre);
+            } else {
+                $query = "SELECT * FROM " . $this->tableRegistros . " 
+                          WHERE fecha = :fecha AND operaria_nombre = :operaria_nombre AND usuario_id = :usuario_id 
+                          ORDER BY fecha_creacion DESC LIMIT 1";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':fecha', $fecha);
+                $stmt->bindParam(':operaria_nombre', $operariaNombre);
+                $stmt->bindParam(':usuario_id', $usuarioId);
+            }
             $stmt->execute();
             return $stmt->fetch();
         } catch (PDOException $e) {
@@ -135,25 +145,33 @@ class Produccion {
                 $stmt->bindParam(':usuario_id', $usuarioId);
                 $stmt->bindParam(':usuario_id2', $usuarioId);
             } else {
-                // Obtener el registro más reciente de cada operaria para la fecha especificada (todos los usuarios)
-                $query = "SELECT r1.* 
-                          FROM " . $this->tableRegistros . " r1
-                          INNER JOIN (
-                              SELECT operaria_nombre, usuario_id, MAX(fecha_creacion) as max_fecha
-                              FROM " . $this->tableRegistros . "
-                              WHERE fecha = :fecha
-                              GROUP BY operaria_nombre, usuario_id
-                          ) r2 ON r1.operaria_nombre = r2.operaria_nombre 
-                              AND r1.usuario_id = r2.usuario_id
-                              AND r1.fecha_creacion = r2.max_fecha
-                              AND r1.fecha = :fecha2
-                          ORDER BY r1.operaria_nombre ASC";
+                $query = "SELECT r.*,
+                                 (SELECT COUNT(*) FROM " . $this->tableOperaciones . " o WHERE o.registro_id = r.id) AS n_ops
+                          FROM " . $this->tableRegistros . " r
+                          WHERE r.fecha = :fecha
+                          ORDER BY n_ops DESC, r.id ASC";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':fecha', $fecha);
-                $stmt->bindParam(':fecha2', $fecha);
             }
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!$soloPropios) {
+                $vistos = [];
+                $unicos = [];
+                foreach ($result as $fila) {
+                    $clave = strtolower($fila['operaria_nombre']);
+                    if (isset($vistos[$clave])) {
+                        continue;
+                    }
+                    $vistos[$clave] = true;
+                    unset($fila['n_ops']);
+                    $unicos[] = $fila;
+                }
+                usort($unicos, function ($a, $b) {
+                    return strcasecmp($a['operaria_nombre'], $b['operaria_nombre']);
+                });
+                $result = $unicos;
+            }
             error_log('getOperariasDelDia - Fecha: ' . $fecha . ', Usuario: ' . $usuarioId . ', SoloPropios: ' . ($soloPropios ? 'true' : 'false') . ', Resultados: ' . count($result));
             return $result;
         } catch (PDOException $e) {
@@ -713,7 +731,7 @@ class Produccion {
             $existente = $stmt->fetch(PDO::FETCH_ASSOC);
             
             // Obtener solo los totales de operarias y operaciones (para referencia)
-            $resumen = $this->getResumenDia($fecha, $usuarioId);
+            $resumen = $this->getResumenDia($fecha, $usuarioId, false);
             
             if ($existente) {
                 // Actualizar cierre existente
@@ -870,11 +888,30 @@ class Produccion {
             return false;
         }
     }
+
+    /**
+     * Vuelve a abrir un día ya cerrado para toda la empresa.
+     */
+    public function reabrirDia($fecha) {
+        try {
+            $this->crearTablaCierresDia();
+            $query = "UPDATE cierres_dia_produccion
+                      SET finalizado = 0, fecha_actualizacion = NOW()
+                      WHERE fecha = :fecha AND finalizado = 1";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':fecha', $fecha);
+            $stmt->execute();
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log('Error en Produccion::reabrirDia(): ' . $e->getMessage());
+            return false;
+        }
+    }
     
     /**
      * Obtener resumen general del período
      */
-    public function getResumenGeneral($fechaInicio, $fechaFin, $usuarioId) {
+    public function getResumenGeneral($fechaInicio, $fechaFin, $usuarioId, $verTodas = false) {
         try {
             $query = "SELECT 
                         COUNT(DISTINCT r.id) as total_registros,
@@ -886,13 +923,17 @@ class Produccion {
                       FROM registros_produccion r
                       LEFT JOIN operaciones_produccion o ON o.registro_id = r.id
                       WHERE r.fecha >= :fecha_inicio 
-                        AND r.fecha <= :fecha_fin
-                        AND r.usuario_id = :usuario_id";
+                        AND r.fecha <= :fecha_fin";
+            if (!$verTodas) {
+                $query .= " AND r.usuario_id = :usuario_id";
+            }
             
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':fecha_inicio', $fechaInicio);
             $stmt->bindParam(':fecha_fin', $fechaFin);
-            $stmt->bindParam(':usuario_id', $usuarioId);
+            if (!$verTodas) {
+                $stmt->bindParam(':usuario_id', $usuarioId);
+            }
             $stmt->execute();
             
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -920,30 +961,34 @@ class Produccion {
     /**
      * Obtener rendimiento de operarias
      */
-    public function getRendimientoOperarias($fechaInicio, $fechaFin, $usuarioId) {
+    public function getRendimientoOperarias($fechaInicio, $fechaFin, $usuarioId, $verTodas = false) {
         try {
             $query = "SELECT 
                         r.operaria_nombre,
-                        COUNT(DISTINCT r.id) as dias_trabajados,
+                        COUNT(DISTINCT r.fecha) as dias_trabajados,
                         COUNT(DISTINCT o.id) as total_operaciones,
                         SUM(o.piezas_producidas) as total_piezas,
                         SUM(o.tiempo_total_minutos) as tiempo_total_minutos,
                         AVG(o.eficiencia) as eficiencia_promedio,
                         SUM(CASE WHEN o.eficiencia >= 100 THEN 1 ELSE 0 END) as operaciones_meta_cumplida,
-                        r.meta_dia,
-                        (SUM(o.piezas_producidas) / NULLIF(COUNT(DISTINCT r.id), 0)) as promedio_piezas_dia
+                        MAX(r.meta_dia) as meta_dia,
+                        (SUM(o.piezas_producidas) / NULLIF(COUNT(DISTINCT r.fecha), 0)) as promedio_piezas_dia
                       FROM registros_produccion r
                       LEFT JOIN operaciones_produccion o ON o.registro_id = r.id
                       WHERE r.fecha >= :fecha_inicio 
-                        AND r.fecha <= :fecha_fin
-                        AND r.usuario_id = :usuario_id
-                      GROUP BY r.operaria_nombre, r.meta_dia
+                        AND r.fecha <= :fecha_fin";
+            if (!$verTodas) {
+                $query .= " AND r.usuario_id = :usuario_id";
+            }
+            $query .= " GROUP BY r.operaria_nombre
                       ORDER BY total_piezas DESC";
             
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':fecha_inicio', $fechaInicio);
             $stmt->bindParam(':fecha_fin', $fechaFin);
-            $stmt->bindParam(':usuario_id', $usuarioId);
+            if (!$verTodas) {
+                $stmt->bindParam(':usuario_id', $usuarioId);
+            }
             $stmt->execute();
             
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -956,7 +1001,7 @@ class Produccion {
     /**
      * Obtener bitácora de días
      */
-    public function getBitacoraDias($fechaInicio, $fechaFin, $usuarioId) {
+    public function getBitacoraDias($fechaInicio, $fechaFin, $usuarioId, $verTodas = false) {
         try {
             $query = "SELECT 
                         fecha,
@@ -966,17 +1011,22 @@ class Produccion {
                         total_operarias,
                         total_operaciones,
                         observaciones,
+                        finalizado,
                         fecha_creacion
                       FROM cierres_dia_produccion
                       WHERE fecha >= :fecha_inicio 
-                        AND fecha <= :fecha_fin
-                        AND usuario_id = :usuario_id
-                      ORDER BY fecha DESC";
+                        AND fecha <= :fecha_fin";
+            if (!$verTodas) {
+                $query .= " AND usuario_id = :usuario_id";
+            }
+            $query .= " ORDER BY fecha DESC";
             
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':fecha_inicio', $fechaInicio);
             $stmt->bindParam(':fecha_fin', $fechaFin);
-            $stmt->bindParam(':usuario_id', $usuarioId);
+            if (!$verTodas) {
+                $stmt->bindParam(':usuario_id', $usuarioId);
+            }
             $stmt->execute();
             
             return $stmt->fetchAll(PDO::FETCH_ASSOC);

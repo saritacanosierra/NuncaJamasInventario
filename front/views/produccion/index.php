@@ -6,23 +6,52 @@ $fechaActual = date('Y-m-d');
 $fecha = $_GET['fecha'] ?? $fechaActual;
 ?>
 
-<div class="main-container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2><i class="bi bi-gear-wide-connected"></i> Registro Diario de Producción</h2>
-        <div class="d-flex gap-2 align-items-center">
+<div class="main-container<?php echo !ve_produccion_ajena() ? ' produccion-operario' : ''; ?>">
+    <?php if (!ve_produccion_ajena()): ?>
+    <div id="pisoOperario" class="piso-operario" aria-live="polite"></div>
+    <?php endif; ?>
+    <div class="produccion-admin-bar mb-3">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-gear-wide-connected"></i> Día de producción</h2>
+            <p class="prod-ayuda">Para sumar a alguien: <strong>Nueva operaria</strong> y luego <strong>Guardar en el día</strong>. Cada trabajo se anota con <strong>Nueva operación</strong>. <strong>Cerrar día de la empresa</strong> bloquea a todas y solo se hace una vez.</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
             <input type="date" id="fechaSeleccionada" class="form-control" value="<?php echo $fecha; ?>" 
                    onchange="cambiarFecha(this.value)" style="width: auto;">
-            <?php if (!isOperario()): ?>
+            <?php if (tienePermiso('produccion_jornada:create') || tienePermiso('produccion_dashboard:view') || tienePermiso('produccion_cierre:decide')): ?>
+            <?php if (tienePermiso('produccion_jornada:create')): ?>
             <button class="btn btn-primary" id="btnNuevaOperaria">
-                <i class="bi bi-plus-circle"></i> Nueva Operaria
-            </button>
-            <button class="btn btn-info" onclick="window.location.href='<?php echo BASE_URL; ?>index.php?action=produccion&method=dashboardOperaciones'">
-                <i class="bi bi-speedometer2"></i> Dashboard Operaciones
-            </button>
-            <button class="btn btn-success" id="btnFinalizarDia" onclick="abrirModalFinalizarDia()">
-                <i class="bi bi-check-circle"></i> Finalizar Día
+                <i class="bi bi-plus-circle"></i> Nueva operaria
             </button>
             <?php endif; ?>
+            <?php if (tienePermiso('produccion_dashboard:view')): ?>
+            <button class="btn btn-info" onclick="window.location.href='<?php echo BASE_URL; ?>index.php?action=produccion&method=dashboardOperaciones'">
+                <i class="bi bi-speedometer2"></i> Ver rendimiento
+            </button>
+            <?php endif; ?>
+            <?php if (tienePermiso('produccion_cierre:decide')): ?>
+            <button class="btn btn-outline-danger" id="btnFinalizarDia" onclick="abrirModalFinalizarDia()" <?php echo !empty($diaFinalizado) ? 'hidden' : ''; ?> title="Cierra el día de toda la empresa. No agrega operarias.">
+                <i class="bi bi-lock"></i> Cerrar día de la empresa
+            </button>
+            <button class="btn btn-outline-primary" id="btnReabrirDia" onclick="reabrirDiaEmpresa()" <?php echo !empty($diaFinalizado) ? '' : 'hidden'; ?> title="Vuelve a permitir el registro de este día.">
+                <i class="bi bi-unlock"></i> Abrir el día
+            </button>
+            <?php endif; ?>
+            <?php endif; ?>
+        </div>
+        </div>
+        <div id="estadoDia" class="estado-dia <?php echo !empty($diaFinalizado) ? 'estado-cerrado' : 'estado-abierto'; ?>" role="status">
+            <i class="bi <?php echo !empty($diaFinalizado) ? 'bi-lock' : 'bi-unlock'; ?>"></i>
+            <div>
+                <?php if (!empty($diaFinalizado)): ?>
+                <strong>Día cerrado</strong>
+                <span>Nadie puede registrar trabajo. Solo un administrador puede abrirlo de nuevo.</span>
+                <?php else: ?>
+                <strong>Día abierto</strong>
+                <span>Las operarias pueden registrar su trabajo. Cerrar el día bloquea a toda la empresa y solo se hace una vez.</span>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
     
@@ -209,7 +238,7 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="modalSeleccionarOperariaLabel">
-                    <i class="bi bi-person-plus"></i> Seleccionar Operaria
+                    <i class="bi bi-people"></i> Seleccionar Operaria
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -224,7 +253,7 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
                 <div id="listaOperarias" class="list-group" style="max-height: 300px; overflow-y: auto;">
                     <!-- Las operarias se cargarán aquí -->
                 </div>
-                <?php if (!isOperario()): ?>
+                <?php if (tienePermiso('produccion_jornada:create')): ?>
                 <div class="mt-3">
                     <button type="button" class="btn btn-success w-100" id="btnCrearNuevaOperaria">
                         <i class="bi bi-plus-circle"></i> Crear Nueva Operaria
@@ -266,13 +295,14 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
 <div class="modal fade" id="modalFinalizarDia" tabindex="-1" aria-labelledby="modalFinalizarDiaLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-success text-white">
+            <div class="modal-header">
                 <h5 class="modal-title" id="modalFinalizarDiaLabel">
-                    <i class="bi bi-check-circle"></i> Finalizar Día - Resumen de Producción
+                    <i class="bi bi-lock"></i> Cerrar el día de la empresa
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
+                <div class="alert alert-warning">Esto cierra el día de <strong>toda la empresa</strong> y solo se puede hacer una vez. No ingresa a una operaria. Para sumarla al día, usa <strong>Nueva operaria</strong> y luego <strong>Guardar en el día</strong>. Si te equivocas, un administrador puede abrir el día de nuevo.</div>
                 <form id="formFinalizarDia">
                     <input type="hidden" id="fecha_cierre" name="fecha" value="<?php echo $fecha; ?>">
                     
@@ -280,7 +310,7 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label for="prendas_terminadas" class="form-label">
-                                <i class="bi bi-check-circle-fill text-success"></i> Prendas Terminadas *
+                                <i class="bi bi-check-circle text-success"></i> Prendas Terminadas *
                             </label>
                             <input type="number" class="form-control" id="prendas_terminadas" name="prendas_terminadas" 
                                    min="0" value="0" required>
@@ -347,8 +377,8 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-success" id="btnGuardarCierreDia" onclick="guardarCierreDia()">
-                    <i class="bi bi-save"></i> Guardar y Finalizar Día
+                <button type="button" class="btn btn-danger" id="btnGuardarCierreDia" onclick="guardarCierreDia()">
+                    <i class="bi bi-lock"></i> Cerrar el día
                 </button>
             </div>
         </div>
@@ -360,18 +390,25 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
     window.BASE_URL = '<?php echo BASE_URL; ?>';
     window.FECHA_ACTUAL = '<?php echo $fecha; ?>';
     window.DIA_FINALIZADO = <?php echo isset($diaFinalizado) && $diaFinalizado ? 'true' : 'false'; ?>;
-    window.USUARIO_ROL = '<?php echo htmlspecialchars($_SESSION['usuario_rol'] ?? ''); ?>';
+    window.PRODUCCION_SOLO_PROPIOS = <?php echo ve_produccion_ajena() ? 'false' : 'true'; ?>;
     window.USUARIO_NOMBRE = '<?php echo htmlspecialchars(trim($_SESSION['usuario_nombre'] ?? '')); ?>';
     
-    // Validar que el operario tenga nombre configurado
-    <?php if (isOperario()): ?>
-    if (!window.USUARIO_NOMBRE || window.USUARIO_NOMBRE.trim() === '') {
-        console.error('Error: El nombre del usuario operario no está configurado');
-        alert('Error: El nombre del usuario operario no está configurado. Por favor, contacte al administrador.');
-    }
+    <?php if (!ve_produccion_ajena()): ?>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.USUARIO_NOMBRE || window.USUARIO_NOMBRE.trim() === '') {
+            console.error('Error: El nombre del usuario operario no está configurado');
+            mostrarAviso({
+                titulo: 'Falta el nombre',
+                mensaje: 'El nombre de la operaria no está configurado. Pide a la administradora que lo complete.'
+            });
+        }
+    });
     <?php endif; ?>
 </script>
 <!-- JavaScript del módulo de producción -->
-<script src="<?php echo BASE_URL; ?>front/public/js/produccion.js"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/produccion.js?v=6"></script>
+<?php if (!ve_produccion_ajena()): ?>
+<script src="<?php echo BASE_URL; ?>front/public/js/produccion-operario.js?v=5"></script>
+<?php endif; ?>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>

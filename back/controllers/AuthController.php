@@ -18,20 +18,10 @@ class AuthController {
     public function login() {
         // Si ya está autenticado, redirigir según su rol
         if (isset($_SESSION['usuario_id'])) {
-            $rol = $_SESSION['usuario_rol'] ?? 'cajero';
-            switch ($rol) {
-                case 'admin':
-                    redirect('index.php?action=dashboard');
-                    break;
-                case 'cajero':
-                    redirect('index.php?action=ventas');
-                    break;
-                case 'operario':
-                    redirect('index.php?action=produccion');
-                    break;
-                default:
-            redirect('index.php?action=dashboard');
+            if (permisos_cargar_en_sesion($this->db, (int) $_SESSION['usuario_id'])) {
+                redirect(permisos_url_inicio());
             }
+            $_SESSION = [];
         }
         
         require_once BASE_DIR . '/front/views/auth/login.php';
@@ -44,6 +34,7 @@ class AuthController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=login');
         }
+        exigir_csrf_redirect('index.php?action=login');
         
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
@@ -69,22 +60,14 @@ class AuthController {
             }
             
             $_SESSION['usuario_rol'] = $rol;
-            
-            // Redirigir según el rol del usuario
-            switch ($rol) {
-                case 'admin':
-            redirect('index.php?action=dashboard');
-                    break;
-                case 'cajero':
-                    redirect('index.php?action=ventas');
-                    break;
-                case 'operario':
-                    redirect('index.php?action=produccion');
-                    break;
-                default:
-                    $_SESSION['error'] = 'Error: Rol no reconocido. Por favor, contacte al administrador.';
-                    redirect('index.php?action=login');
+
+            if (!permisos_cargar_en_sesion($this->db, (int) $usuario['id'])) {
+                $_SESSION = [];
+                $_SESSION['error'] = 'Su usuario no tiene un rol asignado. Contacte al administrador.';
+                redirect('index.php?action=login');
             }
+
+            redirect(permisos_url_inicio());
         } else {
             $_SESSION['error'] = 'Credenciales incorrectas';
             redirect('index.php?action=login');

@@ -12,7 +12,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- CSS global -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>front/public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>front/public/css/style.css?v=15">
     <!-- CSS por vista -->
     <?php if (!empty($pageTitle)): ?>
         <?php
@@ -23,29 +23,28 @@
             'Gastos'       => 'gastos.css',
             'Agenda'       => 'agenda.css',
             'Producción'   => 'produccion.css',
+            'Usuarios'     => 'configuracion.css',
+            'Roles'        => 'configuracion.css',
         ];
         if (isset($cssMap[$pageTitle])): ?>
-            <link rel="stylesheet" href="<?php echo BASE_URL . 'front/public/css/' . $cssMap[$pageTitle]; ?>">
+            <link rel="stylesheet" href="<?php echo BASE_URL . 'front/public/css/' . $cssMap[$pageTitle] . '?v=' . ($cssMap[$pageTitle] === 'produccion.css' ? '14' : '9'); ?>">
         <?php endif; ?>
     <?php endif; ?>
 </head>
 <body>
     <script>window.CSRF_TOKEN = <?php echo json_encode(csrf_token()); ?>;</script>
+    <script>
+        window.FINAL_PERMISSIONS = <?php echo json_encode(array_values($_SESSION['final_permissions'] ?? []), JSON_UNESCAPED_UNICODE); ?>;
+        window.PERMISOS_ANY = <?php echo json_encode(permisos_listas_any(), JSON_UNESCAPED_UNICODE); ?>;
+    </script>
     <?php if (isset($_SESSION['usuario_id'])): ?>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="main-container">
             <?php
-            // Determinar la página de inicio según el rol
-            $rol = $_SESSION['usuario_rol'] ?? 'cajero';
-            $paginaInicio = 'dashboard';
-            if ($rol === 'cajero') {
-                $paginaInicio = 'ventas';
-            } elseif ($rol === 'operario') {
-                $paginaInicio = 'produccion';
-            }
+            $paginaInicio = permisos_url_inicio();
             ?>
-            <a class="navbar-brand" href="<?php echo BASE_URL; ?>index.php?action=<?php echo $paginaInicio; ?>">
+            <a class="navbar-brand" href="<?php echo BASE_URL . htmlspecialchars($paginaInicio); ?>">
                 <i class="bi bi-shop"></i> Inventario Ropa Infantil
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -53,60 +52,60 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <?php if (canAccess('dashboard')): ?>
+                    <?php if (puedeVerModulo('dashboard')): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>index.php?action=dashboard">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('dashboard')); ?>">
                             <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (canAccess('productos')): ?>
+                    <?php if (puedeVerModulo('productos')): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>index.php?action=productos">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('productos')); ?>">
                             <i class="bi bi-box-seam"></i> Productos
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (canAccess('ventas')): ?>
+                    <?php if (puedeVerModulo('ventas')): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>index.php?action=ventas">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('ventas')); ?>">
                             <i class="bi bi-cart-check"></i> Ventas
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (canAccess('clientes')): ?>
+                    <?php if (puedeVerModulo('clientes')): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>index.php?action=clientes">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('clientes')); ?>">
                             <i class="bi bi-people"></i> Clientes
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (canAccess('gastos')): ?>
+                    <?php if (puedeVerModulo('gastos')): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>index.php?action=gastos">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('gastos')); ?>">
                             <i class="bi bi-cash-stack"></i> Gastos
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (canAccess('agenda')): ?>
+                    <?php if (puedeVerModulo('agenda')): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>index.php?action=agenda">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('agenda')); ?>">
                             <i class="bi bi-calendar-check"></i> Agenda
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (canAccess('produccion')): ?>
+                    <?php if (puedeVerModulo('produccion')): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>index.php?action=produccion">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('produccion')); ?>">
                             <i class="bi bi-gear-wide-connected"></i> Producción
                         </a>
                     </li>
                     <?php endif; ?>
                 </ul>
                 <ul class="navbar-nav">
-                    <?php if (isAdmin()): ?>
+                    <?php if (puedeVerModulo('configuracion')): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>index.php?action=usuarios" title="Gestionar Usuarios">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('configuracion')); ?>" title="Configuración">
                             <i class="bi bi-gear"></i>
                         </a>
                     </li>

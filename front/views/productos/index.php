@@ -6,14 +6,18 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-box-seam"></i> Gestión de Productos</h2>
-        <?php if (!isCajero()): ?>
+        <?php if (tienePermiso('productos_categorias:view') || tienePermiso('productos_catalogo:create')): ?>
         <div>
+            <?php if (tienePermiso('productos_categorias:view')): ?>
             <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#modalCategorias">
                 <i class="bi bi-tags"></i> Categorías
             </button>
+            <?php endif; ?>
+            <?php if (tienePermiso('productos_catalogo:create')): ?>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
                 <i class="bi bi-plus-circle"></i> Nuevo Producto
             </button>
+            <?php endif; ?>
         </div>
         <?php endif; ?>
     </div>
@@ -39,8 +43,8 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <?php if (!isCajero()): ?>
-                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCategorias" title="Gestionar Categorías">
+                        <?php if (tienePermiso('productos_categorias:view')): ?>
+                        <button type="button" class="btn btn-outline-primary btn-icono" data-bs-toggle="modal" data-bs-target="#modalCategorias" title="Gestionar Categorías">
                             <i class="bi bi-tags"></i>
                         </button>
                         <?php endif; ?>
@@ -133,15 +137,17 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <td>
                                         <code><?php echo htmlspecialchars($producto['codigo_barras']); ?></code>
                                         <?php if (!empty($producto['codigo_barras'])): ?>
-                                            <?php 
+                                            <?php
                                                 $codigo = htmlspecialchars($producto['codigo_barras']);
-                                                // Servicio externo para generar imagen EAN-13
-                                                $barcodeUrl = 'https://barcode.tec-it.com/barcode.ashx?data=' . urlencode($codigo) . '&code=EAN13';
+                                                $barcodeUrl = 'https://barcode.tec-it.com/barcode.ashx?data=' . rawurlencode($producto['codigo_barras']) . '&code=EAN13';
                                             ?>
                                             <div class="mt-1 text-center">
-                                                <img src="<?php echo $barcodeUrl; ?>"
+                                                <img src="<?php echo htmlspecialchars($barcodeUrl); ?>"
                                                      alt="Código de barras <?php echo $codigo; ?>"
-                                                     class="img-fluid img-barcode-tabla">
+                                                     class="img-fluid img-barcode-tabla"
+                                                     data-codigo="<?php echo $codigo; ?>"
+                                                     data-nombre="<?php echo htmlspecialchars($producto['nombre']); ?>"
+                                                     title="Ver código de barras">
                                             </div>
                                         <?php endif; ?>
                                     </td>
@@ -149,8 +155,8 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <td><?php echo htmlspecialchars($producto['color']); ?></td>
                                     <td><span class="badge bg-secondary"><?php echo htmlspecialchars($producto['talla']); ?></span></td>
                                     <td><?php echo htmlspecialchars($producto['categoria_nombre'] ?? 'N/A'); ?></td>
-                                    <td>$<?php echo number_format($producto['precio_costo'], 2); ?></td>
-                                    <td><strong>$<?php echo number_format($producto['precio_venta'], 2); ?></strong></td>
+                                    <td><?php echo pesos($producto['precio_costo']); ?></td>
+                                    <td><strong><?php echo pesos($producto['precio_venta']); ?></strong></td>
                                     <td>
                                         <span class="badge <?php 
                                             echo $producto['stock'] <= $producto['stock_minimo'] ? 'bg-warning' : 'bg-success'; 
@@ -167,21 +173,24 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                         </span>
                                     </td>
                                     <td>
-                                        <?php if (!isCajero()): ?>
+                                        <?php if (tienePermiso('productos_catalogo:edit')): ?>
                                         <button type="button" 
-                                                class="btn btn-sm btn-outline-primary btnEditarProducto" 
+                                                class="btn btn-sm btn-outline-primary btn-icono btnEditarProducto" 
                                                 data-id="<?php echo $producto['id']; ?>"
                                                 title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=productos&method=delete" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este producto?')">
+                                        <?php endif; ?>
+                                        <?php if (tienePermiso('productos_catalogo:delete')): ?>
+                                        <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=productos&method=delete" class="d-inline form-doble-eliminar" data-titulo="Eliminar producto" data-detalle="Se borra el producto y no se puede recuperar." data-codigo="<?php echo htmlspecialchars(trim($producto['codigo_barras'] ?? '') !== '' ? $producto['codigo_barras'] : $producto['nombre']); ?>">
                                             <?php echo csrf_field(); ?>
                                             <input type="hidden" name="id" value="<?php echo (int) $producto['id']; ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
-                                        <?php else: ?>
+                                        <?php endif; ?>
+                                        <?php if (!tienePermiso('productos_catalogo:edit') && !tienePermiso('productos_catalogo:delete')): ?>
                                         <span class="text-muted">Solo lectura</span>
                                         <?php endif; ?>
                                     </td>
@@ -211,7 +220,7 @@ require_once BASE_DIR . '/front/views/components/modal_producto.php';
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalEditarProductoLabel">
-                    <i class="bi bi-pencil-square"></i> Editar Producto
+                    <i class="bi bi-pencil"></i> Editar Producto
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -241,6 +250,33 @@ require_once BASE_DIR . '/front/views/components/modal_producto.php';
             </div>
             <div class="modal-body text-center">
                 <img id="imgVistaProducto" src="" alt="Imagen del producto" class="img-fluid rounded img-modal-ver-producto">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalVerCodigoProducto" tabindex="-1" aria-labelledby="modalVerCodigoProductoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVerCodigoProductoLabel">
+                    <i class="bi bi-upc-scan"></i> Código de barras
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p id="nombreCodigoProducto" class="fw-semibold mb-2"></p>
+                <img id="imgVistaCodigo" src="" alt="Código de barras" class="img-codigo-modal">
+                <p id="textoCodigoProducto" class="mt-2 mb-0 font-monospace"></p>
+            </div>
+            <div class="modal-footer">
+                <a id="btnDescargarCodigo" class="btn btn-outline-primary" href="#" download>
+                    <i class="bi bi-download"></i> Descargar
+                </a>
+                <button type="button" class="btn btn-outline-secondary" id="btnImprimirCodigoModal">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -284,14 +320,16 @@ ob_start();
                             </span>
                         </td>
                         <td class="text-center">
+                            <?php if (tienePermiso('productos_categorias:delete')): ?>
                             <button type="button" 
-                                    class="btn btn-sm btn-outline-danger btnEliminarCategoria" 
+                                    class="btn btn-sm btn-outline-danger btn-icono btnEliminarCategoria" 
                                     data-id="<?php echo $cat['id']; ?>"
                                     data-nombre="<?php echo htmlspecialchars($cat['nombre']); ?>"
                                     data-productos="<?php echo $cat['total_productos'] ?? 0; ?>"
                                     title="Eliminar categoría">
-                                <i class="bi bi-trash"></i> Eliminar
+                                <i class="bi bi-trash"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -318,7 +356,7 @@ require_once BASE_DIR . '/front/views/components/modal.php';
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalNuevaCategoriaLabel">
-                    <i class="bi bi-tag"></i> Nueva Categoría
+                    <i class="bi bi-tags"></i> Nueva Categoría
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -351,6 +389,6 @@ require_once BASE_DIR . '/front/views/components/modal.php';
     window.BASE_URL = '<?php echo BASE_URL; ?>';
 </script>
 <!-- JavaScript del módulo de productos -->
-<script src="<?php echo BASE_URL; ?>front/public/js/productos.js"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/productos.js?v=2"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>

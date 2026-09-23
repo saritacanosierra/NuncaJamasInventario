@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
         form.reset();
         document.getElementById('cliente_id').value = '';
         esEdicion = false;
-        modalTitle.innerHTML = '<i class="bi bi-person-plus"></i> Nuevo Cliente';
+        modalTitle.innerHTML = '<i class="bi bi-plus-circle"></i> Nuevo Cliente';
         btnGuardarTexto.textContent = 'Guardar Cliente';
         btnGuardar.disabled = false;
         btnGuardar.innerHTML = '<i class="bi bi-save"></i> <span id="btnGuardarTexto">Guardar Cliente</span>';
@@ -253,22 +253,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <td>${escapeHtml(cliente.telefono || 'N/A')}</td>
                                 <td>${escapeHtml(cliente.email || 'N/A')}</td>
                                 <td><span class="badge bg-info">${cliente.total_compras || 0}</span></td>
-                                <td><strong>$${parseFloat(cliente.total_gastado || 0).toFixed(2)}</strong></td>
+                                <td><strong>$${formatearMoneda(cliente.total_gastado || 0)}</strong></td>
                                 <td>
                                     <a href="${baseUrlEscaped}index.php?action=clientes&method=historial&id=${cliente.id}" 
-                                       class="btn btn-sm btn-outline-info" title="Ver Historial">
+                                       class="btn btn-sm btn-outline-info btn-icono" title="Ver Historial">
                                         <i class="bi bi-clock-history"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-icono" 
                                             title="Editar" 
                                             onclick="editarCliente(${cliente.id})">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     ${Number(cliente.id) !== 1 ? `
-                                        <form method="POST" action="${baseUrlEscaped}index.php?action=clientes&method=delete" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este cliente?')">
+                                        <form method="POST" action="${baseUrlEscaped}index.php?action=clientes&method=delete" class="d-inline form-doble-eliminar" data-titulo="Eliminar cliente" data-detalle="Se borra el cliente y no se puede recuperar." data-codigo="${escapeHtml(cliente.cedula_nit || cliente.nombre_completo || '')}">
                                             <input type="hidden" name="csrf_token" value="${window.CSRF_TOKEN || ''}">
                                             <input type="hidden" name="id" value="${Number(cliente.id)}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>

@@ -23,12 +23,13 @@ $action = $action ?? ($isEdit ? BASE_URL . 'index.php?action=productos&method=up
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="<?php echo $modalId; ?>Label">
-                    <i class="bi <?php echo $isEdit ? 'bi-pencil-square' : 'bi-plus-circle'; ?>"></i> <?php echo htmlspecialchars($title); ?>
+                    <i class="bi <?php echo $isEdit ? 'bi-pencil' : 'bi-plus-circle'; ?>"></i> <?php echo htmlspecialchars($title); ?>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="<?php echo $formId; ?>" method="POST" action="<?php echo $action; ?>" enctype="multipart/form-data">
+                    <?php echo csrf_field(); ?>
                     <?php if ($isEdit): ?>
                         <input type="hidden" name="id" value="<?php echo $producto['id']; ?>">
                     <?php endif; ?>
@@ -91,7 +92,7 @@ $action = $action ?? ($isEdit ? BASE_URL . 'index.php?action=productos&method=up
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCategorias" title="Gestionar Categorías">
+                                <button type="button" class="btn btn-outline-primary btn-icono" data-bs-toggle="modal" data-bs-target="#modalCategorias" title="Gestionar Categorías">
                                     <i class="bi bi-tags"></i>
                                 </button>
                             </div>

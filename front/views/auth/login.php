@@ -15,6 +15,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     </div>
                     
                     <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=login&method=doLogin">
+                        <?php echo csrf_field(); ?>
                         <div class="mb-3">
                             <label for="email" class="form-label">
                                 <i class="bi bi-envelope"></i> Email

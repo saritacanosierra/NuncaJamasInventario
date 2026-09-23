@@ -20,8 +20,8 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
                 <p class="factura-subtitle">Ropa Infantil</p>
             </div>
             <div class="factura-empresa-data">
-                <p class="mb-1"><small><i class="bi bi-telephone-fill"></i> Teléfono: <?php echo htmlspecialchars($remitente['telefono']); ?></small></p>
-                <p class="mb-0"><small><i class="bi bi-geo-alt-fill"></i> <?php echo nl2br(htmlspecialchars($remitente['direccion'])); ?></small></p>
+                <p class="mb-1"><small><i class="bi bi-telephone"></i> Teléfono: <?php echo htmlspecialchars($remitente['telefono']); ?></small></p>
+                <p class="mb-0"><small><i class="bi bi-geo-alt"></i> <?php echo nl2br(htmlspecialchars($remitente['direccion'])); ?></small></p>
             </div>
         </div>
     </div>
@@ -90,25 +90,25 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
                                 </small>
                             </td>
                             <td class="text-center"><?php echo $detalle['cantidad']; ?></td>
-                            <td class="text-end">$<?php echo number_format(round($detalle['precio_unitario']), 0, ',', '.'); ?></td>
-                            <td class="text-end">$<?php echo number_format(round($detalle['subtotal']), 0, ',', '.'); ?></td>
+                            <td class="text-end"><?php echo pesos($detalle['precio_unitario']); ?></td>
+                            <td class="text-end"><?php echo pesos($detalle['subtotal']); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
                 <tfoot>
                     <tr>
                         <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
-                        <td class="text-end"><strong>$<?php echo number_format(round($venta['subtotal']), 0, ',', '.'); ?></strong></td>
+                        <td class="text-end"><strong><?php echo pesos($venta['subtotal']); ?></strong></td>
                     </tr>
                     <?php if ($venta['descuento'] > 0): ?>
                         <tr>
                             <td colspan="3" class="text-end"><strong>Descuento:</strong></td>
-                            <td class="text-end"><strong>-$<?php echo number_format(round($venta['descuento']), 0, ',', '.'); ?></strong></td>
+                            <td class="text-end"><strong><?php echo pesos(-($venta['descuento'])); ?></strong></td>
                         </tr>
                     <?php endif; ?>
                     <tr class="table-success factura-total-row">
                         <td colspan="3" class="text-end"><strong class="h5">TOTAL:</strong></td>
-                        <td class="text-end"><strong class="h4">$<?php echo number_format(round($venta['total']), 0, ',', '.'); ?></strong></td>
+                        <td class="text-end"><strong class="h4"><?php echo pesos($venta['total']); ?></strong></td>
                     </tr>
                 </tfoot>
             </table>
@@ -146,9 +146,9 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
 }
 
 .factura-header {
-    background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
+    background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%);
     padding: 30px 40px;
-    color: white;
+    color: #3c3534;
 }
 
 .factura-header-top {
@@ -221,10 +221,10 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
 }
 
 .factura-info-box-compact {
-    background: #f8f9fa;
+    background: #f4f0ef;
     padding: 15px 20px;
     border-radius: 8px;
-    border-left: 3px solid #FF69B4;
+    border-left: 3px solid #fcd1d1;
     height: 100%;
     font-size: 14px;
 }
@@ -232,18 +232,18 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
 .factura-info-title-compact {
     font-size: 13px;
     font-weight: 700;
-    color: #FF69B4;
+    color: #fcd1d1;
     margin-bottom: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #FF69B4;
+    border-bottom: 2px solid #fcd1d1;
 }
 
 .factura-numero-compact {
     font-size: 18px;
     font-weight: 700;
-    color: #333;
+    color: #3c3534;
 }
 
 .factura-info-box-compact p {
@@ -253,7 +253,7 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
 
 .factura-info-box-compact small {
     font-size: 13px;
-    color: #555;
+    color: #6d6562;
 }
 
 .badge-sm {
@@ -270,8 +270,8 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
 }
 
 .factura-table thead {
-    background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
-    color: white;
+    background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%);
+    color: #3c3534;
 }
 
 .factura-table thead th {
@@ -294,7 +294,7 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
 }
 
 .factura-total-row {
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+    background: linear-gradient(135deg, #d3e0dc 0%, #aee1e1 100%) !important;
 }
 
 .factura-total-row td {
@@ -303,11 +303,11 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
 }
 
 .info-domicilio {
-    background-color: #d1ecf1;
-    border: 1px solid #bee5eb;
+    background-color: #aee1e1;
+    border: 1px solid #aee1e1;
     border-radius: 0.375rem;
     padding: 1rem;
-    color: #0c5460;
+    color: #3e6464;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -351,7 +351,7 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
     }
     
     .factura-header {
-        background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%) !important;
+        background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%) !important;
         padding: 30px 40px !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -421,14 +421,14 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
         font-weight: 700 !important;
         margin: 0 !important;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.2) !important;
-        color: white !important;
+        color: #3c3534 !important;
     }
     
     .factura-subtitle {
         margin: 5px 0 0 0 !important;
         font-size: 14px !important;
         opacity: 0.9 !important;
-        color: white !important;
+        color: #3c3534 !important;
     }
     
     .factura-body {
@@ -456,8 +456,8 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
     }
     
     .factura-info-box-compact {
-        background: #f8f9fa !important;
-        border-left: 3px solid #FF69B4 !important;
+        background: #f4f0ef !important;
+        border-left: 3px solid #fcd1d1 !important;
         padding: 15px 20px !important;
         border-radius: 8px !important;
         height: 100% !important;
@@ -468,18 +468,18 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
     .factura-info-title-compact {
         font-size: 13px !important;
         font-weight: 700 !important;
-        color: #FF69B4 !important;
+        color: #fcd1d1 !important;
         margin-bottom: 12px !important;
         text-transform: uppercase !important;
         letter-spacing: 0.5px !important;
         padding-bottom: 8px !important;
-        border-bottom: 2px solid #FF69B4 !important;
+        border-bottom: 2px solid #fcd1d1 !important;
     }
     
     .factura-numero-compact {
         font-size: 18px !important;
         font-weight: 700 !important;
-        color: #333 !important;
+        color: #3c3534 !important;
     }
     
     .factura-info-box-compact p {
@@ -489,7 +489,7 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
     
     .factura-info-box-compact small {
         font-size: 13px !important;
-        color: #555 !important;
+        color: #6d6562 !important;
     }
     
     .badge-sm {
@@ -498,7 +498,7 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
     }
     
     .badge {
-        background-color: #0dcaf0 !important;
+        background-color: #aee1e1 !important;
         color: #000 !important;
         padding: 4px 10px !important;
         border-radius: 0.25rem !important;
@@ -507,12 +507,12 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
     }
     
     .badge.bg-success {
-        background-color: #198754 !important;
-        color: #fff !important;
+        background-color: #97cfcf !important;
+        color: #3c3534 !important;
     }
     
     .badge.bg-warning {
-        background-color: #ffc107 !important;
+        background-color: #5e5552 !important;
         color: #000 !important;
     }
     
@@ -525,14 +525,14 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
     }
     
     .factura-table thead {
-        background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%) !important;
+        background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%) !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
     }
     
     .factura-table thead th {
-        color: white !important;
+        color: #3c3534 !important;
         border: none !important;
         padding: 15px !important;
         font-weight: 600 !important;
@@ -552,7 +552,7 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
     }
     
     .factura-total-row {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+        background: linear-gradient(135deg, #d3e0dc 0%, #aee1e1 100%) !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -564,7 +564,7 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
     }
     
     .badge {
-        background-color: #0dcaf0 !important;
+        background-color: #aee1e1 !important;
         color: #000 !important;
         padding: 4px 10px !important;
         border-radius: 0.25rem !important;
@@ -576,11 +576,11 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
-        background-color: #d1ecf1 !important;
-        border: 1px solid #bee5eb !important;
+        background-color: #aee1e1 !important;
+        border: 1px solid #aee1e1 !important;
         border-radius: 0.375rem !important;
         padding: 1rem !important;
-        color: #0c5460 !important;
+        color: #3e6464 !important;
         page-break-inside: avoid;
     }
 }

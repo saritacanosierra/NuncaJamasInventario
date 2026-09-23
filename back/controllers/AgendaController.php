@@ -54,6 +54,7 @@ class AgendaController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $data = [
             'titulo' => trim($_POST['titulo'] ?? ''),
@@ -132,6 +133,7 @@ class AgendaController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $id = intval($_POST['id'] ?? 0);
         $tarea = $this->tareaModel->getById($id);
@@ -177,6 +179,7 @@ class AgendaController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $id = intval($_POST['id'] ?? 0);
         $tarea = $this->tareaModel->getById($id);
@@ -212,6 +215,10 @@ class AgendaController {
         
         if (!$tarea || $tarea['usuario_id'] != $_SESSION['usuario_id']) {
             echo json_encode(['success' => false, 'error' => 'Tarea no encontrada']);
+            exit;
+        }
+        if (!codigo_eliminacion_valido($tarea['titulo'] ?? '')) {
+            echo json_encode(['success' => false, 'error' => 'La confirmación no coincide. No se eliminó.']);
             exit;
         }
         

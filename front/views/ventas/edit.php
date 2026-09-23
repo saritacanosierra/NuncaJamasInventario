@@ -12,6 +12,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
     </div>
     
     <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=ventas&method=update" id="formEditarVenta">
+        <?php echo csrf_field(); ?>
         <input type="hidden" name="venta_id" value="<?php echo $venta['id']; ?>">
         
         <div class="row">
@@ -133,7 +134,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                             </td>
                                             <td>
                                                 <span class="subtotal-detalle" data-index="<?php echo $index; ?>">
-                                                    $<?php echo number_format(round($detalle['subtotal']), 0, ',', '.'); ?>
+                                                    <?php echo pesos($detalle['subtotal']); ?>
                                                 </span>
                                                 <input type="hidden" name="detalles[<?php echo $index; ?>][producto_id]" 
                                                        value="<?php echo $detalle['producto_id']; ?>">
@@ -142,7 +143,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                                        value="<?php echo number_format($detalle['subtotal'], 2, '.', ''); ?>">
                                             </td>
                                             <td>
-                                                <button type="button" class="btn btn-sm btn-danger btn-eliminar-detalle">
+                                                <button type="button" class="btn btn-sm btn-danger btn-eliminar-detalle btn-icono">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </td>
@@ -152,17 +153,17 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                 <tfoot>
                                     <tr>
                                         <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
-                                        <td><strong id="subtotal_total">$<?php echo number_format(round($venta['subtotal']), 0, ',', '.'); ?></strong></td>
+                                        <td><strong id="subtotal_total"><?php echo pesos($venta['subtotal']); ?></strong></td>
                                         <td></td>
                                     </tr>
                                     <tr>
                                         <td colspan="3" class="text-end"><strong>Descuento:</strong></td>
-                                        <td><strong id="descuento_total">-$<?php echo number_format(round($venta['descuento']), 0, ',', '.'); ?></strong></td>
+                                        <td><strong id="descuento_total"><?php echo pesos(-($venta['descuento'])); ?></strong></td>
                                         <td></td>
                                     </tr>
                                     <tr class="table-success">
                                         <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
-                                        <td><strong class="h4" id="total_venta">$<?php echo number_format(round($venta['total']), 0, ',', '.'); ?></strong></td>
+                                        <td><strong class="h4" id="total_venta"><?php echo pesos($venta['total']); ?></strong></td>
                                         <td></td>
                                     </tr>
                                 </tfoot>
@@ -304,12 +305,20 @@ function actualizarTotales() {
 
 // Eliminar detalle
 document.addEventListener('click', function(e) {
-    if (e.target.closest('.btn-eliminar-detalle')) {
-        if (confirm('¿Está seguro de eliminar este producto de la venta?')) {
-            e.target.closest('tr').remove();
+    const btn = e.target.closest('.btn-eliminar-detalle');
+    if (!btn) return;
+    const fila = btn.closest('tr');
+    const nombre = fila && fila.querySelector('strong') ? fila.querySelector('strong').textContent.trim() : '';
+    if (!nombre || typeof pedirDobleConfirmacion !== 'function') return;
+    pedirDobleConfirmacion({
+        titulo: 'Quitar producto',
+        detalle: 'Se quita este producto de la venta.',
+        codigo: nombre,
+        alConfirmar: function () {
+            fila.remove();
             actualizarTotales();
         }
-    }
+    });
 });
 
 // Agregar producto
@@ -379,7 +388,7 @@ document.getElementById('btnConfirmarAgregar').addEventListener('click', functio
                        value="${subtotal.toFixed(2)}">
             </td>
             <td>
-                <button type="button" class="btn btn-sm btn-danger btn-eliminar-detalle">
+                <button type="button" class="btn btn-sm btn-danger btn-eliminar-detalle btn-icono">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>

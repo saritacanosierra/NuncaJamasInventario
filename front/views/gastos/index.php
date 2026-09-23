@@ -7,18 +7,26 @@ require_once BASE_DIR . '/front/views/layout/header.php';
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-cash-stack"></i> Gestión de Gastos e Inversiones</h2>
         <div>
+            <?php if (tienePermiso('gastos_categorias:view')): ?>
             <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#modalCategoriasGastos">
                 <i class="bi bi-tags"></i> Categorías
             </button>
+            <?php endif; ?>
+            <?php if (tienePermiso('gastos_historial:view')): ?>
             <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#modalHistorial">
                 <i class="bi bi-clock-history"></i> Historial
             </button>
+            <?php endif; ?>
+            <?php if (tienePermiso('gastos_inversiones:create')): ?>
             <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#modalNuevaInversion">
-                <i class="bi bi-graph-up"></i> Nueva Inversión
+                <i class="bi bi-plus-circle"></i> Nueva Inversión
             </button>
+            <?php endif; ?>
+            <?php if (tienePermiso('gastos_registro:create')): ?>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoGasto">
                 <i class="bi bi-plus-circle"></i> Nuevo Gasto
             </button>
+            <?php endif; ?>
         </div>
     </div>
     
@@ -28,7 +36,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             <div class="card bg-danger">
                 <div class="card-body">
                     <h5><i class="bi bi-cash-stack"></i> Total de Gastos del Periodo</h5>
-                    <h2>$<?php echo number_format($totalGastos['total'] ?? 0, 2); ?></h2>
+                    <h2><?php echo pesos($totalGastos['total'] ?? 0); ?></h2>
                     <small><?php echo $totalGastos['cantidad'] ?? 0; ?> gastos registrados</small>
                 </div>
             </div>
@@ -37,7 +45,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             <div class="card bg-success">
                 <div class="card-body">
                     <h5><i class="bi bi-graph-up"></i> Total de Inversiones del Periodo</h5>
-                    <h2>$<?php echo number_format($totalInversiones['total'] ?? 0, 2); ?></h2>
+                    <h2><?php echo pesos($totalInversiones['total'] ?? 0); ?></h2>
                     <small><?php echo $totalInversiones['cantidad'] ?? 0; ?> inversiones registradas</small>
                 </div>
             </div>
@@ -115,6 +123,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
         <?php endif; ?>
     </div>
     
+    <?php if (tienePermiso('gastos_registro:view')): ?>
     <!-- Tabla de gastos -->
     <div class="card mb-4">
         <div class="card-header">
@@ -144,21 +153,25 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <td><?php echo date('d/m/Y', strtotime($gasto['fecha'])); ?></td>
                                     <td><?php echo htmlspecialchars($gasto['concepto']); ?></td>
                                     <td><span class="badge bg-secondary"><?php echo htmlspecialchars($gasto['categoria']); ?></span></td>
-                                    <td><strong>$<?php echo number_format($gasto['monto'], 2); ?></strong></td>
+                                    <td><strong><?php echo pesos($gasto['monto']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($gasto['usuario_nombre'] ?? 'N/A'); ?></td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        <?php if (tienePermiso('gastos_registro:edit')): ?>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-icono" 
                                                 title="Editar" 
                                                 onclick="editarGasto(<?php echo $gasto['id']; ?>)">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=gastos&method=delete" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este gasto?')">
+                                        <?php endif; ?>
+                                        <?php if (tienePermiso('gastos_registro:delete')): ?>
+                                        <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=gastos&method=delete" class="d-inline form-doble-eliminar" data-titulo="Eliminar gasto" data-detalle="Se borra el gasto y no se puede recuperar." data-codigo="<?php echo htmlspecialchars($gasto['concepto']); ?>">
                                             <?php echo csrf_field(); ?>
                                             <input type="hidden" name="id" value="<?php echo (int) $gasto['id']; ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -168,7 +181,9 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             </div>
         </div>
     </div>
+    <?php endif; ?>
     
+    <?php if (tienePermiso('gastos_inversiones:view')): ?>
     <!-- Tabla de inversiones -->
     <div class="card mb-4">
         <div class="card-header">
@@ -198,21 +213,25 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <td><?php echo date('d/m/Y', strtotime($inversion['fecha'])); ?></td>
                                     <td><?php echo htmlspecialchars($inversion['concepto']); ?></td>
                                     <td><span class="badge bg-secondary"><?php echo htmlspecialchars($inversion['categoria']); ?></span></td>
-                                    <td><strong>$<?php echo number_format($inversion['monto'], 2); ?></strong></td>
+                                    <td><strong><?php echo pesos($inversion['monto']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($inversion['usuario_nombre'] ?? 'N/A'); ?></td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        <?php if (tienePermiso('gastos_inversiones:edit')): ?>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-icono" 
                                                 title="Editar" 
                                                 onclick="editarInversion(<?php echo $inversion['id']; ?>)">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=gastos&method=deleteInversion" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar esta inversión?')">
+                                        <?php endif; ?>
+                                        <?php if (tienePermiso('gastos_inversiones:delete')): ?>
+                                        <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=gastos&method=deleteInversion" class="d-inline form-doble-eliminar" data-titulo="Eliminar inversión" data-detalle="Se borra la inversión y no se puede recuperar." data-codigo="<?php echo htmlspecialchars($inversion['concepto']); ?>">
                                             <?php echo csrf_field(); ?>
                                             <input type="hidden" name="id" value="<?php echo (int) $inversion['id']; ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -223,6 +242,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
         </div>
     </div>
 </div>
+    <?php endif; ?>
 
 <?php if (!empty($gastosPorCategoria)): ?>
 <script>
@@ -238,11 +258,11 @@ new Chart(ctx, {
         datasets: [{
             data: data,
             backgroundColor: [
-                'rgba(255, 99, 132, 0.8)',
-                'rgba(54, 162, 235, 0.8)',
-                'rgba(255, 206, 86, 0.8)',
-                'rgba(75, 192, 192, 0.8)',
-                'rgba(153, 102, 255, 0.8)'
+                'rgba(252, 209, 209, 0.95)',
+                'rgba(174, 225, 225, 0.95)',
+                'rgba(236, 226, 225, 0.95)',
+                'rgba(151, 207, 207, 0.95)',
+                'rgba(211, 224, 220, 0.95)'
             ]
         }]
     },
@@ -280,11 +300,11 @@ new Chart(ctxInversiones, {
         datasets: [{
             data: dataInversiones,
             backgroundColor: [
-                'rgba(40, 167, 69, 0.8)',
-                'rgba(25, 135, 84, 0.8)',
-                'rgba(20, 108, 67, 0.8)',
-                'rgba(16, 86, 54, 0.8)',
-                'rgba(12, 64, 40, 0.8)'
+                'rgba(252, 209, 209, 0.95)',
+                'rgba(236, 226, 225, 0.95)',
+                'rgba(211, 224, 220, 0.95)',
+                'rgba(174, 225, 225, 0.95)',
+                'rgba(151, 207, 207, 0.95)'
             ]
         }]
     },
@@ -375,7 +395,7 @@ new Chart(ctxInversiones, {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalNuevaInversionLabel">
-                    <i class="bi bi-graph-up"></i> Nueva Inversión
+                    <i class="bi bi-plus-circle"></i> Nueva Inversión
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -585,7 +605,7 @@ new Chart(ctxInversiones, {
                                     <i class="bi bi-save"></i> Guardar
                                 </button>
                                 <button type="button" class="btn btn-secondary btn-sm" id="btnCancelarCategoriaGasto">
-                                    <i class="bi bi-x"></i> Cancelar
+                                    <i class="bi bi-x-circle"></i> Cancelar
                                 </button>
                             </div>
                         </form>
@@ -624,5 +644,5 @@ new Chart(ctxInversiones, {
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>
 
 <!-- JavaScript del módulo de gastos (debe cargarse después de Bootstrap) -->
-<script src="<?php echo BASE_URL; ?>front/public/js/gastos.js"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/gastos.js?v=3"></script>
 

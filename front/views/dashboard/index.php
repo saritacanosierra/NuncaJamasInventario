@@ -6,80 +6,6 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 <!-- Verificar carga de CSS -->
 <link rel="stylesheet" href="<?php echo BASE_URL; ?>front/public/css/dashboard.css?v=<?php echo time(); ?>">
 
-<style>
-/* Estilos críticos del contador flotante - Asegurados con colores de la app */
-.contador-meta-flotante {
-    position: fixed !important;
-    bottom: 20px !important;
-    right: 20px !important;
-    width: 360px !important;
-    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #B5D9FF 100%) !important;
-    border-radius: 20px !important;
-    box-shadow: 0 8px 24px rgba(225, 190, 231, 0.2), 0 4px 12px rgba(206, 147, 216, 0.1) !important;
-    z-index: 1000 !important;
-    color: #000000 !important;
-    overflow: hidden !important;
-    border: 2px solid #E1BEE7 !important;
-}
-
-.contador-meta-header {
-    background: linear-gradient(135deg, #ffb5d9 0%, #E1BEE7 100%) !important;
-    padding: 15px 20px !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    border-bottom: 2px solid #E1BEE7 !important;
-}
-
-.contador-meta-body {
-    padding: 25px !important;
-    position: relative !important;
-}
-
-.meta-numero {
-    font-size: 42px !important;
-    font-weight: 800 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 10px !important;
-}
-
-.numero-grande {
-    color: rgb(233, 220, 108) !important;
-    -webkit-text-stroke: 2px #000000 !important;
-    text-shadow: 0 2px 6px rgba(74, 144, 226, 0.3), 0 0 0 #000000 !important;
-    font-size: 48px !important;
-    font-weight: 900 !important;
-    paint-order: stroke fill !important;
-}
-
-.numero-meta {
-    color: #000000 !important;
-    font-size: 36px !important;
-    font-weight: 700 !important;
-}
-
-.progreso-bar {
-    width: 100% !important;
-    height: 24px !important;
-    background: #E8F5E9 !important;
-    border-radius: 12px !important;
-    overflow: hidden !important;
-    position: relative !important;
-    border: 2px solid #C8E6C9 !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08) !important;
-}
-
-.progreso-fill {
-    height: 100% !important;
-    background: linear-gradient(90deg, #66BB6A 0%, #4CAF50 50%, #43A047 100%) !important;
-    border-radius: 12px !important;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
-}
-</style>
-
 <div class="main-container">
     <h2 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h2>
     
@@ -90,7 +16,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-2">Inventario Total</h6>
-                        <h3 class="mb-0">$<?php echo number_format($inventario_total ?? 0, 2); ?></h3>
+                        <h3 class="mb-0"><?php echo pesos($inventario_total ?? 0); ?></h3>
                     </div>
                     <i class="bi bi-box-seam display-6"></i>
                 </div>
@@ -114,7 +40,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-2">Ventas del Mes</h6>
-                        <h3 class="mb-0">$<?php echo number_format($ventas_mes['total_ingresos'] ?? 0, 2); ?></h3>
+                        <h3 class="mb-0"><?php echo pesos($ventas_mes['total_ingresos'] ?? 0); ?></h3>
                     </div>
                     <i class="bi bi-cart-check display-6"></i>
                 </div>
@@ -126,7 +52,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-2">Gastos del Mes</h6>
-                        <h3 class="mb-0">$<?php echo number_format($gastos_mes['total'] ?? 0, 2); ?></h3>
+                        <h3 class="mb-0"><?php echo pesos($gastos_mes['total'] ?? 0); ?></h3>
                     </div>
                     <i class="bi bi-cash-stack display-6"></i>
                 </div>
@@ -142,7 +68,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <i class="bi bi-calendar-day"></i> Ventas del Día
                 </div>
                 <div class="card-body">
-                    <h4>$<?php echo number_format($ventas_dia['total_ingresos'] ?? 0, 2); ?></h4>
+                    <h4><?php echo pesos($ventas_dia['total_ingresos'] ?? 0); ?></h4>
                     <p class="mb-0 text-muted"><?php echo $ventas_dia['total_ventas'] ?? 0; ?> ventas</p>
                 </div>
             </div>
@@ -154,7 +80,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <i class="bi bi-calendar-week"></i> Ventas de la Semana
                 </div>
                 <div class="card-body">
-                    <h4>$<?php echo number_format($ventas_semana['total_ingresos'] ?? 0, 2); ?></h4>
+                    <h4><?php echo pesos($ventas_semana['total_ingresos'] ?? 0); ?></h4>
                     <p class="mb-0 text-muted"><?php echo $ventas_semana['total_ventas'] ?? 0; ?> ventas</p>
                 </div>
             </div>
@@ -166,7 +92,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <i class="bi bi-graph-up"></i> Promedio por Venta
                 </div>
                 <div class="card-body">
-                    <h4>$<?php echo number_format($ventas_mes['promedio_venta'] ?? 0, 2); ?></h4>
+                    <h4><?php echo pesos($ventas_mes['promedio_venta'] ?? 0); ?></h4>
                     <p class="mb-0 text-muted">Mes actual</p>
                 </div>
             </div>
@@ -184,7 +110,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <div class="row mb-3">
                         <div class="col-md-3">
                             <strong>Gastos Totales:</strong><br>
-                            <span class="h5">$<?php echo number_format($punto_equilibrio['gastos'] ?? 0, 2); ?></span>
+                            <span class="h5"><?php echo pesos($punto_equilibrio['gastos'] ?? 0); ?></span>
                         </div>
                         <div class="col-md-3">
                             <strong>Margen Promedio:</strong><br>
@@ -192,12 +118,12 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                         </div>
                         <div class="col-md-3">
                             <strong>Punto de Equilibrio:</strong><br>
-                            <span class="h5">$<?php echo number_format($punto_equilibrio['punto_equilibrio'] ?? 0, 2); ?></span>
+                            <span class="h5"><?php echo pesos($punto_equilibrio['punto_equilibrio'] ?? 0); ?></span>
                         </div>
                             <div class="col-md-3">
                                 <strong>Ventas Actuales del Mes:</strong><br>
                                 <span class="h5">
-                                    $<?php echo number_format($punto_equilibrio['ventas_actuales'] ?? 0, 2); ?>
+                                    <?php echo pesos($punto_equilibrio['ventas_actuales'] ?? 0); ?>
                                 </span>
                                 <?php 
                                 $ventasActuales = $punto_equilibrio['ventas_actuales'] ?? 0;
@@ -211,7 +137,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                             </div>
                     </div>
                     <hr>
-                    <div class="row">
+                    <div class="row ganancia-par">
                         <div class="col-md-6">
                             <div class="p-3 rounded ganancia-box <?php echo ($punto_equilibrio['ganancia_actual'] ?? 0) >= 0 ? 'ganancia-positiva' : 'ganancia-negativa'; ?>">
                                 <strong><i class="bi bi-cash-coin"></i> <?php echo ($punto_equilibrio['ganancia_actual'] ?? 0) >= 0 ? 'Ganancia' : 'Pérdida'; ?> Actual:</strong><br>
@@ -219,9 +145,9 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <?php 
                                     $gananciaActual = $punto_equilibrio['ganancia_actual'] ?? 0;
                                     if ($gananciaActual < 0) {
-                                        echo '-$' . number_format(abs($gananciaActual), 2);
+                                        echo pesos(-(abs($gananciaActual)));
                                     } else {
-                                        echo '$' . number_format($gananciaActual, 2);
+                                        echo pesos($gananciaActual);
                                     }
                                     ?>
                                 </span>
@@ -235,13 +161,13 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     $puntoEquilibrio = $punto_equilibrio['punto_equilibrio'] ?? 0;
                                     $faltante = max(0, $puntoEquilibrio - $ventasActuales);
                                     ?>
-                                    • Ventas actuales del mes: <strong>$<?php echo number_format($ventasActuales, 2); ?></strong><br>
-                                    • Contribución (<?php echo number_format($punto_equilibrio['margen_promedio'] ?? 0, 1); ?>% de ventas): <strong>$<?php echo number_format($contribucion, 2); ?></strong><br>
-                                    • Gastos del mes: <strong>$<?php echo number_format($gastos, 2); ?></strong><br>
-                                    • <strong>Resultado:</strong> <?php echo ($gananciaActual >= 0) ? 'Ganancia' : 'Pérdida'; ?> de <strong>$<?php echo number_format(abs($gananciaActual), 2); ?></strong><br>
+                                    • Ventas actuales del mes: <strong><?php echo pesos($ventasActuales); ?></strong><br>
+                                    • Contribución (<?php echo number_format($punto_equilibrio['margen_promedio'] ?? 0, 1); ?>% de ventas): <strong><?php echo pesos($contribucion); ?></strong><br>
+                                    • Gastos del mes: <strong><?php echo pesos($gastos); ?></strong><br>
+                                    • <strong>Resultado:</strong> <?php echo ($gananciaActual >= 0) ? 'Ganancia' : 'Pérdida'; ?> de <strong><?php echo pesos(abs($gananciaActual)); ?></strong><br>
                                     <?php if ($ventasActuales < $puntoEquilibrio): ?>
                                     <span class="alerta-faltante">
-                                        ⚠️ Faltan $<?php echo number_format($faltante, 2); ?> para llegar al punto de equilibrio
+                                        ⚠️ Faltan <?php echo pesos($faltante); ?> para llegar al punto de equilibrio
                                     </span>
                                     <?php endif; ?>
                                 </small>
@@ -257,14 +183,14 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                 ?>
                                 <strong><i class="bi bi-<?php echo $esPositivo ? 'trophy' : 'target'; ?>"></i> <?php echo $esPositivo ? 'Ganancia Neta Actual' : 'Te falta para cubrir gastos'; ?>:</strong><br>
                                 <span class="h4 ganancia-proyeccion-valor <?php echo $esPositivo ? '' : 'ganancia-valor-negativa'; ?>">
-                                    $<?php echo number_format(abs($gananciaNeta), 2); ?>
+                                    <?php echo pesos(abs($gananciaNeta)); ?>
                                 </span>
                                 <br>
                                 <small class="text-muted texto-desglose">
                                     <strong>Desglose:</strong><br>
-                                    • Ventas del mes: <strong>$<?php echo number_format($ventasMes, 2); ?></strong><br>
-                                    • Gastos del mes: <strong>$<?php echo number_format($gastos, 2); ?></strong><br>
-                                    • Resultado: <strong>$<?php echo number_format($gananciaNeta, 2); ?></strong>
+                                    • Ventas del mes: <strong><?php echo pesos($ventasMes); ?></strong><br>
+                                    • Gastos del mes: <strong><?php echo pesos($gastos); ?></strong><br>
+                                    • Resultado: <strong><?php echo pesos($gananciaNeta); ?></strong>
                                 </small>
                             </div>
                         </div>
@@ -354,7 +280,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             <span>Meta del Día</span>
         </div>
         <button type="button" class="btn-close-custom" id="cerrarContador" aria-label="Cerrar">
-            <i class="bi bi-x-lg"></i>
+            <i class="bi bi-x-circle"></i>
         </button>
     </div>
     <div class="contador-meta-body">
@@ -408,7 +334,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
         </div>
         <div id="metaAlcanzadaBadge" class="meta-alcanzada-badge">
             <div class="badge-content">
-                <i class="bi bi-trophy-fill"></i>
+                <i class="bi bi-trophy"></i>
                 <div>
                     <strong>¡Meta alcanzada!</strong>
                     <small>Sigue así, estás haciendo un excelente trabajo</small>
@@ -433,8 +359,8 @@ new Chart(ctx, {
         datasets: [{
             label: 'Ventas ($)',
             data: data,
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgb(151, 207, 207)',
+            backgroundColor: 'rgba(151, 207, 207, 0.35)',
             tension: 0.1
         }]
     },
@@ -460,16 +386,6 @@ function formatearMoneda(valor) {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     }).format(valor);
-}
-
-// Función para formatear valores monetarios cortos (para badges)
-function formatearMonedaCorta(valor) {
-    if (valor >= 1000000) {
-        return '$' + (valor / 1000000).toFixed(1) + 'M';
-    } else if (valor >= 1000) {
-        return '$' + (valor / 1000).toFixed(0) + 'K';
-    }
-    return '$' + Math.round(valor).toLocaleString('es-CO');
 }
 
 // Variable para prevenir llamadas simultáneas
@@ -510,8 +426,8 @@ function actualizarMetaDiaria() {
         .then(data => {
             if (data.success) {
                 // Actualizar valores monetarios
-                document.getElementById('productosVendidosHoy').textContent = formatearMonedaCorta(data.ventas_hoy);
-                document.getElementById('metaDiaria').textContent = formatearMonedaCorta(data.meta_diaria);
+                document.getElementById('productosVendidosHoy').textContent = formatearMoneda(data.ventas_hoy);
+                document.getElementById('metaDiaria').textContent = formatearMoneda(data.meta_diaria);
                 document.getElementById('valorFaltanteMes').textContent = formatearMoneda(data.valor_faltante_mes);
                 document.getElementById('diasHabilesRestantes').textContent = data.dias_habiles_restantes;
                 
@@ -519,7 +435,7 @@ function actualizarMetaDiaria() {
                 const btnAbrir = document.getElementById('btnAbrirContador');
                 const badgeContador = document.getElementById('badgeContador');
                 if (btnAbrir && badgeContador) {
-                    badgeContador.textContent = formatearMonedaCorta(data.ventas_hoy);
+                    badgeContador.textContent = formatearMoneda(data.ventas_hoy);
                     // Si el contador está cerrado, mostrar el botón con animación
                     if (document.getElementById('contadorMeta').style.display === 'none') {
                         btnAbrir.style.display = 'flex';
@@ -544,7 +460,7 @@ function actualizarMetaDiaria() {
                     progresoFill.classList.remove('progreso-alto', 'progreso-medio');
                     metaBadge.style.display = 'block';
                     progresoEstado.textContent = '¡Completado!';
-                    progresoEstado.style.color = '#4CAF50';
+                    progresoEstado.style.color = '#97cfcf';
                     metaBadgeMini.style.display = 'flex';
                 } else {
                     metaBadge.style.display = 'none';
@@ -552,18 +468,18 @@ function actualizarMetaDiaria() {
                         progresoFill.classList.remove('progreso-completo', 'progreso-medio');
                         progresoFill.classList.add('progreso-alto');
                         progresoEstado.textContent = 'Casi ';
-                        progresoEstado.style.color = '#FF9800';
+                        progresoEstado.style.color = '#5e5552';
                         metaBadgeMini.style.display = 'flex';
                     } else if (porcentaje >= 50) {
                         progresoFill.classList.remove('progreso-completo', 'progreso-alto');
                         progresoFill.classList.add('progreso-medio');
                         progresoEstado.textContent = 'A mitad';
-                        progresoEstado.style.color = '#FFC107';
+                        progresoEstado.style.color = '#5e5552';
                         metaBadgeMini.style.display = 'flex';
                     } else {
                         progresoFill.classList.remove('progreso-completo', 'progreso-alto', 'progreso-medio');
                         progresoEstado.textContent = 'En progreso';
-                        progresoEstado.style.color = 'rgba(255, 255, 255, 0.85)';
+                        progresoEstado.style.color = '#6d6562';
                         metaBadgeMini.style.display = porcentaje > 0 ? 'flex' : 'none';
                     }
                 }
@@ -601,7 +517,7 @@ function lanzarConfeti() {
     
     const duration = 3000;
     const end = Date.now() + duration;
-    const colors = ['#FF69B4', '#FFD700', '#FF1493', '#FF69B4', '#FFB6C1'];
+    const colors = ['#fcd1d1', '#ece2e1', '#d3e0dc', '#aee1e1', '#97cfcf'];
     
     (function frame() {
         confetti({

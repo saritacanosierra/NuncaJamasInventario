@@ -10,6 +10,11 @@ let contadorVentas = 0;
 let carrito = []; // seguirá representando el carrito de la venta activa
 let BASE_URL_VENTAS = '';
 
+function formatearNumero(valor) {
+    const numero = Math.round(parseFloat(valor) || 0);
+    return numero.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
     // Obtener BASE_URL de la variable global definida en la vista
@@ -19,13 +24,17 @@ document.addEventListener('DOMContentLoaded', function() {
     crearNuevaVenta();
 
     // Eventos de búsqueda de producto
+    let timeoutBusqueda;
     document.getElementById('btn_buscar_codigo').addEventListener('click', buscarPorCodigo);
+    document.getElementById('codigo_barras_input').addEventListener('input', function() {
+        clearTimeout(timeoutBusqueda);
+        timeoutBusqueda = setTimeout(filtrarPorCodigo, 300);
+    });
     document.getElementById('codigo_barras_input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') buscarPorCodigo();
     });
 
     // Buscar por nombre
-    let timeoutBusqueda;
     document.getElementById('buscar_nombre').addEventListener('input', function() {
         clearTimeout(timeoutBusqueda);
         timeoutBusqueda = setTimeout(buscarPorNombre, 500);
@@ -182,19 +191,34 @@ function buscarPorCodigo() {
     const codigo = document.getElementById('codigo_barras_input').value.trim();
     if (!codigo) return;
     
-    fetch(`${BASE_URL_VENTAS || window.BASE_URL || ''}index.php?action=productos&method=buscarPorCodigo&codigo=${codigo}`)
+    fetch(`${BASE_URL_VENTAS || window.BASE_URL || ''}index.php?action=productos&method=buscarPorCodigo&codigo=${encodeURIComponent(codigo)}`)
         .then(r => r.json())
         .then(data => {
             if (data.success) {
                 mostrarProducto(data.producto);
+                document.getElementById('resultados_busqueda').innerHTML = '';
             } else {
-                alert('Producto no encontrado');
+                filtrarProductos(codigo);
             }
-        });
+        })
+        .catch(() => filtrarProductos(codigo));
+}
+
+function filtrarPorCodigo() {
+    const codigo = document.getElementById('codigo_barras_input').value.trim();
+    if (!codigo) {
+        document.getElementById('resultados_busqueda').innerHTML = '';
+        return;
+    }
+    filtrarProductos(codigo);
 }
 
 function buscarPorNombre() {
     const termino = document.getElementById('buscar_nombre').value.trim();
+    filtrarProductos(termino);
+}
+
+function filtrarProductos(termino) {
     if (!termino) {
         document.getElementById('resultados_busqueda').innerHTML = '';
         return;
@@ -218,8 +242,9 @@ function buscarPorNombre() {
             if (data.success && data.productos && data.productos.length > 0) {
                 html = '<div class="list-group">';
                 data.productos.forEach(p => {
-                    html += `<a href="#" class="list-group-item list-group-item-action" onclick="seleccionarProductoDesdeLista('${p.codigo_barras}'); return false;">
-                        <strong>${p.nombre}</strong> - ${p.color} - ${p.talla} - Stock: ${p.stock}
+                    const codigoLista = String(p.codigo_barras || '').replace(/'/g, '');
+                    html += `<a href="#" class="list-group-item list-group-item-action" onclick="seleccionarProductoDesdeLista('${codigoLista}'); return false;">
+                        <strong>${p.nombre}</strong> - ${p.codigo_barras} - ${p.color} - ${p.talla} - Stock: ${p.stock}
                     </a>`;
                 });
                 html += '</div>';
@@ -253,7 +278,10 @@ function mostrarProducto(producto) {
     document.getElementById('producto_nombre').textContent = producto.nombre || '';
     document.getElementById('producto_color').textContent = producto.color || '';
     document.getElementById('producto_talla').textContent = producto.talla || '';
-    document.getElementById('producto_precio').textContent = formatearNumero(producto.precio_venta || 0);
+    const precioPesos = Math.round(parseFloat(producto.precio_venta) || 0);
+    const precioEl = document.getElementById('producto_precio');
+    precioEl.textContent = formatearNumero(precioPesos);
+    precioEl.dataset.valor = String(precioPesos);
     
     const stockBadge = document.getElementById('producto_stock');
     stockBadge.textContent = producto.stock || 0;
@@ -309,7 +337,7 @@ function agregarAlCarrito() {
     
     // Obtener datos del producto desde la interfaz
     const productoNombre = document.getElementById('producto_nombre').textContent.trim();
-    const productoPrecio = parseFloat(document.getElementById('producto_precio').textContent);
+    const productoPrecio = parseInt(document.getElementById('producto_precio').dataset.valor, 10);
     const productoStock = parseInt(document.getElementById('producto_stock').textContent);
     
     if (!productoNombre || !productoPrecio || isNaN(productoStock)) {
@@ -480,7 +508,7 @@ function actualizarCarrito() {
                 <td>${parseInt(item.cantidad || 0)}</td>
                 <td>$${formatearNumero(item.precio || 0)}</td>
                 <td>$${formatearNumero(subtotal)}</td>
-                <td><button class="btn btn-sm btn-danger" onclick="eliminarDelCarrito(${index})" title="Eliminar"><i class="bi bi-trash"></i></button></td>
+                <td><button class="btn btn-sm btn-danger btn-icono" onclick="eliminarDelCarrito(${index})" title="Eliminar"><i class="bi bi-trash"></i></button></td>
             `;
             tbody.appendChild(row);
         });
@@ -491,6 +519,25 @@ function actualizarCarrito() {
 }
 
 function eliminarDelCarrito(index) {
+    let carritoActual = [];
+    if (ventaActivaId && ventasAbiertas[ventaActivaId] && ventasAbiertas[ventaActivaId].carrito) {
+        carritoActual = JSON.parse(JSON.stringify(ventasAbiertas[ventaActivaId].carrito));
+    }
+    const item = carritoActual[index];
+    if (!item || typeof pedirDobleConfirmacion !== 'function') {
+        return;
+    }
+    pedirDobleConfirmacion({
+        titulo: 'Quitar producto',
+        detalle: 'Se quita este producto de la venta.',
+        codigo: item.nombre || '',
+        alConfirmar: function () {
+            quitarDelCarrito(index);
+        }
+    });
+}
+
+function quitarDelCarrito(index) {
     // Obtener copia del carrito actual
     let carritoActual = [];
     if (ventaActivaId && ventasAbiertas[ventaActivaId] && ventasAbiertas[ventaActivaId].carrito) {

@@ -17,7 +17,7 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
 
 body {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, #f4f0ef 0%, #d3e0dc 100%);
     font-family: 'Poppins', sans-serif;
     padding: 20px;
 }
@@ -33,7 +33,7 @@ body {
 }
 
 .rotulo-header {
-    background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
+    background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%);
     padding: 30px 40px;
     display: flex;
     align-items: center;
@@ -75,14 +75,14 @@ body {
     font-family: 'Dancing Script', cursive;
     font-size: 42px;
     font-weight: 700;
-    color: #fff;
+    color: #3c3534;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
 .titulo-rotulo {
     font-family: 'Dancing Script', cursive;
     font-size: 48px;
-    color: #fff;
+    color: #3c3534;
     font-weight: 700;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     position: relative;
@@ -97,28 +97,28 @@ body {
 }
 
 .datos-destinatario {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, #f4f0ef 0%, #ece2e1 100%);
     padding: 30px;
     border-radius: 15px;
-    border: 2px solid #FF69B4;
-    box-shadow: 0 4px 15px rgba(255, 105, 180, 0.1);
+    border: 2px solid #fcd1d1;
+    box-shadow: 0 4px 15px rgba(252, 209, 209, 0.35);
 }
 
 .datos-remitente {
-    background: linear-gradient(135deg, #fff5f7 0%, #ffeef2 100%);
+    background: linear-gradient(135deg, #f4f0ef 0%, #ece2e1 100%);
     padding: 30px;
     border-radius: 15px;
-    border: 2px solid #FFB6C1;
-    box-shadow: 0 4px 15px rgba(255, 182, 193, 0.1);
+    border: 2px solid #fcd1d1;
+    box-shadow: 0 4px 15px rgba(252, 209, 209, 0.35);
 }
 
 .section-title {
     font-size: 18px;
     font-weight: 700;
-    color: #FF69B4;
+    color: #fcd1d1;
     margin-bottom: 25px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #FF69B4;
+    border-bottom: 2px solid #fcd1d1;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -130,7 +130,7 @@ body {
 .dato-label {
     font-size: 11px;
     font-weight: 600;
-    color: #666;
+    color: #6d6562;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 5px;
@@ -140,9 +140,9 @@ body {
 .dato-value {
     font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: #3c3534;
     padding: 8px 0;
-    border-bottom: 2px dotted #ddd;
+    border-bottom: 2px dotted #ece2e1;
     min-height: 35px;
     display: flex;
     align-items: center;
@@ -151,13 +151,13 @@ body {
 .estado-pago {
     margin-top: 30px;
     padding-top: 20px;
-    border-top: 2px solid #FF69B4;
+    border-top: 2px solid #fcd1d1;
 }
 
 .estado-pago-title {
     font-size: 12px;
     font-weight: 600;
-    color: #666;
+    color: #6d6562;
     text-transform: uppercase;
     margin-bottom: 15px;
     letter-spacing: 0.5px;
@@ -173,7 +173,7 @@ body {
 .checkbox-pago input[type="checkbox"] {
     width: 28px;
     height: 28px;
-    border: 3px solid #FF69B4;
+    border: 3px solid #fcd1d1;
     border-radius: 6px;
     cursor: pointer;
     appearance: none;
@@ -183,8 +183,8 @@ body {
 }
 
 .checkbox-pago input[type="checkbox"]:checked {
-    background: #FF69B4;
-    border-color: #FF69B4;
+    background: #fcd1d1;
+    border-color: #fcd1d1;
 }
 
 .checkbox-pago input[type="checkbox"]:checked::after {
@@ -193,14 +193,14 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: white;
+    color: #3c3534;
     font-size: 20px;
     font-weight: bold;
 }
 
 .checkbox-pago label {
     font-weight: 700;
-    color: #333;
+    color: #3c3534;
     font-size: 16px;
     cursor: pointer;
     text-transform: uppercase;
@@ -223,15 +223,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #FF69B4;
-    color: white;
+    background: #fcd1d1;
+    color: #3c3534;
     border-radius: 50%;
     font-size: 16px;
     flex-shrink: 0;
 }
 
 .remitente-text {
-    color: #333;
+    color: #3c3534;
     font-size: 15px;
     font-weight: 500;
 }
@@ -241,10 +241,10 @@ body {
     padding: 15px;
     background: rgba(255, 255, 255, 0.7);
     border-radius: 8px;
-    color: #555;
+    color: #6d6562;
     font-size: 14px;
     line-height: 1.6;
-    border-left: 4px solid #FF69B4;
+    border-left: 4px solid #fcd1d1;
 }
 
 .decorative-elements {
@@ -258,7 +258,7 @@ body {
     right: 20px;
     width: 100px;
     height: 100px;
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    background: linear-gradient(135deg, #ece2e1 0%, #d3e0dc 100%);
     border-radius: 20px;
     transform: rotate(15deg);
     opacity: 0.15;
@@ -269,7 +269,7 @@ body {
     left: 20px;
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
+    background: linear-gradient(135deg, #aee1e1 0%, #97cfcf 100%);
     border-radius: 50%;
     opacity: 0.15;
 }
@@ -279,12 +279,12 @@ body {
     bottom: 30px;
     right: 30px;
     z-index: 1000;
-    background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+    background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%);
     border: none;
-    color: white;
+    color: #3c3534;
     padding: 18px 30px;
     border-radius: 50px;
-    box-shadow: 0 6px 25px rgba(255, 105, 180, 0.4);
+    box-shadow: 0 6px 25px rgba(151, 207, 207, 0.28);
     font-weight: 600;
     cursor: pointer;
     font-size: 16px;
@@ -293,7 +293,7 @@ body {
 
 .btn-print-rotulo:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(255, 105, 180, 0.5);
+    box-shadow: 0 8px 30px rgba(151, 207, 207, 0.35);
 }
 
 @media print {
@@ -309,7 +309,7 @@ body {
     }
     
     body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+        background: linear-gradient(135deg, #f4f0ef 0%, #d3e0dc 100%) !important;
         padding: 20px !important;
         margin: 0;
     }
@@ -328,7 +328,7 @@ body {
     }
     
     .rotulo-header {
-        background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%) !important;
+        background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%) !important;
         padding: 30px 40px !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -342,15 +342,15 @@ body {
     }
     
     .datos-destinatario {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-        border: 2px solid #FF69B4 !important;
+        background: linear-gradient(135deg, #f4f0ef 0%, #ece2e1 100%) !important;
+        border: 2px solid #fcd1d1 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
     
     .datos-remitente {
-        background: linear-gradient(135deg, #fff5f7 0%, #ffeef2 100%) !important;
-        border: 2px solid #FFB6C1 !important;
+        background: linear-gradient(135deg, #f4f0ef 0%, #ece2e1 100%) !important;
+        border: 2px solid #fcd1d1 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
@@ -366,13 +366,13 @@ body {
     }
     
     .checkbox-pago input[type="checkbox"]:checked {
-        background: #FF69B4 !important;
+        background: #fcd1d1 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
     
     .remitente-icon {
-        background: #FF69B4 !important;
+        background: #fcd1d1 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }

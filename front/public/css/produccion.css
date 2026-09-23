@@ -8,9 +8,10 @@
 }
 
 .operaria-tab.active {
-    background-color: #FFB6D9 !important;
-    color: #000000 !important;
-    border-color: #FFB6D9 !important;
+    background: var(--degradado-agua) !important;
+    color: var(--tinta-agua) !important;
+    border-color: transparent !important;
+    box-shadow: 0 8px 18px rgba(151, 207, 207, 0.25);
 }
 
 .operaria-contenido {
@@ -21,10 +22,19 @@
 .cronometro-container {
     text-align: center;
     padding: 30px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 15px;
-    color: white;
+    background: #ffffff;
+    border: none;
+    box-shadow: 0 12px 32px rgba(92, 82, 140, 0.08);
+    border-radius: 28px;
+    color: #3c3534;
     margin: 20px 0;
+}
+
+.cronometro-display,
+.cronometro-container,
+.cronometro-container small,
+.cronometro-container strong {
+    color: #3c3534 !important;
 }
 
 .cronometro-display {
@@ -48,7 +58,7 @@
     padding: 12px 20px;
     font-size: 1rem;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 999px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     transition: all 0.3s ease;
 }
@@ -76,8 +86,8 @@
 .card.bg-warning:hover,
 .card.bg-success:hover,
 .card.bg-primary:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: none;
+    box-shadow: none;
 }
 
 .card.bg-info h3,
@@ -95,7 +105,7 @@
 }
 
 #tablaOperaciones thead {
-    background-color: #f8f9fa;
+    background-color: #f4f0ef;
     font-weight: 600;
 }
 
@@ -104,7 +114,7 @@
 }
 
 #tablaOperaciones tbody tr:hover {
-    background-color: #f8f9fa;
+    background-color: #f4f0ef;
 }
 
 #tablaOperaciones .badge {
@@ -124,14 +134,14 @@
 /* Formularios */
 .form-label {
     font-weight: 600;
-    color: #495057;
+    color: #6d6562;
     margin-bottom: 5px;
 }
 
 .form-control:focus,
 .form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    border-color: #9a918e;
+    box-shadow: 0 0 0 3px rgba(28, 25, 23, 0.08);
 }
 
 /* Botones de acción */
@@ -179,17 +189,354 @@
 
 /* Estilos para estados de eficiencia */
 .eficiencia-alta {
-    color: #28a745;
+    color: var(--tinta-salvia);
     font-weight: bold;
 }
 
 .eficiencia-media {
-    color: #ffc107;
+    color: var(--tinta-teal);
     font-weight: bold;
 }
 
 .eficiencia-baja {
-    color: #dc3545;
+    color: var(--tinta-rosa);
     font-weight: bold;
+}
+
+/* Pantalla simple del operario */
+.produccion-operario .produccion-admin-bar,
+.produccion-operario #operariasTabs,
+.produccion-operario #contenedorOperarias {
+    display: none !important;
+}
+
+.piso-operario {
+    max-width: 720px;
+    margin: 0 auto 2rem;
+    color: #3c3534;
+}
+
+.piso-saludo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: #fff;
+    border: none;
+    box-shadow: 0 16px 40px rgba(92, 82, 140, 0.12);
+    border-radius: 20px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.4rem;
+}
+
+.piso-hola {
+    font-size: 1.85rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.15;
+}
+
+.piso-fecha {
+    margin: 0.2rem 0 0;
+    font-size: 1.05rem;
+}
+
+.piso-cuenta {
+    flex: 0 0 auto;
+    min-width: 92px;
+    text-align: center;
+    background: #d3e0dc;
+    border-radius: 16px;
+    padding: 0.45rem 0.75rem;
+}
+
+.piso-cuenta-num {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.piso-cuenta-etiq {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.piso-hoy {
+    color: #6d6562;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.piso-paso {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 1rem 0 0.6rem;
+}
+
+.piso-maquinas,
+.piso-defectos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.piso-tile {
+    min-height: 76px;
+    border: 3px solid #ece2e1;
+    border-radius: 16px;
+    background: #fff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 0.75rem;
+}
+
+.piso-tile.is-on {
+    border-color: var(--tono-teal);
+    background: var(--degradado-agua);
+    color: var(--tinta-agua);
+}
+
+.piso-empezar, .piso-guardar { background: var(--degradado-firma); color: var(--text-primary); }
+.piso-pause { background: var(--degradado-arena); color: var(--tinta-arena); }
+.piso-seguir { background: var(--degradado-agua); color: var(--tinta-agua); }
+.piso-termine { background: var(--degradado-salvia); color: var(--tinta-salvia); }
+
+.piso-reloj-caja {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #ffffff;
+    border: none;
+    box-shadow: 0 12px 32px rgba(92, 82, 140, 0.1);
+    color: #3c3534 !important;
+    border-radius: 28px;
+    padding: 1.25rem 1rem 1rem;
+    text-align: center;
+}
+
+.piso-reloj-caja.pausado { background: #ece2e1; }
+.piso-reloj-caja.listo-tiempo { background: #d3e0dc; }
+
+.piso-reloj,
+.piso-reloj-caja .piso-llevas,
+.piso-reloj-caja .piso-en {
+    color: #3c3534 !important;
+}
+
+.piso-que {
+    font-size: 1.35rem;
+    min-height: 64px;
+    border-radius: 14px;
+    border: 3px solid #ece2e1;
+}
+
+.piso-accion {
+    width: 100%;
+    min-height: 88px;
+    margin-top: 1rem;
+    border: 0;
+    border-radius: 18px;
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.piso-accion:disabled {
+    opacity: 0.45;
+}
+
+.piso-reloj {
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(4.5rem, 16vw, 8rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1;
+}
+
+.piso-llevas {
+    font-size: 1.35rem;
+    margin-top: 0.35rem;
+}
+
+.piso-en {
+    font-size: 1.2rem;
+    margin-top: 0.75rem;
+}
+
+.piso-fila {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.piso-piezas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.piso-step {
+    width: 88px;
+    height: 88px;
+    border-radius: 18px;
+    border: 0;
+    background: #ece2e1;
+    font-size: 2.5rem;
+    font-weight: 800;
+}
+
+.piso-numero {
+    min-width: 120px;
+    font-size: 4rem;
+    font-weight: 800;
+    text-align: center;
+    border: 0;
+    background: transparent;
+}
+
+.piso-aviso {
+    background: #d3e0dc;
+    border: 2px solid #aee1e1;
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.piso-lista {
+    margin-top: 1.5rem;
+}
+
+.piso-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    background: #fff;
+    border: 2px solid #ece2e1;
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.6rem;
+    font-size: 1.15rem;
+}
+
+.piso-borrar {
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
+    border: 2px solid #fcd1d1;
+    border-radius: 50%;
+    background: #fff;
+    color: #7a5555;
+    font-size: 1.45rem;
+}
+
+.piso-problema {
+    margin-top: 0.5rem;
+    font-size: 1.15rem;
+}
+
+.piso-chip {
+    display: inline-block;
+    margin-top: 0.35rem;
+    background: #d3e0dc;
+    color: #4a6156 !important;
+    border-radius: 999px;
+    padding: 0.2rem 0.75rem;
+    font-weight: 700;
+}
+
+.piso-cerrado {
+    margin-top: 1rem;
+    text-align: center;
+    background: #fcd1d1;
+    border: 2px solid #7a5555;
+    border-radius: 16px;
+    padding: 1.5rem 1rem;
+}
+
+.piso-cerrado i {
+    font-size: 2.6rem;
+    color: #7a5555 !important;
+}
+
+.prod-ayuda {
+    margin: 0;
+    max-width: 40rem;
+    color: #3c3534 !important;
+}
+
+.estado-dia {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    margin-top: 1rem;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    border: 2px solid;
+}
+
+.estado-dia i {
+    font-size: 1.7rem;
+}
+
+.estado-dia strong,
+.estado-dia span {
+    display: block;
+}
+
+.estado-abierto {
+    background: var(--degradado-salvia);
+    border-color: var(--tono-salvia);
+}
+
+.estado-abierto,
+.estado-abierto strong,
+.estado-abierto span,
+.estado-abierto i {
+    color: var(--tinta-salvia) !important;
+}
+
+.estado-cerrado {
+    background: var(--degradado-rosa);
+    border-color: var(--tono-rosa);
+}
+
+.estado-cerrado,
+.estado-cerrado strong,
+.estado-cerrado span,
+.estado-cerrado i {
+    color: var(--tinta-rosa) !important;
+}
+
+.prod-vacia {
+    background: #fff;
+    border: 2px dashed #ece2e1;
+    border-radius: 16px;
+    padding: 1.5rem;
+    font-size: 1.05rem;
+}
+
+.prod-vacia strong,
+.prod-vacia p {
+    color: #3c3534 !important;
+}
+
+@media (max-width: 640px) {
+    .piso-maquinas,
+    .piso-defectos,
+    .piso-fila {
+        grid-template-columns: 1fr;
+    }
+
+    .piso-saludo {
+        align-items: flex-start;
+    }
 }
 

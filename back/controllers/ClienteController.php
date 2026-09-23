@@ -36,6 +36,7 @@ class ClienteController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=clientes');
         }
+        exigir_csrf_redirect('index.php?action=clientes');
         
         $data = [
             'nombre_completo' => trim($_POST['nombre_completo'] ?? ''),
@@ -132,6 +133,7 @@ class ClienteController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=clientes');
         }
+        exigir_csrf_redirect('index.php?action=clientes');
         
         $id = intval($_POST['id'] ?? 0);
         $cliente = $this->clienteModel->getById($id);
@@ -174,6 +176,17 @@ class ClienteController {
         
         if ($id == 1) {
             $_SESSION['error'] = 'No se puede eliminar el cliente general';
+            redirect('index.php?action=clientes');
+        }
+
+        $cliente = $this->clienteModel->getById($id);
+        if (!$cliente) {
+            $_SESSION['error'] = 'Cliente no encontrado';
+            redirect('index.php?action=clientes');
+        }
+        $esperado = trim($cliente['cedula_nit'] ?? '') !== '' ? $cliente['cedula_nit'] : ($cliente['nombre_completo'] ?? '');
+        if (!codigo_eliminacion_valido($esperado)) {
+            $_SESSION['error'] = 'La confirmación no coincide. No se eliminó.';
             redirect('index.php?action=clientes');
         }
         
@@ -267,6 +280,7 @@ class ClienteController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
 
         // Limpiar cualquier output previo (warnings, notices, etc.) antes de enviar headers
         ob_clean();

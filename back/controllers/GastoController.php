@@ -71,6 +71,7 @@ class GastoController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=gastos');
         }
+        exigir_csrf_redirect('index.php?action=gastos');
         
         $data = [
             'concepto' => trim($_POST['concepto'] ?? ''),
@@ -123,6 +124,7 @@ class GastoController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=gastos');
         }
+        exigir_csrf_redirect('index.php?action=gastos');
         
         $id = intval($_POST['id'] ?? 0);
         $gasto = $this->gastoModel->getById($id);
@@ -160,6 +162,15 @@ class GastoController {
         }
         
         $id = intval($_POST['id'] ?? 0);
+        $gasto = $this->gastoModel->getById($id);
+        if (!$gasto) {
+            $_SESSION['error'] = 'Gasto no encontrado';
+            redirect('index.php?action=gastos');
+        }
+        if (!codigo_eliminacion_valido($gasto['concepto'] ?? '')) {
+            $_SESSION['error'] = 'La confirmación no coincide. No se eliminó.';
+            redirect('index.php?action=gastos');
+        }
         
         if ($this->gastoModel->delete($id)) {
             $_SESSION['success'] = 'Gasto eliminado exitosamente';
@@ -196,6 +207,7 @@ class GastoController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $nombre = trim($_POST['nombre'] ?? '');
         
@@ -236,6 +248,7 @@ class GastoController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $id = intval($_POST['id'] ?? 0);
         $nombre = trim($_POST['nombre'] ?? '');
@@ -275,11 +288,18 @@ class GastoController {
             echo json_encode(['success' => false, 'error' => 'Método no permitido']);
             exit;
         }
+        exigir_csrf_json();
         
         $id = intval($_POST['id'] ?? 0);
         
         if ($id <= 0) {
             echo json_encode(['success' => false, 'error' => 'ID de categoría inválido']);
+            exit;
+        }
+
+        $categoria = $this->categoriaGastoModel->getById($id);
+        if (!$categoria || !codigo_eliminacion_valido($categoria['nombre'] ?? '')) {
+            echo json_encode(['success' => false, 'error' => 'La confirmación no coincide. No se eliminó.']);
             exit;
         }
         
@@ -319,6 +339,7 @@ class GastoController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=gastos');
         }
+        exigir_csrf_redirect('index.php?action=gastos');
         
         require_once BASE_DIR . '/back/models/Inversion.php';
         $inversionModel = new Inversion($this->db);
@@ -377,6 +398,7 @@ class GastoController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=gastos');
         }
+        exigir_csrf_redirect('index.php?action=gastos');
         
         require_once BASE_DIR . '/back/models/Inversion.php';
         $inversionModel = new Inversion($this->db);
@@ -420,6 +442,15 @@ class GastoController {
         $inversionModel = new Inversion($this->db);
         
         $id = intval($_POST['id'] ?? 0);
+        $inversion = $inversionModel->getById($id);
+        if (!$inversion) {
+            $_SESSION['error'] = 'Inversión no encontrada';
+            redirect('index.php?action=gastos');
+        }
+        if (!codigo_eliminacion_valido($inversion['concepto'] ?? '')) {
+            $_SESSION['error'] = 'La confirmación no coincide. No se eliminó.';
+            redirect('index.php?action=gastos');
+        }
         
         if ($inversionModel->delete($id)) {
             $_SESSION['success'] = 'Inversión eliminada exitosamente';

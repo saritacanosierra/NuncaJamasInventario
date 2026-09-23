@@ -24,9 +24,7 @@ class DashboardController {
         
         // Verificar permisos antes de mostrar el dashboard
         if (!canAccess('dashboard')) {
-            $rol = $_SESSION['usuario_rol'] ?? 'cajero';
-            $redirectAction = ($rol === 'cajero') ? 'ventas' : (($rol === 'operario') ? 'produccion' : 'login');
-            redirect('index.php?action=' . $redirectAction);
+            redirect(permisos_url_inicio());
         }
         
         try {

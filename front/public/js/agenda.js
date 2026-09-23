@@ -249,13 +249,19 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Función para eliminar tarea
-    window.eliminarTarea = function(tareaId) {
-        if (!confirm('¿Está seguro de eliminar esta tarea?')) {
+    window.eliminarTarea = function(tareaId, boton) {
+        const codigo = boton && boton.getAttribute ? (boton.getAttribute('data-codigo') || '') : '';
+        if (!codigo || typeof pedirDobleConfirmacion !== 'function') {
             return;
         }
-        
+        pedirDobleConfirmacion({
+            titulo: 'Eliminar tarea',
+            detalle: 'Se borra la tarea y no se puede recuperar.',
+            codigo: codigo,
+            alConfirmar: function (escrito) {
         const formData = new FormData();
         formData.append('id', tareaId);
+        formData.append('codigo_confirmacion', escrito);
         if (window.CSRF_TOKEN) {
             formData.append('csrf_token', window.CSRF_TOKEN);
         }
@@ -276,6 +282,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             alert('Error al eliminar la tarea');
+        });
+            }
         });
     };
 });
