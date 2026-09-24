@@ -19,6 +19,24 @@
     cursor: pointer;
 }
 
+#modalEditarProducto .modal-dialog {
+    max-width: 52rem;
+}
+
+#modalEditarProducto .img-barcode-tabla {
+    display: block;
+    max-height: 4.5rem;
+    width: auto;
+    margin: 0.35rem auto 0;
+}
+
+#modalEditarProducto .fila-talla .btn-icono,
+.lista-tallas .btn-quitar-talla {
+    width: 2.35rem;
+    height: 2.35rem;
+    min-width: 2.35rem;
+}
+
 .img-codigo-modal {
     max-width: 100%;
     height: auto;

@@ -4,9 +4,11 @@
  */
 
 class ProduccionController {
+    private $db;
     private $produccionModel;
     
     public function __construct($db) {
+        $this->db = $db;
         try {
             require_once BASE_DIR . '/back/models/Produccion.php';
             $this->produccionModel = new Produccion($db);
@@ -806,5 +808,41 @@ class ProduccionController {
         $bitacoraDias = $this->produccionModel->getBitacoraDias($fechaInicio, $fechaFin, $_SESSION['usuario_id'], $verTodas);
         
         require_once BASE_DIR . '/front/views/produccion/dashboard_operaciones.php';
+    }
+
+    public function pago() {
+        $desde = trim($_GET['desde'] ?? date('Y-m-01'));
+        $hasta = trim($_GET['hasta'] ?? date('Y-m-d'));
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $desde)) {
+            $desde = date('Y-m-01');
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $hasta)) {
+            $hasta = date('Y-m-d');
+        }
+        $pago = new PagoPieza($this->db);
+        $tarifas = $pago->tarifas();
+        $codigos = $pago->codigosUsados();
+        $liquidacion = $pago->liquidacion($desde, $hasta);
+        require_once BASE_DIR . '/front/views/produccion/pago.php';
+    }
+
+    public function guardarTarifa() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('index.php?action=produccion&method=pago');
+        }
+        exigir_csrf_redirect('index.php?action=produccion&method=pago');
+
+        $codigo = trim($_POST['codigo'] ?? '');
+        $nombre = trim($_POST['nombre'] ?? '');
+        $valor = (int) ($_POST['valor_pieza'] ?? -1);
+        $desde = trim($_POST['desde'] ?? date('Y-m-01'));
+        $hasta = trim($_POST['hasta'] ?? date('Y-m-d'));
+        if ($codigo === '' || $nombre === '' || $valor < 0) {
+            $_SESSION['error'] = 'La tarifa necesita código, nombre y un valor en pesos.';
+            redirect('index.php?action=produccion&method=pago');
+        }
+        (new PagoPieza($this->db))->guardar(mb_substr($codigo, 0, 40), mb_substr($nombre, 0, 120), $valor);
+        $_SESSION['success'] = 'Tarifa guardada.';
+        redirect('index.php?action=produccion&method=pago&desde=' . urlencode($desde) . '&hasta=' . urlencode($hasta));
     }
 }

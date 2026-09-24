@@ -1,0 +1,4 @@
+@media print {
+    .no-print, .navbar, .modal { display: none !important; }
+    .informe-mes { padding: 0; }
+}

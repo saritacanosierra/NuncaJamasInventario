@@ -225,6 +225,21 @@ a:hover {
     font-size: 1.05rem;
     color: var(--text-primary) !important;
     letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+}
+
+.logo-marca {
+    height: 52px;
+    width: auto;
+    display: block;
+}
+
+.logo-acceso {
+    width: 220px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
 }
 
 .navbar-brand:hover {

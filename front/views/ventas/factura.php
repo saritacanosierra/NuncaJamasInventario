@@ -3,7 +3,45 @@ $pageTitle = 'Factura';
 require_once BASE_DIR . '/front/views/layout/header.php';
 
 // Ruta del logo
-$logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
+$logoPath = BASE_URL . 'front/public/img/logo-nunca-jamas.jpg';
+if (!isset($remitente) || !is_array($remitente)) {
+    $remitente = [];
+}
+$remitente += [
+    'nombre' => '',
+    'cedula' => '',
+    'telefono' => '',
+    'direccion' => '',
+];
+if (!isset($venta) || !is_array($venta)) {
+    $venta = [];
+}
+$venta += [
+    'id' => 0,
+    'cliente_nombre' => '',
+    'cliente_cedula' => '',
+    'cliente_direccion' => '',
+    'cliente_telefono' => '',
+    'vendedor' => '',
+    'numero_factura' => '',
+    'fecha_venta' => date('Y-m-d H:i:s'),
+    'metodo_pago' => '',
+    'pago_contra_entrega' => 0,
+    'con_domicilio' => 0,
+    'observaciones_domicilio' => '',
+    'detalles' => [],
+    'subtotal' => 0,
+    'descuento' => 0,
+    'total' => 0,
+];
+if (!is_array($venta['detalles'])) {
+    $venta['detalles'] = [];
+}
+if (!isset($resolucion) || !is_array($resolucion)) {
+    $resolucion = null;
+}
+$razonFactura = !empty($resolucion['razon_social']) ? $resolucion['razon_social'] : $remitente['nombre'];
+$nitFactura = !empty($resolucion['nit']) ? $resolucion['nit'] : $remitente['cedula'];
 ?>
 
 <div class="factura-container">
@@ -20,6 +58,12 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
                 <p class="factura-subtitle">Ropa Infantil</p>
             </div>
             <div class="factura-empresa-data">
+                <p class="mb-1"><small><?php echo htmlspecialchars($razonFactura); ?></small></p>
+                <p class="mb-1"><small>NIT: <?php echo htmlspecialchars($nitFactura); ?></small></p>
+                <?php if (!empty($resolucion)): ?>
+                <p class="mb-1"><small>Resolución <?php echo htmlspecialchars($resolucion['numero']); ?> del <?php echo date('d/m/Y', strtotime($resolucion['fecha_desde'])); ?></small></p>
+                <p class="mb-1"><small><?php echo htmlspecialchars($resolucion['prefijo']); ?> del <?php echo (int) $resolucion['desde_numero']; ?> al <?php echo (int) $resolucion['hasta_numero']; ?>, hasta el <?php echo date('d/m/Y', strtotime($resolucion['fecha_hasta'])); ?></small></p>
+                <?php endif; ?>
                 <p class="mb-1"><small><i class="bi bi-telephone"></i> Teléfono: <?php echo htmlspecialchars($remitente['telefono']); ?></small></p>
                 <p class="mb-0"><small><i class="bi bi-geo-alt"></i> <?php echo nl2br(htmlspecialchars($remitente['direccion'])); ?></small></p>
             </div>
@@ -48,6 +92,12 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
                     <p class="mb-1"><strong>Número:</strong> <span class="factura-numero-compact"><?php echo htmlspecialchars($venta['numero_factura']); ?></span></p>
                     <p class="mb-1"><strong>Fecha:</strong> <?php echo date('d/m/Y H:i', strtotime($venta['fecha_venta'])); ?></p>
                     <p class="mb-1"><strong>Método de Pago:</strong> <?php echo htmlspecialchars($venta['metodo_pago']); ?></p>
+                    <?php if ((float) ($venta['pago_transferencia'] ?? 0) > 0 && (float) ($venta['pago_efectivo'] ?? 0) > 0): ?>
+                    <p class="mb-1"><strong>Transferencia:</strong> <?php echo pesos($venta['pago_transferencia']); ?> · <strong>Efectivo:</strong> <?php echo pesos($venta['pago_efectivo']); ?></p>
+                    <?php endif; ?>
+                    <?php if ((float) ($venta['recibido'] ?? 0) > 0): ?>
+                    <p class="mb-1"><strong>Recibí:</strong> <?php echo pesos($venta['recibido']); ?> · <strong>Devuelta:</strong> <?php echo pesos($venta['devuelta'] ?? 0); ?></p>
+                    <?php endif; ?>
                     <?php 
                     $pagoContraEntrega = isset($venta['pago_contra_entrega']) && ($venta['pago_contra_entrega'] == 1 || $venta['pago_contra_entrega'] === '1' || $venta['pago_contra_entrega'] === true);
                     if ($pagoContraEntrega):
@@ -96,6 +146,7 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
                     <?php endforeach; ?>
                 </tbody>
                 <tfoot>
+                    <?php $domicilioPorCobrar = ((float) ($venta['domicilio'] ?? 0) > 0) && (!empty($venta['domicilio_contra_entrega']) || !empty($venta['pago_contra_entrega'])); ?>
                     <tr>
                         <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
                         <td class="text-end"><strong><?php echo pesos($venta['subtotal']); ?></strong></td>
@@ -106,6 +157,28 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
                             <td class="text-end"><strong><?php echo pesos(-($venta['descuento'])); ?></strong></td>
                         </tr>
                     <?php endif; ?>
+                    <?php if ((float) ($venta['iva'] ?? 0) > 0): ?>
+                        <?php
+                        $ivaSumado = round((float) $venta['subtotal'] - (float) $venta['descuento'] + (float) $venta['iva'] + (float) ($venta['domicilio'] ?? 0) + (float) ($venta['empaque'] ?? 0));
+                        $ivaYaIncluido = abs($ivaSumado - round((float) $venta['total'])) > 1;
+                        ?>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong><?php echo $ivaYaIncluido ? 'IVA incluido:' : 'IVA:'; ?></strong></td>
+                            <td class="text-end"><strong><?php echo pesos($venta['iva']); ?></strong></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if ((float) ($venta['domicilio'] ?? 0) > 0): ?>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong><?php echo $domicilioPorCobrar ? 'Domicilio (contra entrega):' : 'Domicilio:'; ?></strong></td>
+                            <td class="text-end"><strong><?php echo pesos($venta['domicilio']); ?></strong></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if ((float) ($venta['empaque'] ?? 0) > 0): ?>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Empaque:</strong></td>
+                            <td class="text-end"><strong><?php echo pesos($venta['empaque']); ?></strong></td>
+                        </tr>
+                    <?php endif; ?>
                     <tr class="table-success factura-total-row">
                         <td colspan="3" class="text-end"><strong class="h5">TOTAL:</strong></td>
                         <td class="text-end"><strong class="h4"><?php echo pesos($venta['total']); ?></strong></td>
@@ -114,488 +187,23 @@ $logoPath = BASE_URL . 'front/public/img/logo nunca jamas.png';
             </table>
         </div>
         
-        <div class="text-center mt-4 no-print">
-            <button onclick="window.print()" class="btn btn-primary">
-                <i class="bi bi-printer"></i> Imprimir Factura
-            </button>
-            <?php 
-            if ($conDomicilio): 
-            ?>
-                <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=rotuloEnvio&id=<?php echo $venta['id']; ?>" 
-                   class="btn btn-info" target="_blank">
-                    <i class="bi bi-truck"></i> Imprimir Rótulo de Envío
+        <div class="factura-acciones no-print">
+            <div class="factura-acciones-fila">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer"></i> Imprimir factura
+                </button>
+                <?php if ($conDomicilio): ?>
+                <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=rotuloEnvio&id=<?php echo $venta['id']; ?>" class="btn btn-info" target="_blank">
+                    <i class="bi bi-truck"></i> Imprimir rótulo
                 </a>
-            <?php endif; ?>
-            <a href="<?php echo BASE_URL; ?>index.php?action=ventas" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Nueva Venta
+                <?php endif; ?>
+            </div>
+            <a href="<?php echo BASE_URL; ?>index.php?action=ventas" class="btn btn-secondary factura-accion-volver">
+                <i class="bi bi-arrow-left"></i> Nueva venta
             </a>
         </div>
     </div>
 </div>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
-
-.factura-container {
-    max-width: 900px;
-    margin: 20px auto;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-.factura-header {
-    background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%);
-    padding: 30px 40px;
-    color: #3c3534;
-}
-
-.factura-header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-.factura-logo-section {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    flex-shrink: 0;
-}
-
-.factura-title-section {
-    flex: 1;
-    text-align: center;
-}
-
-.factura-empresa-data {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    flex-shrink: 0;
-    text-align: right;
-}
-
-.logo-factura {
-    width: 120px;
-    height: 120px;
-    object-fit: contain;
-    background: white;
-    border-radius: 100px;
-    padding: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-
-.factura-empresa-data i {
-    margin-right: 8px;
-    font-size: 14px;
-    opacity: 1;
-    vertical-align: middle;
-    color: #000000;
-}
-
-.factura-empresa-data small {
-    color: #000000;
-    font-size: 12px;
-    display: block;
-}
-
-.factura-title {
-    font-size: 32px;
-    font-weight: 700;
-    margin: 0;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-}
-
-.factura-subtitle {
-    margin: 5px 0 0 0;
-    font-size: 14px;
-    opacity: 0.9;
-}
-
-.factura-body {
-    padding: 30px 40px;
-}
-
-.factura-info-box-compact {
-    background: #f4f0ef;
-    padding: 15px 20px;
-    border-radius: 8px;
-    border-left: 3px solid #fcd1d1;
-    height: 100%;
-    font-size: 14px;
-}
-
-.factura-info-title-compact {
-    font-size: 13px;
-    font-weight: 700;
-    color: #fcd1d1;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #fcd1d1;
-}
-
-.factura-numero-compact {
-    font-size: 18px;
-    font-weight: 700;
-    color: #3c3534;
-}
-
-.factura-info-box-compact p {
-    margin-bottom: 6px;
-    line-height: 1.5;
-}
-
-.factura-info-box-compact small {
-    font-size: 13px;
-    color: #6d6562;
-}
-
-.badge-sm {
-    font-size: 11px;
-    padding: 4px 10px;
-}
-
-.factura-table-container {
-    margin-top: 30px;
-}
-
-.factura-table {
-    margin-bottom: 0;
-}
-
-.factura-table thead {
-    background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%);
-    color: #3c3534;
-}
-
-.factura-table thead th {
-    border: none;
-    padding: 15px;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 13px;
-    letter-spacing: 0.5px;
-}
-
-.factura-table tbody td {
-    padding: 15px;
-    vertical-align: middle;
-}
-
-.factura-table tfoot td {
-    padding: 15px;
-    font-size: 16px;
-}
-
-.factura-total-row {
-    background: linear-gradient(135deg, #d3e0dc 0%, #aee1e1 100%) !important;
-}
-
-.factura-total-row td {
-    font-size: 20px;
-    padding: 20px 15px !important;
-}
-
-.info-domicilio {
-    background-color: #aee1e1;
-    border: 1px solid #aee1e1;
-    border-radius: 0.375rem;
-    padding: 1rem;
-    color: #3e6464;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-@media print {
-    @page {
-        margin: 0.5cm;
-        size: A4;
-    }
-    
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-    
-    body {
-        background: #fff !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-    
-    .navbar, .btn, .card-header, .no-print, .main-container > *:not(.factura-container) {
-        display: none !important;
-    }
-    
-    .main-container {
-        padding: 0 !important;
-        margin: 0 !important;
-        max-width: 100% !important;
-    }
-    
-    .factura-container {
-        max-width: 100% !important;
-        margin: 0 auto !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
-        border-radius: 10px !important;
-        page-break-after: avoid;
-        background: #fff !important;
-    }
-    
-    .factura-header {
-        background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%) !important;
-        padding: 30px 40px !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-        page-break-after: avoid;
-    }
-    
-    .factura-header-top {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        gap: 20px !important;
-    }
-    
-    .factura-logo-section {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        flex-shrink: 0 !important;
-    }
-    
-    .logo-factura {
-        width: 120px !important;
-        height: 120px !important;
-        object-fit: contain !important;
-        background: white !important;
-        border-radius: 100px !important;
-        padding: 10px !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-        display: block !important;
-    }
-    
-    .factura-title-section {
-        flex: 1 !important;
-        text-align: center !important;
-    }
-    
-    .factura-empresa-data {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-end !important;
-        flex-shrink: 0 !important;
-        text-align: right !important;
-        color: #000000 !important;
-        font-size: 13px !important;
-        line-height: 1.8 !important;
-    }
-    
-    .factura-empresa-data i {
-        margin-right: 8px !important;
-        font-size: 14px !important;
-        opacity: 1 !important;
-        vertical-align: middle !important;
-        display: inline !important;
-        color: #000000 !important;
-    }
-    
-    .factura-empresa-data small {
-        color: #000000 !important;
-        font-size: 12px !important;
-        display: block !important;
-        text-align: right !important;
-    }
-    
-    .factura-title {
-        font-size: 32px !important;
-        font-weight: 700 !important;
-        margin: 0 !important;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2) !important;
-        color: #3c3534 !important;
-    }
-    
-    .factura-subtitle {
-        margin: 5px 0 0 0 !important;
-        font-size: 14px !important;
-        opacity: 0.9 !important;
-        color: #3c3534 !important;
-    }
-    
-    .factura-body {
-        padding: 30px 40px !important;
-        background: #fff !important;
-    }
-    
-    .factura-body {
-        padding: 30px 40px !important;
-        background: #fff !important;
-    }
-    
-    .row {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        margin-right: -15px !important;
-        margin-left: -15px !important;
-    }
-    
-    .col-md-6 {
-        flex: 0 0 50% !important;
-        max-width: 50% !important;
-        padding-right: 15px !important;
-        padding-left: 15px !important;
-    }
-    
-    .factura-info-box-compact {
-        background: #f4f0ef !important;
-        border-left: 3px solid #fcd1d1 !important;
-        padding: 15px 20px !important;
-        border-radius: 8px !important;
-        height: 100% !important;
-        font-size: 14px !important;
-        page-break-inside: avoid;
-    }
-    
-    .factura-info-title-compact {
-        font-size: 13px !important;
-        font-weight: 700 !important;
-        color: #fcd1d1 !important;
-        margin-bottom: 12px !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        padding-bottom: 8px !important;
-        border-bottom: 2px solid #fcd1d1 !important;
-    }
-    
-    .factura-numero-compact {
-        font-size: 18px !important;
-        font-weight: 700 !important;
-        color: #3c3534 !important;
-    }
-    
-    .factura-info-box-compact p {
-        margin-bottom: 6px !important;
-        line-height: 1.5 !important;
-    }
-    
-    .factura-info-box-compact small {
-        font-size: 13px !important;
-        color: #6d6562 !important;
-    }
-    
-    .badge-sm {
-        font-size: 11px !important;
-        padding: 4px 10px !important;
-    }
-    
-    .badge {
-        background-color: #aee1e1 !important;
-        color: #000 !important;
-        padding: 4px 10px !important;
-        border-radius: 0.25rem !important;
-        font-size: 11px !important;
-        display: inline-block !important;
-    }
-    
-    .badge.bg-success {
-        background-color: #97cfcf !important;
-        color: #3c3534 !important;
-    }
-    
-    .badge.bg-warning {
-        background-color: #5e5552 !important;
-        color: #000 !important;
-    }
-    
-    .factura-table-container {
-        margin-top: 30px !important;
-    }
-    
-    .factura-table {
-        margin-bottom: 0 !important;
-    }
-    
-    .factura-table thead {
-        background: linear-gradient(135deg, #fcd1d1 0%, #aee1e1 100%) !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-    
-    .factura-table thead th {
-        color: #3c3534 !important;
-        border: none !important;
-        padding: 15px !important;
-        font-weight: 600 !important;
-        text-transform: uppercase !important;
-        font-size: 13px !important;
-        letter-spacing: 0.5px !important;
-    }
-    
-    .factura-table tbody td {
-        padding: 15px !important;
-        vertical-align: middle !important;
-    }
-    
-    .factura-table tfoot td {
-        padding: 15px !important;
-        font-size: 16px !important;
-    }
-    
-    .factura-total-row {
-        background: linear-gradient(135deg, #d3e0dc 0%, #aee1e1 100%) !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-    
-    .factura-total-row td {
-        font-size: 20px !important;
-        padding: 20px 15px !important;
-    }
-    
-    .badge {
-        background-color: #aee1e1 !important;
-        color: #000 !important;
-        padding: 4px 10px !important;
-        border-radius: 0.25rem !important;
-        font-size: 11px !important;
-        display: inline-block !important;
-    }
-    
-    .info-domicilio {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        background-color: #aee1e1 !important;
-        border: 1px solid #aee1e1 !important;
-        border-radius: 0.375rem !important;
-        padding: 1rem !important;
-        color: #3e6464 !important;
-        page-break-inside: avoid;
-    }
-}
-
-@media (max-width: 768px) {
-    .factura-header {
-        flex-direction: column;
-        text-align: center;
-        gap: 20px;
-    }
-    
-    .factura-title-section {
-        text-align: center;
-    }
-}
-</style>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>

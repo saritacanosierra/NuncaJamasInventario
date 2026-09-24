@@ -23,10 +23,11 @@ class ProductoController {
         $filters = [
             'busqueda' => $_GET['busqueda'] ?? '',
             'categoria_id' => $_GET['categoria_id'] ?? '',
-            'estado' => $_GET['estado'] ?? ''
+            'estado' => $_GET['estado'] ?? '',
+            'origen' => $_GET['origen'] ?? ''
         ];
         
-        $productos = $this->productoModel->getAll($filters);
+        $productos = $this->productoModel->conTallas($this->productoModel->getAll($filters));
         $categorias = $this->categoriaModel->getAllWithCount();
         
         require_once BASE_DIR . '/front/views/productos/index.php';
@@ -97,6 +98,7 @@ class ProductoController {
             'stock' => intval($_POST['stock'] ?? 0),
             'stock_minimo' => intval($_POST['stock_minimo'] ?? 5),
             'estado' => $_POST['estado'] ?? 'Disponible',
+            'origen' => $this->origenProducto($_POST['origen'] ?? ''),
             'foto' => null
         ];
         
@@ -109,6 +111,16 @@ class ProductoController {
         if (empty($data['categoria_id']) || $data['categoria_id'] == 0) {
             $_SESSION['error'] = 'Debe seleccionar una categoría';
             redirect('index.php?action=productos');
+        }
+
+        $tallas = $this->leerTallas();
+        if ($tallas === null) {
+            redirect('index.php?action=productos');
+        }
+        $data['talla'] = $tallas[0]['talla'];
+        $data['stock'] = 0;
+        foreach ($tallas as $talla) {
+            $data['stock'] += $talla['stock'];
         }
         
         // Verificar si código ya existe
@@ -137,6 +149,7 @@ class ProductoController {
             
             // El método create() ahora retorna el ID del producto o false
             if ($result && $result > 0) {
+                $this->productoModel->guardarTallas($result, $tallas);
                 $_SESSION['success'] = 'Producto creado exitosamente';
                 redirect('index.php?action=productos');
             } else {
@@ -233,17 +246,26 @@ class ProductoController {
             redirect('index.php?action=productos');
         }
         
+        $tallas = $this->leerTallas();
+        if ($tallas === null) {
+            redirect('index.php?action=productos');
+        }
+        $stock = 0;
+        foreach ($tallas as $talla) {
+            $stock += $talla['stock'];
+        }
         $data = [
             'nombre' => trim($_POST['nombre'] ?? ''),
             'descripcion' => trim($_POST['descripcion'] ?? ''),
             'color' => trim($_POST['color'] ?? ''),
-            'talla' => trim($_POST['talla'] ?? ''),
+            'talla' => $tallas[0]['talla'],
             'precio_costo' => floatval($_POST['precio_costo'] ?? 0),
             'precio_venta' => floatval($_POST['precio_venta'] ?? 0),
             'categoria_id' => intval($_POST['categoria_id'] ?? 0),
-            'stock' => intval($_POST['stock'] ?? 0),
+            'stock' => $stock,
             'stock_minimo' => intval($_POST['stock_minimo'] ?? 5),
             'estado' => $_POST['estado'] ?? 'Disponible',
+            'origen' => $this->origenProducto($_POST['origen'] ?? ''),
             'foto' => $producto['foto'] // Mantener foto actual
         ];
         
@@ -261,6 +283,7 @@ class ProductoController {
         }
         
         if ($this->productoModel->update($id, $data)) {
+            $this->productoModel->guardarTallas($id, $tallas);
             $_SESSION['success'] = 'Producto actualizado exitosamente';
             redirect('index.php?action=productos');
         } else {
@@ -602,5 +625,51 @@ class ProductoController {
         }
         
         exit;
+    }
+
+    private function origenProducto($valor) {
+        return $valor === 'comprado' ? 'comprado' : 'confeccionado';
+    }
+
+    private function leerTallas() {
+        $nombres = $_POST['tallas'] ?? null;
+        if (!is_array($nombres) || $nombres === []) {
+            $unica = trim($_POST['talla'] ?? '');
+            if ($unica === '') {
+                $_SESSION['error'] = 'Agrega al menos una talla';
+                return null;
+            }
+            return [[
+                'id' => 0,
+                'talla' => $unica,
+                'stock' => (int) ($_POST['stock'] ?? 0),
+            ]];
+        }
+
+        $stocks = $_POST['stocks'] ?? [];
+        $ids = $_POST['talla_ids'] ?? [];
+        $filas = [];
+        $vistas = [];
+        foreach ($nombres as $indice => $nombre) {
+            $talla = trim((string) $nombre);
+            if ($talla === '') {
+                continue;
+            }
+            if (isset($vistas[$talla])) {
+                $_SESSION['error'] = 'La talla ' . $talla . ' está repetida';
+                return null;
+            }
+            $vistas[$talla] = true;
+            $filas[] = [
+                'id' => (int) ($ids[$indice] ?? 0),
+                'talla' => $talla,
+                'stock' => max(0, (int) ($stocks[$indice] ?? 0)),
+            ];
+        }
+        if ($filas === []) {
+            $_SESSION['error'] = 'Agrega al menos una talla';
+            return null;
+        }
+        return $filas;
     }
 }

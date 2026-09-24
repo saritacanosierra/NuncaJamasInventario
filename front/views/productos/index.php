@@ -1,6 +1,9 @@
 <?php
 $pageTitle = 'Productos';
 require_once BASE_DIR . '/front/views/layout/header.php';
+if (!isset($categorias) || !is_array($categorias)) {
+    $categorias = [];
+}
 ?>
 
 <div class="main-container">
@@ -9,8 +12,8 @@ require_once BASE_DIR . '/front/views/layout/header.php';
         <?php if (tienePermiso('productos_categorias:view') || tienePermiso('productos_catalogo:create')): ?>
         <div>
             <?php if (tienePermiso('productos_categorias:view')): ?>
-            <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#modalCategorias">
-                <i class="bi bi-tags"></i> Categorías
+            <button type="button" class="btn btn-outline-secondary btn-icono me-2" data-bs-toggle="modal" data-bs-target="#modalCategorias" title="Categorías">
+                <i class="bi bi-tags"></i>
             </button>
             <?php endif; ?>
             <?php if (tienePermiso('productos_catalogo:create')): ?>
@@ -27,7 +30,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
         <div class="card-body">
             <form method="GET" action="<?php echo BASE_URL; ?>index.php" id="formFiltrosProductos" class="row g-3">
                 <input type="hidden" name="action" value="productos">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <input type="text" class="form-control" name="busqueda" id="inputBusqueda"
                            placeholder="Buscar por nombre, color, talla, categoría, código de barras..." 
                            value="<?php echo htmlspecialchars($_GET['busqueda'] ?? ''); ?>">
@@ -44,18 +47,25 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                             <?php endforeach; ?>
                         </select>
                         <?php if (tienePermiso('productos_categorias:view')): ?>
-                        <button type="button" class="btn btn-outline-primary btn-icono" data-bs-toggle="modal" data-bs-target="#modalCategorias" title="Gestionar Categorías">
+                        <button type="button" class="btn btn-outline-secondary btn-icono" data-bs-toggle="modal" data-bs-target="#modalCategorias" title="Categorías">
                             <i class="bi bi-tags"></i>
                         </button>
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select class="form-select" name="estado" id="selectEstado">
                         <option value="">Todos los estados</option>
                         <option value="Disponible" <?php echo (isset($_GET['estado']) && $_GET['estado'] == 'Disponible') ? 'selected' : ''; ?>>Disponible</option>
                         <option value="Agotado" <?php echo (isset($_GET['estado']) && $_GET['estado'] == 'Agotado') ? 'selected' : ''; ?>>Agotado</option>
                         <option value="Vendido" <?php echo (isset($_GET['estado']) && $_GET['estado'] == 'Vendido') ? 'selected' : ''; ?>>Vendido</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="origen" id="selectOrigen">
+                        <option value="">Confeccionado y comprado</option>
+                        <option value="confeccionado" <?php echo (isset($_GET['origen']) && $_GET['origen'] == 'confeccionado') ? 'selected' : ''; ?>>Confeccionado</option>
+                        <option value="comprado" <?php echo (isset($_GET['origen']) && $_GET['origen'] == 'comprado') ? 'selected' : ''; ?>>Comprado</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -84,19 +94,22 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                             <th>Precio Venta</th>
                             <th>Stock</th>
                             <th>Estado</th>
+                            <th>Origen</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyProductos">
                         <?php if (empty($productos)): ?>
                             <tr>
-                                <td colspan="11" class="text-center text-muted">No se encontraron productos</td>
+                                <td colspan="12" class="text-center text-muted">No se encontraron productos</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($productos as $producto): ?>
                                 <tr data-nombre="<?php echo htmlspecialchars(strtolower($producto['nombre'])); ?>"
+                                    data-origen="<?php echo ($producto['origen'] ?? '') === 'comprado' ? 'comprado' : 'confeccionado'; ?>"
+                                    data-estado="<?php echo htmlspecialchars(strtolower($producto['estado'] ?? '')); ?>"
                                     data-color="<?php echo htmlspecialchars(strtolower($producto['color'])); ?>"
-                                    data-talla="<?php echo htmlspecialchars(strtolower($producto['talla'])); ?>"
+                                    data-talla="<?php echo htmlspecialchars(strtolower(!empty($producto['tallas']) ? implode(' ', array_column($producto['tallas'], 'talla')) : $producto['talla'])); ?>"
                                     data-categoria="<?php echo htmlspecialchars(strtolower($producto['categoria_nombre'] ?? '')); ?>"
                                     data-codigo="<?php echo htmlspecialchars(strtolower($producto['codigo_barras'])); ?>">
                                     <td>
@@ -153,10 +166,21 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     </td>
                                     <td><?php echo htmlspecialchars($producto['nombre']); ?></td>
                                     <td><?php echo htmlspecialchars($producto['color']); ?></td>
-                                    <td><span class="badge bg-secondary"><?php echo htmlspecialchars($producto['talla']); ?></span></td>
+                                    <td>
+                                        <?php if (!empty($producto['tallas'])): ?>
+                                            <?php foreach ($producto['tallas'] as $tallaFila): ?>
+                                                <span class="badge bg-secondary"><?php echo htmlspecialchars($tallaFila['talla']); ?> · <?php echo (int) $tallaFila['stock']; ?></span>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary"><?php echo htmlspecialchars($producto['talla']); ?></span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?php echo htmlspecialchars($producto['categoria_nombre'] ?? 'N/A'); ?></td>
                                     <td><?php echo pesos($producto['precio_costo']); ?></td>
-                                    <td><strong><?php echo pesos($producto['precio_venta']); ?></strong></td>
+                                    <td>
+                                        <strong><?php echo pesos(precio_con_iva($producto['precio_venta'])); ?></strong>
+                                        <div class="small text-muted">Venta <?php echo pesos($producto['precio_venta']); ?> · IVA <?php echo pesos(iva_de($producto['precio_venta'])); ?></div>
+                                    </td>
                                     <td>
                                         <span class="badge <?php 
                                             echo $producto['stock'] <= $producto['stock_minimo'] ? 'bg-warning' : 'bg-success'; 
@@ -171,6 +195,13 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                         ?>">
                                             <?php echo htmlspecialchars($producto['estado']); ?>
                                         </span>
+                                    </td>
+                                    <td>
+                                        <?php if (($producto['origen'] ?? '') === 'comprado'): ?>
+                                            <span class="badge bg-info">Comprado</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">Confeccionado</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if (tienePermiso('productos_catalogo:edit')): ?>
@@ -216,7 +247,7 @@ require_once BASE_DIR . '/front/views/components/modal_producto.php';
 
 <!-- Modal para Editar Producto (se llenará dinámicamente) -->
 <div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-labelledby="modalEditarProductoLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalEditarProductoLabel">
@@ -389,6 +420,6 @@ require_once BASE_DIR . '/front/views/components/modal.php';
     window.BASE_URL = '<?php echo BASE_URL; ?>';
 </script>
 <!-- JavaScript del módulo de productos -->
-<script src="<?php echo BASE_URL; ?>front/public/js/productos.js?v=2"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/productos.js?v=7"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>

@@ -357,6 +357,11 @@ class GastoController {
             $_SESSION['error'] = 'El concepto y monto son obligatorios';
             redirect('index.php?action=gastos');
         }
+
+        if ($this->inversionDeProducto($data['categoria'])) {
+            $_SESSION['error'] = 'La mercancía se registra en Compras de producto. Así entra al inventario y también suma como inversión.';
+            redirect('index.php?action=compras');
+        }
         
         if ($inversionModel->create($data)) {
             $_SESSION['success'] = 'Inversión registrada exitosamente';
@@ -418,6 +423,11 @@ class GastoController {
             'fecha' => $_POST['fecha'] ?? date('Y-m-d'),
             'descripcion' => trim($_POST['descripcion'] ?? '')
         ];
+
+        if ($this->inversionDeProducto($data['categoria']) && !$this->inversionDeProducto($inversion['categoria'])) {
+            $_SESSION['error'] = 'La mercancía se registra en Compras de producto. Así entra al inventario y también suma como inversión.';
+            redirect('index.php?action=compras');
+        }
         
         if ($inversionModel->update($id, $data)) {
             $_SESSION['success'] = 'Inversión actualizada exitosamente';
@@ -485,5 +495,9 @@ class GastoController {
             'inversiones_por_anio' => $inversionesPorAnio
         ]);
         exit;
+    }
+
+    private function inversionDeProducto($categoria) {
+        return strtolower(trim((string) $categoria)) === 'producto';
     }
 }

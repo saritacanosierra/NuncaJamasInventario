@@ -1,15 +1,23 @@
 <?php
 $pageTitle = 'Historial de Ventas';
 require_once BASE_DIR . '/front/views/layout/header.php';
+if (!isset($clientes) || !is_array($clientes)) {
+    $clientes = [];
+}
 ?>
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-clock-history"></i> Historial de Ventas</h2>
         <div>
-            <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#modalHistorialVentas">
-                <i class="bi bi-bar-chart"></i> Historial
+            <button type="button" class="btn btn-outline-info btn-icono me-2" data-bs-toggle="modal" data-bs-target="#modalHistorialVentas" title="Historial">
+                <i class="bi bi-clock-history"></i>
             </button>
+            <?php if (tienePermiso('ventas_dian:view')): ?>
+            <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=resolucion" class="btn btn-outline-info me-2">
+                <i class="bi bi-file-earmark-text"></i> Resolución
+            </a>
+            <?php endif; ?>
             <a href="<?php echo BASE_URL; ?>index.php?action=ventas" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Nueva Venta
             </a>
@@ -106,6 +114,12 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                         <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=factura&id=<?php echo $venta['id']; ?>" 
                                            class="btn btn-sm btn-outline-primary" title="Ver factura">
                                             <i class="bi bi-eye"></i> Ver
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if (tienePermiso('ventas_cambio:create')): ?>
+                                        <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=cambiarTalla&id=<?php echo (int) $venta['id']; ?>"
+                                           class="btn btn-sm btn-outline-info" title="Cambiar talla">
+                                            <i class="bi bi-arrow-left-right"></i> Talla
                                         </a>
                                         <?php endif; ?>
                                         <?php if (tienePermiso('ventas_historial:edit')): ?>
@@ -275,7 +289,7 @@ document.getElementById('buscar_cliente_historial').addEventListener('blur', fun
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalHistorialVentasLabel">
-                    <i class="bi bi-bar-chart"></i> Historial de Ventas
+                    <i class="bi bi-clock-history"></i> Historial de Ventas
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>

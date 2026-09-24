@@ -220,11 +220,30 @@ function pesos($valor) {
     return $signo . '$' . number_format(abs($numero), 0, ',', '.');
 }
 
+function iva_tasa() {
+    return 0.19;
+}
+
+function iva_de($base) {
+    return (int) round(round((float) $base) * iva_tasa());
+}
+
+function precio_con_iva($base) {
+    return (int) round((float) $base) + iva_de($base);
+}
+
+function iva_incluido_en($precioConIva) {
+    $precio = round((float) $precioConIva);
+    if ($precio <= 0) {
+        return 0;
+    }
+    return (int) round($precio * iva_tasa() / (1 + iva_tasa()));
+}
+
 /**
- * Verifica que el usuario esté autenticado
- * Redirige al login si no hay sesión activa
- * 
- * @return void
+ * Devuelve el token CSRF de la sesión y lo crea si todavía no existe.
+ *
+ * @return string
  */
 function csrf_token() {
     if (empty($_SESSION['csrf_token'])) {

@@ -18,14 +18,17 @@ class Venta {
         $this->conn->beginTransaction();
         
         try {
+            $productoModel = new Producto($this->conn);
+            $productoModel->asegurarStock($data['detalles']);
+
             // Generar número de factura
             $numeroFactura = $this->generarNumeroFactura();
             
             // Insertar venta
             $query = "INSERT INTO " . $this->table . " 
-                      (numero_factura, cliente_id, usuario_id, subtotal, descuento, total, metodo_pago, con_domicilio, observaciones_domicilio, pago_contra_entrega) 
+                      (numero_factura, cliente_id, usuario_id, subtotal, descuento, iva, domicilio, empaque, total, metodo_pago, pago_efectivo, pago_transferencia, pago_tarjeta, recibido, devuelta, con_domicilio, observaciones_domicilio, pago_contra_entrega, domicilio_contra_entrega) 
                       VALUES 
-                      (:numero_factura, :cliente_id, :usuario_id, :subtotal, :descuento, :total, :metodo_pago, :con_domicilio, :observaciones_domicilio, :pago_contra_entrega)";
+                      (:numero_factura, :cliente_id, :usuario_id, :subtotal, :descuento, :iva, :domicilio, :empaque, :total, :metodo_pago, :pago_efectivo, :pago_transferencia, :pago_tarjeta, :recibido, :devuelta, :con_domicilio, :observaciones_domicilio, :pago_contra_entrega, :domicilio_contra_entrega)";
             
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':numero_factura', $numeroFactura);
@@ -33,36 +36,54 @@ class Venta {
             $stmt->bindParam(':usuario_id', $data['usuario_id']);
             $stmt->bindParam(':subtotal', $data['subtotal']);
             $stmt->bindParam(':descuento', $data['descuento']);
+            $iva = $data['iva'] ?? 0;
+            $domicilio = $data['domicilio'] ?? 0;
+            $empaque = $data['empaque'] ?? 0;
+            $stmt->bindValue(':iva', $iva);
+            $stmt->bindValue(':domicilio', $domicilio);
+            $stmt->bindValue(':empaque', $empaque);
             $stmt->bindParam(':total', $data['total']);
             $stmt->bindParam(':metodo_pago', $data['metodo_pago']);
+            $pagoEfectivo = $data['pago_efectivo'] ?? 0;
+            $pagoTransferencia = $data['pago_transferencia'] ?? 0;
+            $pagoTarjeta = $data['pago_tarjeta'] ?? 0;
+            $recibido = $data['recibido'] ?? 0;
+            $devuelta = $data['devuelta'] ?? 0;
+            $stmt->bindValue(':pago_efectivo', $pagoEfectivo);
+            $stmt->bindValue(':pago_transferencia', $pagoTransferencia);
+            $stmt->bindValue(':pago_tarjeta', $pagoTarjeta);
+            $stmt->bindValue(':recibido', $recibido);
+            $stmt->bindValue(':devuelta', $devuelta);
             $conDomicilio = $data['con_domicilio'] ? 1 : 0;
             $stmt->bindParam(':con_domicilio', $conDomicilio, PDO::PARAM_INT);
             $stmt->bindParam(':observaciones_domicilio', $data['observaciones_domicilio']);
             $pagoContraEntrega = isset($data['pago_contra_entrega']) && $data['pago_contra_entrega'] ? 1 : 0;
             $stmt->bindParam(':pago_contra_entrega', $pagoContraEntrega, PDO::PARAM_INT);
+            $domicilioContra = !empty($data['domicilio_contra_entrega']) ? 1 : 0;
+            $stmt->bindValue(':domicilio_contra_entrega', $domicilioContra, PDO::PARAM_INT);
             
             $stmt->execute();
             $ventaId = $this->conn->lastInsertId();
             
             // Insertar detalles
-            $productoModel = new Producto($this->conn);
+            $kardex = new Kardex($this->conn);
             foreach ($data['detalles'] as $detalle) {
-                // Insertar detalle
-                $queryDetalle = "INSERT INTO detalle_venta 
-                                (venta_id, producto_id, cantidad, precio_unitario, subtotal) 
-                                VALUES 
-                                (:venta_id, :producto_id, :cantidad, :precio_unitario, :subtotal)";
-                
-                $stmtDetalle = $this->conn->prepare($queryDetalle);
-                $stmtDetalle->bindParam(':venta_id', $ventaId);
-                $stmtDetalle->bindParam(':producto_id', $detalle['producto_id']);
-                $stmtDetalle->bindParam(':cantidad', $detalle['cantidad']);
-                $stmtDetalle->bindParam(':precio_unitario', $detalle['precio_unitario']);
-                $stmtDetalle->bindParam(':subtotal', $detalle['subtotal']);
-                $stmtDetalle->execute();
-                
-                // Reducir stock
-                $productoModel->reducirStock($detalle['producto_id'], $detalle['cantidad']);
+                $tallaId = $productoModel->bajarStock(
+                    (int) $detalle['producto_id'],
+                    (int) ($detalle['talla_id'] ?? 0),
+                    (int) $detalle['cantidad']
+                );
+                $this->insertarDetalle($ventaId, $detalle, $tallaId);
+                $kardex->anotar(
+                    (int) $detalle['producto_id'],
+                    'venta',
+                    -1 * (int) $detalle['cantidad'],
+                    'venta',
+                    (int) $ventaId,
+                    (int) $data['usuario_id'],
+                    $numeroFactura,
+                    $tallaId
+                );
             }
             
             $this->conn->commit();
@@ -121,9 +142,11 @@ class Venta {
         if ($venta) {
             // Obtener detalles
             $queryDetalle = "SELECT dv.*, p.nombre as producto_nombre, 
-                                    p.codigo_barras, p.color, p.talla
+                                    p.codigo_barras, p.color,
+                                    COALESCE(pt.talla, p.talla) AS talla
                              FROM detalle_venta dv
                              LEFT JOIN productos p ON dv.producto_id = p.id
+                             LEFT JOIN producto_tallas pt ON pt.id = dv.talla_id
                              WHERE dv.venta_id = :venta_id";
             
             $stmtDetalle = $this->conn->prepare($queryDetalle);
@@ -263,8 +286,16 @@ class Venta {
                       SET cliente_id = :cliente_id,
                           subtotal = :subtotal,
                           descuento = :descuento,
+                          iva = :iva,
+                          domicilio = :domicilio,
+                          empaque = :empaque,
                           total = :total,
                           metodo_pago = :metodo_pago,
+                          pago_efectivo = :pago_efectivo,
+                          pago_transferencia = :pago_transferencia,
+                          pago_tarjeta = :pago_tarjeta,
+                          recibido = :recibido,
+                          devuelta = :devuelta,
                           con_domicilio = :con_domicilio,
                           observaciones_domicilio = :observaciones_domicilio,
                           pago_contra_entrega = :pago_contra_entrega
@@ -275,8 +306,24 @@ class Venta {
             $stmt->bindParam(':cliente_id', $data['cliente_id']);
             $stmt->bindParam(':subtotal', $data['subtotal']);
             $stmt->bindParam(':descuento', $data['descuento']);
+            $iva = $data['iva'] ?? 0;
+            $domicilio = $data['domicilio'] ?? 0;
+            $empaque = $data['empaque'] ?? 0;
+            $stmt->bindValue(':iva', $iva);
+            $stmt->bindValue(':domicilio', $domicilio);
+            $stmt->bindValue(':empaque', $empaque);
             $stmt->bindParam(':total', $data['total']);
             $stmt->bindParam(':metodo_pago', $data['metodo_pago']);
+            $pagoEfectivo = $data['pago_efectivo'] ?? 0;
+            $pagoTransferencia = $data['pago_transferencia'] ?? 0;
+            $pagoTarjeta = $data['pago_tarjeta'] ?? 0;
+            $recibido = $data['recibido'] ?? 0;
+            $devuelta = $data['devuelta'] ?? 0;
+            $stmt->bindValue(':pago_efectivo', $pagoEfectivo);
+            $stmt->bindValue(':pago_transferencia', $pagoTransferencia);
+            $stmt->bindValue(':pago_tarjeta', $pagoTarjeta);
+            $stmt->bindValue(':recibido', $recibido);
+            $stmt->bindValue(':devuelta', $devuelta);
             $conDomicilio = $data['con_domicilio'] ? 1 : 0;
             $stmt->bindParam(':con_domicilio', $conDomicilio, PDO::PARAM_INT);
             $stmt->bindParam(':observaciones_domicilio', $data['observaciones_domicilio']);
@@ -284,68 +331,33 @@ class Venta {
             $stmt->bindParam(':pago_contra_entrega', $pagoContraEntrega, PDO::PARAM_INT);
             $stmt->execute();
             
-            // Restaurar stock de productos eliminados o con cantidad reducida
             $productoModel = new Producto($this->conn);
-            foreach ($data['detalles_actuales'] as $detalleActual) {
-                $encontrado = false;
-                $nuevaCantidad = 0;
-                
-                foreach ($data['detalles'] as $detalleNuevo) {
-                    if ($detalleActual['producto_id'] == $detalleNuevo['producto_id']) {
-                        $encontrado = true;
-                        $nuevaCantidad = intval($detalleNuevo['cantidad']);
-                        break;
-                    }
-                }
-                
-                if (!$encontrado) {
-                    // Producto eliminado, restaurar todo el stock
-                    $productoModel->aumentarStock($detalleActual['producto_id'], $detalleActual['cantidad']);
-                } else if ($nuevaCantidad < $detalleActual['cantidad']) {
-                    // Cantidad reducida, restaurar la diferencia
-                    $diferencia = $detalleActual['cantidad'] - $nuevaCantidad;
-                    $productoModel->aumentarStock($detalleActual['producto_id'], $diferencia);
-                } else if ($nuevaCantidad > $detalleActual['cantidad']) {
-                    // Cantidad aumentada, reducir la diferencia
-                    $diferencia = $nuevaCantidad - $detalleActual['cantidad'];
-                    $productoModel->reducirStock($detalleActual['producto_id'], $diferencia);
+            $kardex = new Kardex($this->conn);
+            $usuarioId = (int) ($data['usuario_id'] ?? 0);
+            $viejas = $this->agruparLineas($data['detalles_actuales']);
+            $nuevas = $this->agruparLineas($data['detalles']);
+            $claves = array_unique(array_merge(array_keys($viejas), array_keys($nuevas)));
+            foreach ($claves as $clave) {
+                $vieja = (int) ($viejas[$clave]['cantidad'] ?? 0);
+                $nueva = (int) ($nuevas[$clave]['cantidad'] ?? 0);
+                $delta = $nueva - $vieja;
+                $fila = $nuevas[$clave] ?? $viejas[$clave];
+                if ($delta > 0) {
+                    $tallaId = $productoModel->bajarStock((int) $fila['producto_id'], (int) ($fila['talla_id'] ?? 0), $delta);
+                    $kardex->anotar((int) $fila['producto_id'], 'venta', -$delta, 'venta', (int) $id, $usuarioId, 'Edición de venta', $tallaId);
+                } elseif ($delta < 0) {
+                    $tallaId = $productoModel->subirStock((int) $fila['producto_id'], (int) ($fila['talla_id'] ?? 0), -$delta);
+                    $kardex->anotar((int) $fila['producto_id'], 'anulacion', -$delta, 'venta', (int) $id, $usuarioId, 'Edición de venta', $tallaId);
                 }
             }
-            
-            // Eliminar todos los detalles actuales
+
             $queryDelete = "DELETE FROM detalle_venta WHERE venta_id = :venta_id";
             $stmtDelete = $this->conn->prepare($queryDelete);
             $stmtDelete->bindParam(':venta_id', $id);
             $stmtDelete->execute();
-            
-            // Insertar nuevos detalles
+
             foreach ($data['detalles'] as $detalle) {
-                $queryDetalle = "INSERT INTO detalle_venta 
-                                (venta_id, producto_id, cantidad, precio_unitario, subtotal) 
-                                VALUES 
-                                (:venta_id, :producto_id, :cantidad, :precio_unitario, :subtotal)";
-                
-                $stmtDetalle = $this->conn->prepare($queryDetalle);
-                $stmtDetalle->bindParam(':venta_id', $id);
-                $stmtDetalle->bindParam(':producto_id', $detalle['producto_id']);
-                $stmtDetalle->bindParam(':cantidad', $detalle['cantidad']);
-                $stmtDetalle->bindParam(':precio_unitario', $detalle['precio_unitario']);
-                $stmtDetalle->bindParam(':subtotal', $detalle['subtotal']);
-                $stmtDetalle->execute();
-            }
-            
-            // Reducir stock de productos nuevos (que no estaban en la venta original)
-            foreach ($data['detalles'] as $detalleNuevo) {
-                $esNuevo = true;
-                foreach ($data['detalles_actuales'] as $detalleActual) {
-                    if ($detalleActual['producto_id'] == $detalleNuevo['producto_id']) {
-                        $esNuevo = false;
-                        break;
-                    }
-                }
-                if ($esNuevo) {
-                    $productoModel->reducirStock($detalleNuevo['producto_id'], $detalleNuevo['cantidad']);
-                }
+                $this->insertarDetalle($id, $detalle, (int) ($detalle['talla_id'] ?? 0));
             }
             
             $this->conn->commit();
@@ -402,7 +414,7 @@ class Venta {
     /**
      * Elimina la venta, sus líneas y devuelve el stock.
      */
-    public function eliminar($id) {
+    public function eliminar($id, $usuarioId) {
         $this->conn->beginTransaction();
 
         try {
@@ -413,8 +425,23 @@ class Venta {
             }
 
             $productoModel = new Producto($this->conn);
+            $kardex = new Kardex($this->conn);
             foreach ($venta['detalles'] as $detalle) {
-                $productoModel->aumentarStock($detalle['producto_id'], $detalle['cantidad']);
+                $tallaId = $productoModel->subirStock(
+                    (int) $detalle['producto_id'],
+                    (int) ($detalle['talla_id'] ?? 0),
+                    (int) $detalle['cantidad']
+                );
+                $kardex->anotar(
+                    (int) $detalle['producto_id'],
+                    'anulacion',
+                    (int) $detalle['cantidad'],
+                    'venta',
+                    (int) $id,
+                    (int) $usuarioId,
+                    'Anulación de venta',
+                    $tallaId
+                );
             }
 
             $stmtDetalle = $this->conn->prepare('DELETE FROM detalle_venta WHERE venta_id = :id');
@@ -432,5 +459,37 @@ class Venta {
             error_log('Error al eliminar venta: ' . $e->getMessage());
             return false;
         }
+    }
+
+    private function agruparLineas($detalles) {
+        $grupos = [];
+        foreach ($detalles as $detalle) {
+            $clave = (int) $detalle['producto_id'] . ':' . (int) ($detalle['talla_id'] ?? 0);
+            if (!isset($grupos[$clave])) {
+                $grupos[$clave] = $detalle;
+                $grupos[$clave]['cantidad'] = (int) $detalle['cantidad'];
+            } else {
+                $grupos[$clave]['cantidad'] += (int) $detalle['cantidad'];
+            }
+        }
+        return $grupos;
+    }
+
+    private function insertarDetalle($ventaId, $detalle, $tallaId) {
+        $stmt = $this->conn->prepare(
+            'INSERT INTO detalle_venta (venta_id, producto_id, talla_id, cantidad, precio_unitario, subtotal)
+             VALUES (:venta_id, :producto_id, :talla_id, :cantidad, :precio_unitario, :subtotal)'
+        );
+        $stmt->bindValue(':venta_id', (int) $ventaId, PDO::PARAM_INT);
+        $stmt->bindValue(':producto_id', (int) $detalle['producto_id'], PDO::PARAM_INT);
+        if ((int) $tallaId > 0) {
+            $stmt->bindValue(':talla_id', (int) $tallaId, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue(':talla_id', null, PDO::PARAM_NULL);
+        }
+        $stmt->bindValue(':cantidad', (int) $detalle['cantidad'], PDO::PARAM_INT);
+        $stmt->bindValue(':precio_unitario', $detalle['precio_unitario']);
+        $stmt->bindValue(':subtotal', $detalle['subtotal']);
+        $stmt->execute();
     }
 }

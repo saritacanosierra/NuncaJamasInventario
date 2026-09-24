@@ -1,6 +1,38 @@
 <?php
 $pageTitle = 'Editar Venta';
 require_once BASE_DIR . '/front/views/layout/header.php';
+if (!isset($clientes) || !is_array($clientes)) {
+    $clientes = [];
+}
+if (!isset($productos) || !is_array($productos)) {
+    $productos = [];
+}
+if (!isset($venta) || !is_array($venta)) {
+    $venta = [];
+}
+$venta += [
+    'id' => 0,
+    'numero_factura' => '',
+    'cliente_id' => 0,
+    'metodo_pago' => '',
+    'descuento' => 0,
+    'iva' => 0,
+    'domicilio' => 0,
+    'empaque' => 0,
+    'con_domicilio' => 0,
+    'pago_contra_entrega' => 0,
+    'observaciones_domicilio' => '',
+    'detalles' => [],
+    'subtotal' => 0,
+    'total' => 0,
+    'fecha_venta' => date('Y-m-d H:i:s'),
+    'vendedor' => '',
+];
+if (!is_array($venta['detalles'])) {
+    $venta['detalles'] = [];
+}
+$ivaSumadoEdicion = round((float) $venta['subtotal'] - (float) $venta['descuento'] + (float) $venta['iva'] + (float) $venta['domicilio'] + (float) $venta['empaque']);
+$ivaIncluidoEdicion = (float) $venta['iva'] > 0 && abs($ivaSumadoEdicion - round((float) $venta['total'])) > 1;
 ?>
 
 <div class="main-container">
@@ -41,19 +73,39 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <option value="Tarjeta" <?php echo ($venta['metodo_pago'] == 'Tarjeta') ? 'selected' : ''; ?>>Tarjeta</option>
                                     <option value="Transferencia" <?php echo ($venta['metodo_pago'] == 'Transferencia') ? 'selected' : ''; ?>>Transferencia</option>
                                     <option value="Mixto" <?php echo ($venta['metodo_pago'] == 'Mixto') ? 'selected' : ''; ?>>Mixto</option>
+                                    <option value="Fiado" <?php echo ($venta['metodo_pago'] == 'Fiado') ? 'selected' : ''; ?>>Fiado</option>
                                 </select>
                             </div>
                         </div>
                         
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <label for="descuento" class="form-label">Descuento</label>
                                 <input type="number" class="form-control" name="descuento" id="descuento" 
                                        value="<?php echo number_format($venta['descuento'], 2, '.', ''); ?>" 
-                                       min="0" step="0.01">
+                                       min="0" step="1">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="iva" class="form-label">IVA</label>
+                                <input type="hidden" name="iva_incluido" id="iva_incluido" value="<?php echo $ivaIncluidoEdicion ? '1' : '0'; ?>">
+                                <input type="number" class="form-control" name="iva" id="iva"
+                                       value="<?php echo number_format($venta['iva'], 2, '.', ''); ?>"
+                                       min="0" step="1" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="domicilio" class="form-label">Domicilio</label>
+                                <input type="number" class="form-control" name="domicilio" id="domicilio"
+                                       value="<?php echo number_format($venta['domicilio'], 2, '.', ''); ?>"
+                                       min="0" step="1">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="empaque" class="form-label">Empaque</label>
+                                <input type="number" class="form-control" name="empaque" id="empaque"
+                                       value="<?php echo number_format($venta['empaque'], 2, '.', ''); ?>"
+                                       min="0" step="1">
                             </div>
                             <div class="col-md-6">
-                                <div class="form-check mt-4">
+                                <div class="form-check mt-2">
                                     <input class="form-check-input" type="checkbox" name="con_domicilio" 
                                            id="con_domicilio" value="1" 
                                            <?php echo (!empty($venta['con_domicilio'])) ? 'checked' : ''; ?>>
@@ -136,8 +188,10 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                                 <span class="subtotal-detalle" data-index="<?php echo $index; ?>">
                                                     <?php echo pesos($detalle['subtotal']); ?>
                                                 </span>
-                                                <input type="hidden" name="detalles[<?php echo $index; ?>][producto_id]" 
+                                                <input type="hidden" name="detalles[<?php echo $index; ?>][producto_id]"
                                                        value="<?php echo $detalle['producto_id']; ?>">
+                                                <input type="hidden" name="detalles[<?php echo $index; ?>][talla_id]"
+                                                       value="<?php echo (int) ($detalle['talla_id'] ?? 0); ?>">
                                                 <input type="hidden" name="detalles[<?php echo $index; ?>][subtotal]" 
                                                        class="subtotal-input" data-index="<?php echo $index; ?>" 
                                                        value="<?php echo number_format($detalle['subtotal'], 2, '.', ''); ?>">
@@ -159,6 +213,21 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <tr>
                                         <td colspan="3" class="text-end"><strong>Descuento:</strong></td>
                                         <td><strong id="descuento_total"><?php echo pesos(-($venta['descuento'])); ?></strong></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>IVA:</strong></td>
+                                        <td><strong id="iva_total"><?php echo pesos($venta['iva']); ?></strong></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Domicilio:</strong></td>
+                                        <td><strong id="domicilio_total"><?php echo pesos($venta['domicilio']); ?></strong></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Empaque:</strong></td>
+                                        <td><strong id="empaque_total"><?php echo pesos($venta['empaque']); ?></strong></td>
                                         <td></td>
                                     </tr>
                                     <tr class="table-success">
@@ -223,17 +292,21 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <select class="form-select" id="producto_select">
                         <option value="">Seleccionar producto...</option>
                         <?php foreach ($productos as $producto): ?>
+                            <?php $tallasOpcion = !empty($producto['tallas']) ? $producto['tallas'] : [['id' => 0, 'talla' => $producto['talla'], 'stock' => $producto['stock']]]; ?>
+                            <?php foreach ($tallasOpcion as $tallaOpcion): ?>
                             <option value="<?php echo $producto['id']; ?>" 
                                     data-nombre="<?php echo htmlspecialchars($producto['nombre']); ?>"
                                     data-color="<?php echo htmlspecialchars($producto['color']); ?>"
-                                    data-talla="<?php echo htmlspecialchars($producto['talla']); ?>"
-                                    data-precio="<?php echo $producto['precio_venta']; ?>"
-                                    data-stock="<?php echo $producto['stock']; ?>">
+                                    data-talla="<?php echo htmlspecialchars($tallaOpcion['talla']); ?>"
+                                    data-talla-id="<?php echo (int) $tallaOpcion['id']; ?>"
+                                    data-precio="<?php echo $ivaIncluidoEdicion ? precio_con_iva($producto['precio_venta']) : $producto['precio_venta']; ?>"
+                                    data-stock="<?php echo (int) $tallaOpcion['stock']; ?>">
                                 <?php echo htmlspecialchars($producto['nombre']); ?> - 
                                 <?php echo htmlspecialchars($producto['color']); ?> - 
-                                <?php echo htmlspecialchars($producto['talla']); ?> 
-                                (Stock: <?php echo $producto['stock']; ?>)
+                                talla <?php echo htmlspecialchars($tallaOpcion['talla']); ?> 
+                                (Stock: <?php echo (int) $tallaOpcion['stock']; ?>)
                             </option>
+                            <?php endforeach; ?>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -283,7 +356,7 @@ document.addEventListener('input', function(e) {
         actualizarTotales();
     }
     
-    if (e.target.id === 'descuento') {
+    if (['descuento', 'iva', 'domicilio', 'empaque'].indexOf(e.target.id) >= 0) {
         actualizarTotales();
     }
 });
@@ -295,12 +368,25 @@ function actualizarTotales() {
         subtotal += parseFloat(input.value) || 0;
     });
     
-    const descuento = parseFloat(document.getElementById('descuento').value) || 0;
-    const total = subtotal - descuento;
+    const incluido = document.getElementById('iva_incluido') && document.getElementById('iva_incluido').value === '1';
+    const descuento = Math.min(subtotal, Math.max(0, parseFloat(document.getElementById('descuento').value) || 0));
+    const gravado = Math.max(0, subtotal - descuento);
+    const iva = incluido
+        ? Math.round(gravado * 0.19 / 1.19)
+        : Math.round(gravado * 0.19);
+    document.getElementById('iva').value = iva;
+    const domicilio = Math.max(0, parseFloat(document.getElementById('domicilio').value) || 0);
+    const empaque = Math.max(0, parseFloat(document.getElementById('empaque').value) || 0);
+    const total = incluido
+        ? (subtotal - descuento) + domicilio + empaque
+        : (subtotal - descuento) + iva + domicilio + empaque;
     
     document.getElementById('subtotal_total').textContent = '$' + formatearNumero(subtotal);
     document.getElementById('descuento_total').textContent = '-$' + formatearNumero(descuento);
-    document.getElementById('total_venta').textContent = '$' + formatearNumero(total > 0 ? total : 0);
+    document.getElementById('iva_total').textContent = '$' + formatearNumero(iva);
+    document.getElementById('domicilio_total').textContent = '$' + formatearNumero(domicilio);
+    document.getElementById('empaque_total').textContent = '$' + formatearNumero(empaque);
+    document.getElementById('total_venta').textContent = '$' + formatearNumero(total);
 }
 
 // Eliminar detalle
@@ -381,6 +467,7 @@ document.getElementById('btnConfirmarAgregar').addEventListener('click', functio
                 <span class="subtotal-detalle" data-index="${contadorDetalles}">
                     $${formatearNumero(subtotal)}
                 </span>
+                <input type="hidden" name="detalles[${contadorDetalles}][talla_id]" value="${option.dataset.tallaId || 0}">
                 <input type="hidden" name="detalles[${contadorDetalles}][producto_id]" 
                        value="${productoId}">
                 <input type="hidden" name="detalles[${contadorDetalles}][subtotal]" 
@@ -415,8 +502,10 @@ document.getElementById('formEditarVenta').addEventListener('submit', function(e
         const precioUnitario = tr.querySelector('input[name*="[precio_unitario]"]').value;
         const subtotal = tr.querySelector('.subtotal-input').value;
         
+        const tallaInput = tr.querySelector('input[name*="[talla_id]"]');
         detalles.push({
             producto_id: productoId,
+            talla_id: tallaInput ? parseInt(tallaInput.value, 10) || 0 : 0,
             cantidad: parseInt(cantidad),
             precio_unitario: parseFloat(precioUnitario),
             subtotal: parseFloat(subtotal)

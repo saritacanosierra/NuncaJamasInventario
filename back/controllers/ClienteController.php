@@ -4,9 +4,11 @@
  */
 
 class ClienteController {
+    private $db;
     private $clienteModel;
     
     public function __construct($db) {
+        $this->db = $db;
         $this->clienteModel = new Cliente($db);
     }
     
@@ -22,6 +24,17 @@ class ClienteController {
             $clientes = $this->clienteModel->search($busqueda);
         } else {
             $clientes = $this->clienteModel->getAll();
+        }
+
+        $saldosFiado = tienePermiso('clientes_fiado:view') ? (new Fiado($this->db))->saldosPorCliente() : [];
+        $facturasPendientes = [];
+        if (tienePermiso('clientes_fiado:view')) {
+            $facturasPendientes = array_values(array_filter(
+                (new Fiado($this->db))->repartirAbonos(),
+                function ($fila) {
+                    return $fila['saldo'] > 0;
+                }
+            ));
         }
         
         require_once BASE_DIR . '/front/views/clientes/index.php';
@@ -214,8 +227,70 @@ class ClienteController {
         }
         
         $compras = $this->clienteModel->getHistorialCompras($id);
-        
+        $saldoFiado = tienePermiso('clientes_fiado:view') ? (new Fiado($this->db))->saldoDe($id) : 0;
+        $abonos = tienePermiso('clientes_fiado:view') ? (new Fiado($this->db))->abonosDe($id) : [];
+        $cuentasFiado = [];
+        $facturasAbiertas = [];
+        if (tienePermiso('clientes_fiado:view')) {
+            foreach ((new Fiado($this->db))->repartirAbonos($id) as $fila) {
+                $cuentasFiado[$fila['id']] = $fila;
+                if ($fila['saldo'] > 0) {
+                    $facturasAbiertas[] = $fila;
+                }
+            }
+        }
+        $enlaceFiado = null;
+        if (tienePermiso('clientes_fiado:view') && $saldoFiado > 0) {
+            $enlaceFiado = (new Fiado($this->db))->enlaceCobro(
+                $cliente['telefono'] ?? '',
+                $cliente['nombre_completo'] ?? '',
+                $saldoFiado
+            );
+        }
+
         require_once BASE_DIR . '/front/views/clientes/historial.php';
+    }
+
+    public function deudas() {
+        requireAuth();
+        if (!tienePermiso('clientes_fiado:view')) {
+            $_SESSION['error'] = 'No tienes permiso para ver el fiado.';
+            redirect('index.php?action=clientes');
+        }
+        $facturasPendientes = array_values(array_filter(
+            (new Fiado($this->db))->repartirAbonos(),
+            function ($fila) {
+                return $fila['saldo'] > 0;
+            }
+        ));
+        require_once BASE_DIR . '/front/views/clientes/deudas.php';
+    }
+
+    public function abonar() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('index.php?action=clientes');
+        }
+        $id = (int) ($_POST['cliente_id'] ?? 0);
+        exigir_csrf_redirect('index.php?action=clientes&method=historial&id=' . $id);
+
+        if ($id <= 1) {
+            $_SESSION['error'] = 'El cliente general no tiene fiado.';
+            redirect('index.php?action=clientes');
+        }
+
+        $resultado = (new Fiado($this->db))->abonar(
+            $id,
+            $_POST['monto'] ?? 0,
+            (int) $_SESSION['usuario_id'],
+            trim($_POST['nota'] ?? ''),
+            (int) ($_POST['venta_id'] ?? 0)
+        );
+        if ($resultado['success']) {
+            $_SESSION['success'] = 'Abono registrado.';
+        } else {
+            $_SESSION['error'] = $resultado['error'];
+        }
+        redirect('index.php?action=clientes&method=historial&id=' . $id);
     }
     
     /**
@@ -240,11 +315,17 @@ class ClienteController {
             if (empty($termino)) {
                 // Si no hay término, devolver todos los clientes
                 $clientes = $this->clienteModel->getAll();
-                echo json_encode(['success' => true, 'clientes' => $clientes]);
             } else {
                 $clientes = $this->clienteModel->search($termino);
-                echo json_encode(['success' => true, 'clientes' => $clientes]);
             }
+            if (tienePermiso('clientes_fiado:view')) {
+                $saldos = (new Fiado($this->db))->saldosPorCliente();
+                foreach ($clientes as &$cliente) {
+                    $cliente['saldo_fiado'] = $saldos[(int) $cliente['id']] ?? 0;
+                }
+                unset($cliente);
+            }
+            echo json_encode(['success' => true, 'clientes' => $clientes]);
         } catch (Exception $e) {
             ob_clean();
             error_log('Error en buscar: ' . $e->getMessage());

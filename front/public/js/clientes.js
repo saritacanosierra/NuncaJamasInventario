@@ -195,18 +195,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
     let timeoutBusqueda;
     
+    const filtroDeuda = document.getElementById('filtroDeuda');
+    const cardClientes = document.getElementById('cardClientes');
+    const cardDeudas = document.getElementById('cardDeudas');
+
+    function vistaDeudas() {
+        return filtroDeuda && filtroDeuda.value === 'deben';
+    }
+
+    function filtrarDeudas() {
+        const termino = (inputBusqueda ? inputBusqueda.value : '').toLowerCase().trim();
+        const filas = document.querySelectorAll('#tablaDeudas tr[data-busca]');
+        let visibles = 0;
+        filas.forEach(function (fila) {
+            const coincide = termino === '' || (fila.getAttribute('data-busca') || '').indexOf(termino) !== -1;
+            fila.style.display = coincide ? '' : 'none';
+            if (coincide) visibles += 1;
+        });
+        const vacio = document.getElementById('deudasSinCoincidencia');
+        if (vacio) vacio.classList.toggle('d-none', visibles !== 0);
+    }
+
+    function aplicarVista() {
+        const deudas = vistaDeudas();
+        if (cardClientes) cardClientes.classList.toggle('d-none', deudas);
+        if (cardDeudas) cardDeudas.classList.toggle('d-none', !deudas);
+        if (deudas) filtrarDeudas();
+    }
+
+    if (filtroDeuda) {
+        filtroDeuda.addEventListener('change', aplicarVista);
+    }
+
     if (inputBusqueda) {
         inputBusqueda.addEventListener('input', function() {
             clearTimeout(timeoutBusqueda);
+            if (vistaDeudas()) {
+                filtrarDeudas();
+                return;
+            }
             const termino = this.value.trim();
             
             if (termino.length === 0) {
-                // Si está vacío, mostrar todos los clientes
                 timeoutBusqueda = setTimeout(() => {
                     buscarClientes('');
                 }, 300);
             } else if (termino.length >= 2) {
-                // Buscar después de 500ms de inactividad
                 timeoutBusqueda = setTimeout(() => {
                     buscarClientes(termino);
                 }, 500);
@@ -217,6 +251,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnLimpiar) {
         btnLimpiar.addEventListener('click', function() {
             inputBusqueda.value = '';
+            if (vistaDeudas()) {
+                filtrarDeudas();
+                return;
+            }
             buscarClientes('');
         });
     }
@@ -240,6 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const tbody = document.getElementById('tablaClientes');
                 if (!tbody) return;
+                const muestraFiado = !!document.getElementById('columnaDebe');
                 
                 let html = '';
                 
@@ -254,6 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <td>${escapeHtml(cliente.email || 'N/A')}</td>
                                 <td><span class="badge bg-info">${cliente.total_compras || 0}</span></td>
                                 <td><strong>$${formatearMoneda(cliente.total_gastado || 0)}</strong></td>
+                                ${muestraFiado ? `<td>$${formatearMoneda(cliente.saldo_fiado || 0)}</td>` : ''}
                                 <td>
                                     <a href="${baseUrlEscaped}index.php?action=clientes&method=historial&id=${cliente.id}" 
                                        class="btn btn-sm btn-outline-info btn-icono" title="Ver Historial">
@@ -278,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         `;
                     });
                 } else {
-                    html = '<tr><td colspan="7" class="text-center text-muted">No se encontraron clientes</td></tr>';
+                    html = `<tr><td colspan="${muestraFiado ? 8 : 7}" class="text-center text-muted">No se encontraron clientes</td></tr>`;
                 }
                 
                 tbody.innerHTML = html;

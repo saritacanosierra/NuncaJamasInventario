@@ -12,7 +12,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- CSS global -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>front/public/css/style.css?v=15">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>front/public/css/style.css?v=16">
     <!-- CSS por vista -->
     <?php if (!empty($pageTitle)): ?>
         <?php
@@ -25,9 +25,21 @@
             'Producción'   => 'produccion.css',
             'Usuarios'     => 'configuracion.css',
             'Roles'        => 'configuracion.css',
+            'Compras'      => 'compras.css',
+            'Kardex'       => 'compras.css',
+            'Caja'         => 'caja.css',
+            'Informe'      => 'informes.css',
+            'Factura'      => 'factura.css',
+            'Rótulo de Envío' => 'rotulo-envio.css',
+            'Pago por pieza' => 'produccion.css',
+            'Cambio de talla' => 'ventas.css',
+            'Resolución'   => 'ventas.css',
         ];
-        if (isset($cssMap[$pageTitle])): ?>
-            <link rel="stylesheet" href="<?php echo BASE_URL . 'front/public/css/' . $cssMap[$pageTitle] . '?v=' . ($cssMap[$pageTitle] === 'produccion.css' ? '14' : '9'); ?>">
+        $versionesCss = ['produccion.css' => '14', 'compras.css' => '1', 'caja.css' => '1', 'ventas.css' => '19', 'factura.css' => '1', 'rotulo-envio.css' => '3', 'informes.css' => '1', 'productos.css' => '10'];
+        if (isset($cssMap[$pageTitle])):
+            $versionCss = $versionesCss[$cssMap[$pageTitle]] ?? '9';
+        ?>
+            <link rel="stylesheet" href="<?php echo BASE_URL . 'front/public/css/' . $cssMap[$pageTitle] . '?v=' . $versionCss; ?>">
         <?php endif; ?>
     <?php endif; ?>
 </head>
@@ -45,7 +57,7 @@
             $paginaInicio = permisos_url_inicio();
             ?>
             <a class="navbar-brand" href="<?php echo BASE_URL . htmlspecialchars($paginaInicio); ?>">
-                <i class="bi bi-shop"></i> Inventario Ropa Infantil
+                <img src="<?php echo BASE_URL; ?>front/public/img/logo-nunca-jamas.jpg" alt="Nunca Jamás" class="logo-marca">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -73,6 +85,20 @@
                         </a>
                     </li>
                     <?php endif; ?>
+                    <?php if (puedeVerModulo('caja')): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('caja')); ?>">
+                            <i class="bi bi-safe"></i> Caja
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <?php if (puedeVerModulo('informes')): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('informes')); ?>">
+                            <i class="bi bi-graph-up"></i> Informes
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <?php if (puedeVerModulo('clientes')): ?>
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('clientes')); ?>">
@@ -80,9 +106,9 @@
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (puedeVerModulo('gastos')): ?>
+                    <?php if (puedeVerModulo('gastos') || tienePermiso('compras_registro:view') || tienePermiso('compras:view')): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('gastos')); ?>">
+                        <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(puedeVerModulo('gastos') ? permisos_url_de('gastos') : 'index.php?action=compras'); ?>">
                             <i class="bi bi-cash-stack"></i> Gastos
                         </a>
                     </li>

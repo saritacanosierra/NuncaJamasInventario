@@ -19,7 +19,7 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
         <div class="d-flex gap-2 align-items-center flex-wrap">
             <input type="date" id="fechaSeleccionada" class="form-control" value="<?php echo $fecha; ?>" 
                    onchange="cambiarFecha(this.value)" style="width: auto;">
-            <?php if (tienePermiso('produccion_jornada:create') || tienePermiso('produccion_dashboard:view') || tienePermiso('produccion_cierre:decide')): ?>
+            <?php if (tienePermiso('produccion_jornada:create') || tienePermiso('produccion_dashboard:view') || tienePermiso('produccion_cierre:decide') || tienePermiso('produccion_pago:view')): ?>
             <?php if (tienePermiso('produccion_jornada:create')): ?>
             <button class="btn btn-primary" id="btnNuevaOperaria">
                 <i class="bi bi-plus-circle"></i> Nueva operaria
@@ -29,6 +29,11 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
             <button class="btn btn-info" onclick="window.location.href='<?php echo BASE_URL; ?>index.php?action=produccion&method=dashboardOperaciones'">
                 <i class="bi bi-speedometer2"></i> Ver rendimiento
             </button>
+            <?php endif; ?>
+            <?php if (tienePermiso('produccion_pago:view')): ?>
+            <a class="btn btn-outline-primary" href="<?php echo BASE_URL; ?>index.php?action=produccion&method=pago">
+                <i class="bi bi-cash-coin"></i> Pago por pieza
+            </a>
             <?php endif; ?>
             <?php if (tienePermiso('produccion_cierre:decide')): ?>
             <button class="btn btn-outline-danger" id="btnFinalizarDia" onclick="abrirModalFinalizarDia()" <?php echo !empty($diaFinalizado) ? 'hidden' : ''; ?> title="Cierra el día de toda la empresa. No agrega operarias.">

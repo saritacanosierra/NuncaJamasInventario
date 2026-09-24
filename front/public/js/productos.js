@@ -5,8 +5,71 @@
 
 let BASE_URL_PRODUCTOS = '';
 
+function opcionesTalla(seleccionada) {
+    const base = ['0', '2', '4', '6', '8', '10'];
+    const actual = seleccionada === undefined || seleccionada === null ? '' : String(seleccionada);
+    if (actual !== '' && base.indexOf(actual) === -1) {
+        base.push(actual);
+    }
+    return base.map(function (valor) {
+        return '<option value="' + valor + '"' + (actual === valor ? ' selected' : '') + '>' + valor + '</option>';
+    }).join('');
+}
+
+function htmlFilaTalla(fila) {
+    return '<div class="row g-2 mb-2 fila-talla">'
+        + '<div class="col-5"><select class="form-select" name="tallas[]" required>'
+        + '<option value="">Talla</option>' + opcionesTalla(fila.talla) + '</select></div>'
+        + '<div class="col-5"><input type="number" class="form-control" name="stocks[]" min="0" value="' + (fila.stock || 0) + '" placeholder="Stock" required></div>'
+        + '<div class="col-2 d-flex align-items-center"><button type="button" class="btn btn-sm btn-outline-danger btn-icono btn-quitar-talla" title="Quitar"><i class="bi bi-trash"></i></button></div>'
+        + '<input type="hidden" name="talla_ids[]" value="' + (fila.id || 0) + '">'
+        + '</div>';
+}
+
+function htmlFilasTalla(filas) {
+    return filas.map(htmlFilaTalla).join('');
+}
+
+document.addEventListener('click', function (evento) {
+    const agregar = evento.target.closest('.btn-otra-talla');
+    if (agregar) {
+        const lista = agregar.parentElement.querySelector('.lista-tallas');
+        if (lista) {
+            lista.insertAdjacentHTML('beforeend', htmlFilaTalla({ id: 0, talla: '', stock: 0 }));
+        }
+        return;
+    }
+    const quitar = evento.target.closest('.btn-quitar-talla');
+    if (quitar) {
+        const lista = quitar.closest('.lista-tallas');
+        const fila = quitar.closest('.fila-talla');
+        if (lista && fila && lista.querySelectorAll('.fila-talla').length > 1) {
+            fila.remove();
+        }
+    }
+});
+
+function pesosIva(base) {
+    const valor = Math.round(parseFloat(base) || 0);
+    const iva = Math.round(valor * 0.19);
+    const texto = function (numero) {
+        return '$' + Math.round(numero).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    return 'En caja ' + texto(valor + iva) + ' · IVA 19% ' + texto(iva);
+}
+
+function pintarAyudaIva(input) {
+    const caja = input.closest('.col-md-4');
+    const nota = caja ? caja.querySelector('.precio-iva-ayuda') : null;
+    if (nota) nota.textContent = pesosIva(input.value);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     BASE_URL_PRODUCTOS = window.BASE_URL || '';
+    document.querySelectorAll('input[name="precio_venta"]').forEach(pintarAyudaIva);
+    document.addEventListener('input', function (e) {
+        if (e.target && e.target.name === 'precio_venta') pintarAyudaIva(e.target);
+    });
     
     // Generar código de barras
     function generarCodigo() {
@@ -246,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <form id="formEditarProducto" method="POST" action="${baseUrl}index.php?action=productos&method=update&id=${p.id}" enctype="multipart/form-data">
                                 <input type="hidden" name="csrf_token" value="${window.CSRF_TOKEN || ''}">
                                 <input type="hidden" name="id" value="${p.id}">
-                                <div class="row g-3">
+                                <div class="row g-2">
                                     <div class="col-md-6">
                                         <label class="form-label">Código de Barras</label>
                                         <input type="text" class="form-control" name="codigo_barras" value="${p.codigo_barras || ''}" readonly>
@@ -255,26 +318,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="col-md-6">
                                         <label class="form-label">Nombre *</label>
                                         <input type="text" class="form-control" name="nombre" value="${p.nombre || ''}" required>
+                                        <label class="form-label mt-2">Color *</label>
+                                        <input type="text" class="form-control" name="color" value="${p.color || ''}" required>
                                     </div>
-                                    <div class="col-md-12">
+                                    <div class="col-12">
                                         <label class="form-label">Descripción</label>
                                         <textarea class="form-control" name="descripcion" rows="2">${p.descripcion || ''}</textarea>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Color *</label>
-                                        <input type="text" class="form-control" name="color" value="${p.color || ''}" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Talla *</label>
-                                        <select class="form-select" name="talla" required>
-                                            <option value="">Seleccione...</option>
-                                            <option value="0" ${p.talla == '0' ? 'selected' : ''}>0</option>
-                                            <option value="2" ${p.talla == '2' ? 'selected' : ''}>2</option>
-                                            <option value="4" ${p.talla == '4' ? 'selected' : ''}>4</option>
-                                            <option value="6" ${p.talla == '6' ? 'selected' : ''}>6</option>
-                                            <option value="8" ${p.talla == '8' ? 'selected' : ''}>8</option>
-                                            <option value="10" ${p.talla == '10' ? 'selected' : ''}>10</option>
-                                        </select>
+                                    <div class="col-12">
+                                        <label class="form-label">Tallas y stock *</label>
+                                        <div class="lista-tallas">${htmlFilasTalla(p.tallas && p.tallas.length ? p.tallas : [{id: 0, talla: p.talla, stock: p.stock || 0}])}</div>
+                                        <button type="button" class="btn btn-outline-info btn-sm mt-2 btn-otra-talla">
+                                            <i class="bi bi-plus-circle"></i> Otra talla
+                                        </button>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Categoría *</label>
@@ -289,14 +345,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <label class="form-label">Precio Venta *</label>
                                         <div class="input-group"><span class="input-group-text">$</span>
                                         <input type="number" class="form-control" name="precio_venta" value="${p.precio_venta || ''}" step="0.01" required></div>
+                                        <p class="mb-0 small text-muted precio-iva-ayuda"></p>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label">Stock *</label>
-                                        <input type="number" class="form-control" name="stock" value="${p.stock || 0}" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Stock Actual</label>
+                                        <label class="form-label">Stock mínimo</label>
                                         <input type="number" class="form-control" name="stock_minimo" value="${p.stock_minimo || 0}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Origen *</label>
+                                        <select class="form-select" name="origen">
+                                            <option value="confeccionado" ${p.origen === 'comprado' ? '' : 'selected'}>Confeccionado</option>
+                                            <option value="comprado" ${p.origen === 'comprado' ? 'selected' : ''}>Comprado</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Estado</label>
@@ -328,6 +388,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" form="formEditarProducto" class="btn btn-primary">Actualizar</button>
                         `;
+                        const campoVenta = document.querySelector('#formEditarProducto input[name="precio_venta"]');
+                        if (campoVenta) pintarAyudaIva(campoVenta);
                         
                         document.getElementById('formEditarProducto').addEventListener('submit', function(e) {
                             e.preventDefault();
@@ -525,6 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Función para filtrar productos
         function filtrarProductos() {
             const termino = inputBusqueda.value.toLowerCase().trim();
+            const estado = (document.getElementById('selectEstado')?.value || '').toLowerCase();
             const todasLasFilas = Array.from(tbodyProductos.querySelectorAll('tr'));
             
             // Remover mensaje anterior si existe
@@ -533,8 +596,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 mensajeNoResultados.remove();
             }
             
-            if (termino === '') {
-                // Si está vacío, mostrar todas las filas con atributo data-nombre
+            if (termino === '' && estado === '') {
                 todasLasFilas.forEach(fila => {
                     if (fila.hasAttribute('data-nombre')) {
                         fila.style.display = '';
@@ -556,15 +618,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 const color = (fila.getAttribute('data-color') || '').toLowerCase();
                 const talla = (fila.getAttribute('data-talla') || '').toLowerCase();
                 const categoria = (fila.getAttribute('data-categoria') || '').toLowerCase();
+                const origen = (fila.getAttribute('data-origen') || '').toLowerCase();
+                const estadoFila = (fila.getAttribute('data-estado') || '').toLowerCase();
                 // Código de barras: buscar coincidencia exacta o parcial, sin espacios
                 const codigo = (fila.getAttribute('data-codigo') || '').toLowerCase().replace(/\s/g, '');
                 const terminoSinEspacios = termino.replace(/\s/g, '');
                 
-                const coincide = nombre.includes(termino) || 
-                                color.includes(termino) || 
-                                talla.includes(termino) || 
-                                categoria.includes(termino) || 
+                const coincideTexto = termino === '' || nombre.includes(termino) ||
+                                color.includes(termino) ||
+                                talla.includes(termino) ||
+                                categoria.includes(termino) ||
+                                origen.includes(termino) ||
                                 codigo.includes(terminoSinEspacios);
+                const coincideEstado = estado === '' || estadoFila === estado;
+                const coincide = coincideTexto && coincideEstado;
                 
                 if (coincide) {
                     hayCoincidencias = true;
@@ -580,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (filasConProductos.length > 0) {
                     const tr = document.createElement('tr');
                     tr.id = 'mensajeNoResultados';
-                    tr.innerHTML = '<td colspan="11" class="text-center text-muted">No se encontraron productos que coincidan con la búsqueda</td>';
+                    tr.innerHTML = '<td colspan="12" class="text-center text-muted">No se encontraron productos que coincidan con la búsqueda</td>';
                     tbodyProductos.appendChild(tr);
                 }
             }
@@ -588,6 +655,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Evento input para filtrar en tiempo real
         inputBusqueda.addEventListener('input', filtrarProductos);
+        const selectEstado = document.getElementById('selectEstado');
+        if (selectEstado) {
+            selectEstado.addEventListener('change', filtrarProductos);
+        }
         
         // Evento keyup para limpiar con Escape
         inputBusqueda.addEventListener('keyup', function(e) {
@@ -618,7 +689,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // No limpiar el input de búsqueda para mantener el filtro en tiempo real
                 if (selectCategoria) selectCategoria.value = '';
-                if (selectEstado) selectEstado.value = '';
             }, 100);
         }
     }

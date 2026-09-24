@@ -30,10 +30,10 @@ class Producto {
             
             $query = "INSERT INTO " . $this->table . " 
                       (codigo_barras, nombre, descripcion, color, talla, precio_costo, 
-                       precio_venta, categoria_id, stock, stock_minimo, estado, foto) 
+                       precio_venta, categoria_id, stock, stock_minimo, estado, origen, foto) 
                       VALUES 
                       (:codigo_barras, :nombre, :descripcion, :color, :talla, :precio_costo, 
-                       :precio_venta, :categoria_id, :stock, :stock_minimo, :estado, :foto)";
+                       :precio_venta, :categoria_id, :stock, :stock_minimo, :estado, :origen, :foto)";
             
             $stmt = $this->conn->prepare($query);
             
@@ -54,6 +54,7 @@ class Producto {
             $stmt->bindParam(':stock', $data['stock']);
             $stmt->bindParam(':stock_minimo', $data['stock_minimo']);
             $stmt->bindParam(':estado', $data['estado']);
+            $stmt->bindParam(':origen', $data['origen']);
             $stmt->bindParam(':foto', $data['foto']);
             
             $resultado = $stmt->execute();
@@ -100,6 +101,7 @@ class Producto {
                   stock = :stock,
                   stock_minimo = :stock_minimo,
                   estado = :estado,
+                  origen = :origen,
                   foto = :foto
                   WHERE id = :id";
         
@@ -116,8 +118,16 @@ class Producto {
         $stmt->bindParam(':stock', $data['stock']);
         $stmt->bindParam(':stock_minimo', $data['stock_minimo']);
         $stmt->bindParam(':estado', $data['estado']);
+        $stmt->bindParam(':origen', $data['origen']);
         $stmt->bindParam(':foto', $data['foto']);
         
+        return $stmt->execute();
+    }
+
+    public function marcarComprado($id) {
+        $query = "UPDATE " . $this->table . " SET origen = 'comprado' WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
     
@@ -143,8 +153,12 @@ class Producto {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         $stmt->execute();
-        
-        return $stmt->fetch();
+
+        $producto = $stmt->fetch();
+        if ($producto) {
+            $producto['tallas'] = $this->getTallas((int) $producto['id']);
+        }
+        return $producto;
     }
     
     /**
@@ -159,8 +173,12 @@ class Producto {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':codigo', $codigo);
         $stmt->execute();
-        
-        return $stmt->fetch();
+
+        $producto = $stmt->fetch();
+        if ($producto) {
+            $producto['tallas'] = $this->getTallas((int) $producto['id']);
+        }
+        return $producto;
     }
     
     /**
@@ -193,6 +211,11 @@ class Producto {
         if (!empty($filters['estado'])) {
             $query .= " AND p.estado = :estado";
             $params[':estado'] = $filters['estado'];
+        }
+
+        if (!empty($filters['origen']) && in_array($filters['origen'], ['confeccionado', 'comprado'], true)) {
+            $query .= " AND p.origen = :origen";
+            $params[':origen'] = $filters['origen'];
         }
         
         $query .= " ORDER BY p.fecha_creacion DESC";
@@ -234,7 +257,29 @@ class Producto {
         $stmt->bindValue(':term5', $like);
         $stmt->execute();
 
-        return $stmt->fetchAll();
+        return $this->conTallas($stmt->fetchAll());
+    }
+
+    /**
+     * Busca prendas para una compra, también si están agotadas.
+     */
+    public function buscarParaCompra($termino) {
+        $query = "SELECT p.id, p.nombre, p.talla, p.color, p.codigo_barras, p.stock, p.precio_costo
+                  FROM " . $this->table . " p
+                  WHERE p.nombre LIKE :term1
+                     OR p.codigo_barras LIKE :term2
+                     OR p.talla LIKE :term3
+                     OR p.color LIKE :term4
+                  ORDER BY p.nombre ASC
+                  LIMIT 10";
+        $stmt = $this->conn->prepare($query);
+        $like = '%' . $termino . '%';
+        $stmt->bindValue(':term1', $like);
+        $stmt->bindValue(':term2', $like);
+        $stmt->bindValue(':term3', $like);
+        $stmt->bindValue(':term4', $like);
+        $stmt->execute();
+        return $this->conTallas($stmt->fetchAll());
     }
     
     /**
@@ -359,5 +404,263 @@ class Producto {
             error_log("Error en getMasVendidos: " . $e->getMessage());
             return [];
         }
+    }
+
+    public function getTallas($productoId) {
+        $stmt = $this->conn->prepare(
+            'SELECT id, producto_id, talla, stock
+             FROM producto_tallas
+             WHERE producto_id = :id
+             ORDER BY talla'
+        );
+        $stmt->bindValue(':id', (int) $productoId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function conTallas(array $productos) {
+        if ($productos === []) {
+            return $productos;
+        }
+        $ids = [];
+        foreach ($productos as $producto) {
+            $ids[] = (int) $producto['id'];
+        }
+        $ids = array_values(array_unique($ids));
+        $marcas = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->conn->prepare(
+            "SELECT id, producto_id, talla, stock
+             FROM producto_tallas
+             WHERE producto_id IN ($marcas)
+             ORDER BY talla"
+        );
+        $stmt->execute($ids);
+        $porProducto = [];
+        foreach ($stmt->fetchAll() as $fila) {
+            $porProducto[(int) $fila['producto_id']][] = $fila;
+        }
+        foreach ($productos as &$producto) {
+            $producto['tallas'] = $porProducto[(int) $producto['id']] ?? [];
+        }
+        unset($producto);
+        return $productos;
+    }
+
+    public function guardarTallas($productoId, array $filas) {
+        $productoId = (int) $productoId;
+        $conservar = [];
+        $actualizar = $this->conn->prepare(
+            'UPDATE producto_tallas SET talla = :talla, stock = :stock WHERE id = :id AND producto_id = :producto_id'
+        );
+        $buscar = $this->conn->prepare(
+            'SELECT id FROM producto_tallas WHERE producto_id = :producto_id AND talla = :talla'
+        );
+        $insertar = $this->conn->prepare(
+            'INSERT INTO producto_tallas (producto_id, talla, stock) VALUES (:producto_id, :talla, :stock)'
+        );
+
+        foreach ($filas as $fila) {
+            $talla = trim((string) $fila['talla']);
+            $stock = max(0, (int) $fila['stock']);
+            $id = (int) ($fila['id'] ?? 0);
+            if ($id > 0) {
+                $actualizar->execute([
+                    ':talla' => $talla,
+                    ':stock' => $stock,
+                    ':id' => $id,
+                    ':producto_id' => $productoId,
+                ]);
+                $conservar[] = $id;
+                continue;
+            }
+            $buscar->execute([':producto_id' => $productoId, ':talla' => $talla]);
+            $existente = (int) $buscar->fetchColumn();
+            if ($existente > 0) {
+                $actualizar->execute([
+                    ':talla' => $talla,
+                    ':stock' => $stock,
+                    ':id' => $existente,
+                    ':producto_id' => $productoId,
+                ]);
+                $conservar[] = $existente;
+                continue;
+            }
+            $insertar->execute([
+                ':producto_id' => $productoId,
+                ':talla' => $talla,
+                ':stock' => $stock,
+            ]);
+            $conservar[] = (int) $this->conn->lastInsertId();
+        }
+
+        $usadas = $this->conn->prepare('SELECT COUNT(*) FROM detalle_venta WHERE talla_id = :id');
+        $borrar = $this->conn->prepare('DELETE FROM producto_tallas WHERE id = :id AND producto_id = :producto_id');
+        foreach ($this->getTallas($productoId) as $actual) {
+            if (in_array((int) $actual['id'], $conservar, true)) {
+                continue;
+            }
+            $usadas->execute([':id' => (int) $actual['id']]);
+            if ((int) $usadas->fetchColumn() > 0) {
+                continue;
+            }
+            $borrar->execute([':id' => (int) $actual['id'], ':producto_id' => $productoId]);
+        }
+
+        $this->sincronizarTallas($productoId);
+    }
+
+    public function asegurarStock(array $detalles) {
+        $grupos = [];
+        foreach ($detalles as $detalle) {
+            $productoId = (int) ($detalle['producto_id'] ?? 0);
+            $tallaId = $this->resolverTalla($productoId, (int) ($detalle['talla_id'] ?? 0));
+            $cantidad = (int) ($detalle['cantidad'] ?? 0);
+            if ($productoId < 1 || $cantidad < 1) {
+                throw new Exception('Hay una prenda sin cantidad en la venta.');
+            }
+            $clave = $productoId . ':' . $tallaId;
+            if (!isset($grupos[$clave])) {
+                $grupos[$clave] = [
+                    'producto_id' => $productoId,
+                    'talla_id' => $tallaId,
+                    'cantidad' => 0,
+                ];
+            }
+            $grupos[$clave]['cantidad'] += $cantidad;
+        }
+        usort($grupos, function ($a, $b) {
+            if ($a['producto_id'] === $b['producto_id']) {
+                return $a['talla_id'] <=> $b['talla_id'];
+            }
+            return $a['producto_id'] <=> $b['producto_id'];
+        });
+        foreach ($grupos as $grupo) {
+            $this->leerStockBloqueado($grupo['producto_id'], $grupo['talla_id'], $grupo['cantidad']);
+        }
+    }
+
+    public function bajarStock($productoId, $tallaId, $cantidad) {
+        $productoId = (int) $productoId;
+        $cantidad = (int) $cantidad;
+        $tallaId = $this->resolverTalla($productoId, (int) $tallaId);
+        $this->leerStockBloqueado($productoId, $tallaId, $cantidad);
+        if ($tallaId > 0) {
+            $stmt = $this->conn->prepare(
+                'UPDATE producto_tallas
+                 SET stock = stock - :cantidad
+                 WHERE id = :id AND producto_id = :producto_id AND stock >= :cantidad2'
+            );
+            $stmt->bindValue(':cantidad', $cantidad, PDO::PARAM_INT);
+            $stmt->bindValue(':cantidad2', $cantidad, PDO::PARAM_INT);
+            $stmt->bindValue(':id', $tallaId, PDO::PARAM_INT);
+            $stmt->bindValue(':producto_id', $productoId, PDO::PARAM_INT);
+            $stmt->execute();
+            if ($stmt->rowCount() < 1) {
+                throw new Exception($this->mensajeSinStock($this->nombreProducto($productoId), '', 0));
+            }
+            $this->sincronizarTallas($productoId);
+            return $tallaId;
+        }
+        $this->reducirStock($productoId, $cantidad);
+        return 0;
+    }
+
+    public function subirStock($productoId, $tallaId, $cantidad) {
+        $tallaId = $this->resolverTalla((int) $productoId, (int) $tallaId);
+        if ($tallaId > 0) {
+            $stmt = $this->conn->prepare(
+                'UPDATE producto_tallas SET stock = stock + :cantidad WHERE id = :id AND producto_id = :producto_id'
+            );
+            $stmt->bindValue(':cantidad', (int) $cantidad, PDO::PARAM_INT);
+            $stmt->bindValue(':id', $tallaId, PDO::PARAM_INT);
+            $stmt->bindValue(':producto_id', (int) $productoId, PDO::PARAM_INT);
+            $stmt->execute();
+            $this->sincronizarTallas((int) $productoId);
+            return $tallaId;
+        }
+        $this->aumentarStock((int) $productoId, (int) $cantidad);
+        return 0;
+    }
+
+    private function leerStockBloqueado($productoId, $tallaId, $cantidad) {
+        if ($tallaId > 0) {
+            $stmt = $this->conn->prepare(
+                'SELECT pt.stock, pt.talla, p.nombre
+                 FROM producto_tallas pt
+                 INNER JOIN productos p ON p.id = pt.producto_id
+                 WHERE pt.id = :id AND pt.producto_id = :producto_id
+                 FOR UPDATE'
+            );
+            $stmt->execute([
+                ':id' => $tallaId,
+                ':producto_id' => $productoId,
+            ]);
+            $fila = $stmt->fetch();
+            $queda = $fila ? (int) $fila['stock'] : 0;
+            if (!$fila || $queda < $cantidad) {
+                $nombre = $fila ? (string) $fila['nombre'] : $this->nombreProducto($productoId);
+                $talla = $fila ? (string) $fila['talla'] : '';
+                throw new Exception($this->mensajeSinStock($nombre, $talla, $queda));
+            }
+            return;
+        }
+        $stmt = $this->conn->prepare('SELECT nombre, stock FROM productos WHERE id = :id FOR UPDATE');
+        $stmt->execute([':id' => $productoId]);
+        $fila = $stmt->fetch();
+        $queda = $fila ? (int) $fila['stock'] : 0;
+        if (!$fila || $queda < $cantidad) {
+            $nombre = $fila ? (string) $fila['nombre'] : 'esa prenda';
+            throw new Exception($this->mensajeSinStock($nombre, '', $queda));
+        }
+    }
+
+    private function nombreProducto($productoId) {
+        $stmt = $this->conn->prepare('SELECT nombre FROM productos WHERE id = :id');
+        $stmt->execute([':id' => $productoId]);
+        $nombre = $stmt->fetchColumn();
+        return $nombre ? (string) $nombre : 'esa prenda';
+    }
+
+    private function mensajeSinStock($nombre, $talla, $queda) {
+        $pieza = $nombre;
+        if ($talla !== '') {
+            $pieza .= ' talla ' . $talla;
+        }
+        if ((int) $queda <= 0) {
+            return 'Ya no queda ' . $pieza . '. La otra caja lo facturó primero.';
+        }
+        return 'Solo queda ' . (int) $queda . ' de ' . $pieza . '. No alcanza para esta venta.';
+    }
+
+    private function resolverTalla($productoId, $tallaId) {
+        if ($tallaId > 0) {
+            return $tallaId;
+        }
+        $tallas = $this->getTallas($productoId);
+        if (count($tallas) === 1) {
+            return (int) $tallas[0]['id'];
+        }
+        return 0;
+    }
+
+    private function sincronizarTallas($productoId) {
+        $tallas = $this->getTallas($productoId);
+        $stock = 0;
+        $nombres = [];
+        foreach ($tallas as $talla) {
+            $stock += (int) $talla['stock'];
+            $nombres[] = $talla['talla'];
+        }
+        $texto = implode(', ', $nombres);
+        $estado = $stock > 0 ? 'Disponible' : 'Agotado';
+        $stmt = $this->conn->prepare(
+            'UPDATE productos SET stock = :stock, talla = :talla, estado = :estado WHERE id = :id'
+        );
+        $stmt->execute([
+            ':stock' => $stock,
+            ':talla' => $texto,
+            ':estado' => $estado,
+            ':id' => (int) $productoId,
+        ]);
     }
 }

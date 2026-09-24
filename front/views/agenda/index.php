@@ -19,6 +19,9 @@ $diasEnMes = date('t', strtotime("$year-$month-01"));
 
 // Organizar tareas por fecha
 $tareasPorFecha = [];
+if (!isset($tareasMes) || !is_array($tareasMes)) {
+    $tareasMes = [];
+}
 foreach ($tareasMes as $tarea) {
     $fecha = $tarea['fecha'];
     if (!isset($tareasPorFecha[$fecha])) {

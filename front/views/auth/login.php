@@ -9,9 +9,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             <div class="card shadow-lg">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        <i class="bi bi-shop display-1 text-primary"></i>
-                        <h2 class="mt-3">Sistema de Inventario</h2>
-                        <p class="text-muted">Ropa Infantil</p>
+                        <img src="<?php echo BASE_URL; ?>front/public/img/logo-nunca-jamas.jpg" alt="Nunca Jamás" class="logo-acceso">
                     </div>
                     
                     <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=login&method=doLogin">

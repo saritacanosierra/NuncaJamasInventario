@@ -6,23 +6,38 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-people"></i> Gestión de Clientes</h2>
-        <?php if (tienePermiso('clientes_lista:create')): ?>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
-            <i class="bi bi-plus-circle"></i> Nuevo Cliente
-        </button>
-        <?php endif; ?>
+        <div class="d-flex align-items-center gap-2">
+            <?php if (tienePermiso('clientes_fiado:view')): ?>
+            <a class="btn btn-outline-primary" href="<?php echo BASE_URL; ?>index.php?action=clientes&method=deudas">
+                <i class="bi bi-wallet2"></i> Quienes deben
+            </a>
+            <?php endif; ?>
+            <?php if (tienePermiso('clientes_lista:create')): ?>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
+                <i class="bi bi-plus-circle"></i> Nuevo Cliente
+            </button>
+            <?php endif; ?>
+        </div>
     </div>
     
     <!-- Buscador -->
     <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-10">
+                <div class="<?php echo tienePermiso('clientes_fiado:view') ? 'col-md-7' : 'col-md-10'; ?>">
                     <input type="text" class="form-control" 
                            placeholder="Buscar por nombre, cédula/NIT o teléfono..." 
                            value="<?php echo htmlspecialchars($_GET['busqueda'] ?? ''); ?>"
                            id="inputBusqueda">
                 </div>
+                <?php if (tienePermiso('clientes_fiado:view')): ?>
+                <div class="col-md-3">
+                    <select class="form-select" id="filtroDeuda" aria-label="Filtrar quienes deben">
+                        <option value="todos">Todos los clientes</option>
+                        <option value="deben">Quienes deben</option>
+                    </select>
+                </div>
+                <?php endif; ?>
                 <div class="col-md-2">
                     <button type="button" class="btn btn-secondary w-100" id="btnLimpiarBusqueda">
                         <i class="bi bi-x-circle"></i> Limpiar
@@ -33,7 +48,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
     </div>
     
     <!-- Tabla de clientes -->
-    <div class="card">
+    <div class="card" id="cardClientes">
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -45,13 +60,16 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                             <th>Email</th>
                             <th>Total Compras</th>
                             <th>Total Gastado</th>
+                            <?php if (tienePermiso('clientes_fiado:view')): ?>
+                            <th id="columnaDebe">Debe</th>
+                            <?php endif; ?>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaClientes">
                         <?php if (empty($clientes)): ?>
                             <tr>
-                                <td colspan="7" class="text-center text-muted">No se encontraron clientes</td>
+                                <td colspan="<?php echo tienePermiso('clientes_fiado:view') ? 8 : 7; ?>" class="text-center text-muted">No se encontraron clientes</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($clientes as $cliente): ?>
@@ -62,6 +80,9 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                     <td><?php echo htmlspecialchars($cliente['email'] ?? 'N/A'); ?></td>
                                     <td><span class="badge bg-info"><?php echo $cliente['total_compras'] ?? 0; ?></span></td>
                                     <td><strong><?php echo pesos($cliente['total_gastado'] ?? 0); ?></strong></td>
+                                    <?php if (tienePermiso('clientes_fiado:view')): ?>
+                                    <td><?php echo pesos($saldosFiado[$cliente['id']] ?? 0); ?></td>
+                                    <?php endif; ?>
                                     <td>
                                         <?php if (tienePermiso('clientes_historial:view')): ?>
                                         <a href="<?php echo BASE_URL; ?>index.php?action=clientes&method=historial&id=<?php echo $cliente['id']; ?>" 
@@ -94,6 +115,13 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             </div>
         </div>
     </div>
+    <?php if (tienePermiso('clientes_fiado:view')): ?>
+    <div class="card d-none" id="cardDeudas">
+        <div class="card-body">
+            <?php require BASE_DIR . '/front/views/components/tabla_deudas.php'; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Modal Nuevo Cliente -->
@@ -166,6 +194,6 @@ require_once BASE_DIR . '/front/views/layout/header.php';
     window.BASE_URL = '<?php echo BASE_URL; ?>';
 </script>
 <!-- JavaScript del módulo de clientes -->
-<script src="<?php echo BASE_URL; ?>front/public/js/clientes.js?v=3"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/clientes.js?v=5"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>

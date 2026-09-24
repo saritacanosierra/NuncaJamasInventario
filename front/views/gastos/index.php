@@ -1,35 +1,42 @@
 <?php
 $pageTitle = 'Gastos';
 require_once BASE_DIR . '/front/views/layout/header.php';
+if (!isset($categorias) || !is_array($categorias)) {
+    $categorias = [];
+}
 ?>
 
 <div class="main-container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-cash-stack"></i> Gestión de Gastos e Inversiones</h2>
-        <div>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+        <h2 class="mb-0"><i class="bi bi-cash-stack"></i> Gastos e inversiones</h2>
+        <div class="d-flex align-items-center gap-2">
             <?php if (tienePermiso('gastos_categorias:view')): ?>
-            <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#modalCategoriasGastos">
-                <i class="bi bi-tags"></i> Categorías
+            <button type="button" class="btn btn-outline-secondary btn-icono" data-bs-toggle="modal" data-bs-target="#modalCategoriasGastos" title="Categorías">
+                <i class="bi bi-tags"></i>
             </button>
             <?php endif; ?>
             <?php if (tienePermiso('gastos_historial:view')): ?>
-            <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#modalHistorial">
-                <i class="bi bi-clock-history"></i> Historial
+            <button type="button" class="btn btn-outline-info btn-icono" data-bs-toggle="modal" data-bs-target="#modalHistorial" title="Historial">
+                <i class="bi bi-clock-history"></i>
             </button>
             <?php endif; ?>
+            <?php if (tienePermiso('compras_registro:view') || tienePermiso('compras:view')): ?>
+            <a class="btn btn-outline-primary" href="<?php echo BASE_URL; ?>index.php?action=compras">
+                <i class="bi bi-bag-plus"></i> Compras de producto
+            </a>
+            <?php endif; ?>
             <?php if (tienePermiso('gastos_inversiones:create')): ?>
-            <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#modalNuevaInversion">
-                <i class="bi bi-plus-circle"></i> Nueva Inversión
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNuevaInversion">
+                <i class="bi bi-plus-circle"></i> Nueva inversión
             </button>
             <?php endif; ?>
             <?php if (tienePermiso('gastos_registro:create')): ?>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoGasto">
-                <i class="bi bi-plus-circle"></i> Nuevo Gasto
+                <i class="bi bi-plus-circle"></i> Nuevo gasto
             </button>
             <?php endif; ?>
         </div>
     </div>
-    
     <!-- Resumen -->
     <div class="row g-3 mb-4">
         <div class="col-md-6">
@@ -79,6 +86,17 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                                 <?php echo htmlspecialchars($cat['nombre']); ?>
                             </option>
                         <?php endforeach; ?>
+                        <?php
+                        $hayCategoriaProducto = false;
+                        foreach ($categorias as $cat) {
+                            if (strtolower($cat['nombre']) === 'producto') {
+                                $hayCategoriaProducto = true;
+                            }
+                        }
+                        if (!$hayCategoriaProducto):
+                        ?>
+                            <option value="Producto" <?php echo ($categoriaFiltro == 'Producto') ? 'selected' : ''; ?>>Producto</option>
+                        <?php endif; ?>
                     </select>
                 </div>
                 <div class="col-md-12">
@@ -258,11 +276,11 @@ new Chart(ctx, {
         datasets: [{
             data: data,
             backgroundColor: [
-                'rgba(252, 209, 209, 0.95)',
-                'rgba(174, 225, 225, 0.95)',
-                'rgba(236, 226, 225, 0.95)',
-                'rgba(151, 207, 207, 0.95)',
-                'rgba(211, 224, 220, 0.95)'
+                '#fcd1d1',
+                '#e7a3a8',
+                '#d6848a',
+                '#ece2e1',
+                '#7a5555'
             ]
         }]
     },
@@ -300,11 +318,11 @@ new Chart(ctxInversiones, {
         datasets: [{
             data: dataInversiones,
             backgroundColor: [
-                'rgba(252, 209, 209, 0.95)',
-                'rgba(236, 226, 225, 0.95)',
-                'rgba(211, 224, 220, 0.95)',
-                'rgba(174, 225, 225, 0.95)',
-                'rgba(151, 207, 207, 0.95)'
+                '#97cfcf',
+                '#d3e0dc',
+                '#6ea898',
+                '#aee1e1',
+                '#3e6464'
             ]
         }]
     },
@@ -360,6 +378,7 @@ new Chart(ctxInversiones, {
                         <select class="form-select" id="categoria" name="categoria" required>
                             <option value="">Seleccione una categoría</option>
                             <?php foreach ($categorias as $cat): ?>
+                                <?php if (strtolower($cat['nombre']) === 'producto') { continue; } ?>
                                 <option value="<?php echo htmlspecialchars($cat['nombre']); ?>">
                                     <?php echo htmlspecialchars($cat['nombre']); ?>
                                 </option>
@@ -421,11 +440,13 @@ new Chart(ctxInversiones, {
                         <select class="form-select" id="inversion_categoria" name="categoria" required>
                             <option value="">Seleccione una categoría</option>
                             <?php foreach ($categorias as $cat): ?>
+                                <?php if (strtolower($cat['nombre']) === 'producto') { continue; } ?>
                                 <option value="<?php echo htmlspecialchars($cat['nombre']); ?>">
                                     <?php echo htmlspecialchars($cat['nombre']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <small class="text-muted">La mercancía se anota en Compras de producto. Entra al inventario y también suma aquí como inversión.</small>
                     </div>
                     
                     <div class="mb-3">

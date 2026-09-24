@@ -64,6 +64,20 @@ function permisos_catalogo() {
         grupo_permiso('ventas_rotulo', 'Rótulo de envío', 'Operación', 'ventas', 'subview', [
             item_permiso('ventas_rotulo:view', 'Ver rótulo', 'Abre e imprime el rótulo de envío de una venta con domicilio.'),
         ]),
+        grupo_permiso('ventas_cambio', 'Cambio de talla', 'Operación', 'ventas', 'capability', [
+            item_permiso('ventas_cambio:create', 'Cambiar talla', 'Cambia la talla de una prenda ya vendida y ajusta el stock.'),
+        ]),
+        grupo_permiso('ventas_dian', 'Factura electrónica', 'Operación', 'ventas', 'subview', [
+            item_permiso('ventas_dian:view', 'Ver documento', 'Ve el CUFE y el estado del documento electrónico de una venta.'),
+            item_permiso('ventas_dian:create', 'Generar documento', 'Arma el número, el CUFE y el XML de una venta.'),
+            item_permiso('ventas_dian:decide', 'Enviar a la DIAN', 'Envía el XML al ambiente configurado y guarda la respuesta de la DIAN.'),
+        ]),
+        grupo_permiso('ventas_nota', 'Nota crédito', 'Operación', 'ventas', 'capability', [
+            item_permiso('ventas_nota:create', 'Crear nota crédito', 'Anula el documento, devuelve la prenda al stock y deja la nota para enviarla.'),
+        ]),
+        grupo_permiso('ventas_resolucion', 'Resolución DIAN', 'Operación', 'ventas', 'capability', [
+            item_permiso('ventas_resolucion:edit', 'Guardar resolución', 'Guarda el rango, la clave técnica y el NIT con los que se arma el documento.'),
+        ]),
 
         grupo_permiso('clientes', 'Clientes', 'Operación', 'clientes', 'workspace', [
             item_permiso('clientes:view', 'Ver menú', 'Muestra el ítem Clientes en el menú. No abre el listado ni el historial de compras.'),
@@ -76,6 +90,10 @@ function permisos_catalogo() {
         ]),
         grupo_permiso('clientes_historial', 'Historial de compras', 'Operación', 'clientes', 'subview', [
             item_permiso('clientes_historial:view', 'Ver compras', 'Abre las compras de un cliente y, desde ahí, la factura de cada compra.'),
+        ]),
+        grupo_permiso('clientes_fiado', 'Fiado', 'Operación', 'clientes', 'subview', [
+            item_permiso('clientes_fiado:view', 'Ver fiado', 'Ve lo que cada cliente debe.'),
+            item_permiso('clientes_fiado:create', 'Abonar fiado', 'Registra un abono sobre la deuda del cliente.'),
         ]),
 
         grupo_permiso('gastos', 'Gastos', 'Operación', 'gastos', 'workspace', [
@@ -138,6 +156,36 @@ function permisos_catalogo() {
         ]),
         grupo_permiso('produccion_cierre', 'Cierre del día', 'Operación', 'produccion', 'capability', [
             item_permiso('produccion_cierre:decide', 'Cerrar y abrir el día', 'Cierra la jornada de toda la empresa una sola vez, y puede abrirla de nuevo.'),
+        ]),
+        grupo_permiso('produccion_pago', 'Pago por pieza', 'Operación', 'produccion', 'subview', [
+            item_permiso('produccion_pago:view', 'Ver pago', 'Ve las piezas del periodo y lo que se le debe a cada operaria.'),
+            item_permiso('produccion_pago:edit', 'Editar tarifa', 'Guarda cuánto se paga por cada pieza de una operación.'),
+        ]),
+
+        grupo_permiso('compras', 'Compras', 'Operación', 'compras', 'workspace', [
+            item_permiso('compras:view', 'Ver menú', 'Muestra el ítem Compras en el menú.'),
+        ]),
+        grupo_permiso('compras_registro', 'Registro de compras', 'Operación', 'compras', 'subview', [
+            item_permiso('compras_registro:view', 'Ver compras', 'Lista las compras de mercancía.'),
+            item_permiso('compras_registro:create', 'Registrar compra', 'Registra una compra, sube el stock y actualiza el costo.'),
+        ]),
+        grupo_permiso('compras_kardex', 'Kardex', 'Operación', 'compras', 'subview', [
+            item_permiso('compras_kardex:view', 'Ver kardex', 'Lista las entradas y salidas de cada prenda.'),
+        ]),
+
+        grupo_permiso('caja', 'Caja', 'Operación', 'caja', 'workspace', [
+            item_permiso('caja:view', 'Ver menú', 'Muestra el ítem Caja en el menú.'),
+        ]),
+        grupo_permiso('caja_cierre', 'Cierre de caja', 'Operación', 'caja', 'subview', [
+            item_permiso('caja_cierre:view', 'Ver cierre', 'Ve el efectivo esperado del día y los cierres anteriores.'),
+            item_permiso('caja_cierre:decide', 'Cerrar caja', 'Cierra la caja de un día una sola vez.'),
+        ]),
+
+        grupo_permiso('informes', 'Informes', 'Operación', 'informes', 'workspace', [
+            item_permiso('informes:view', 'Ver menú', 'Muestra el ítem Informes en el menú.'),
+        ]),
+        grupo_permiso('informes_mes', 'Informe del mes', 'Operación', 'informes', 'subview', [
+            item_permiso('informes_mes:view', 'Ver informe', 'Ve ventas, gastos, caja, documentos y fiado de un mes, listo para imprimir.'),
         ]),
 
         grupo_permiso('configuracion', 'Configuración', 'Configuración', 'configuracion', 'workspace', [
@@ -229,6 +277,21 @@ function permisos_semilla_roles() {
         'ventas_historial:delete',
         'ventas_factura:view',
         'ventas_rotulo:view',
+        'ventas_cambio:create',
+        'ventas_dian:view',
+        'ventas_dian:create',
+        'ventas_nota:create',
+        'clientes:view',
+        'clientes_lista:view',
+        'clientes_fiado:view',
+        'clientes_fiado:create',
+        'compras:view',
+        'compras_registro:view',
+        'compras_registro:create',
+        'compras_kardex:view',
+        'caja:view',
+        'caja_cierre:view',
+        'caja_cierre:decide',
     ];
     $operario = [
         'produccion:view',
@@ -256,6 +319,17 @@ function permisos_entradas() {
             'ventas_historial:view' => 'index.php?action=ventas&method=historial',
             'ventas_factura:view' => 'index.php?action=ventas&method=historial',
             'ventas_rotulo:view' => 'index.php?action=ventas&method=historial',
+            'ventas_dian:view' => 'index.php?action=ventas&method=resolucion',
+        ],
+        'compras' => [
+            'compras_registro:view' => 'index.php?action=compras',
+            'compras_kardex:view' => 'index.php?action=compras&method=kardex',
+        ],
+        'caja' => [
+            'caja_cierre:view' => 'index.php?action=caja',
+        ],
+        'informes' => [
+            'informes_mes:view' => 'index.php?action=informes',
         ],
         'clientes' => [
             'clientes_lista:view' => 'index.php?action=clientes',
@@ -273,6 +347,7 @@ function permisos_entradas() {
             'produccion_operaciones:view' => 'index.php?action=produccion',
             'produccion_retrocesos:view' => 'index.php?action=produccion',
             'produccion_dashboard:view' => 'index.php?action=produccion&method=dashboardOperaciones',
+            'produccion_pago:view' => 'index.php?action=produccion&method=pago',
         ],
         'configuracion' => [
             'usuarios_lista:view' => 'index.php?action=usuarios',
@@ -316,6 +391,14 @@ function permisos_rutas() {
             'delete' => ['slug' => 'ventas_historial:delete'],
             'factura' => ['any' => 'ver_factura'],
             'rotuloEnvio' => ['slug' => 'ventas_rotulo:view'],
+            'cambiarTalla' => ['slug' => 'ventas_cambio:create'],
+            'resolucion' => ['slug' => 'ventas_dian:view'],
+            'guardarResolucion' => ['slug' => 'ventas_resolucion:edit'],
+            'emitirDian' => ['slug' => 'ventas_dian:create'],
+            'guardarCertificado' => ['slug' => 'ventas_resolucion:edit'],
+            'enviarDian' => ['slug' => 'ventas_dian:decide'],
+            'notaCredito' => ['slug' => 'ventas_nota:create'],
+            'enviarNota' => ['slug' => 'ventas_dian:decide'],
         ],
         'clientes' => [
             'index' => ['all' => ['clientes:view', 'clientes_lista:view']],
@@ -326,6 +409,8 @@ function permisos_rutas() {
             'getCliente' => ['any' => 'buscar_cliente', 'json' => $json],
             'buscar' => ['any' => 'buscar_cliente', 'json' => $json],
             'crearRapido' => ['any' => 'crear_cliente', 'json' => $json],
+            'abonar' => ['slug' => 'clientes_fiado:create'],
+            'deudas' => ['slug' => 'clientes_fiado:view'],
         ],
         'gastos' => [
             'index' => ['all' => ['gastos:view'], 'any' => 'entrar_gastos'],
@@ -370,6 +455,21 @@ function permisos_rutas() {
             'finalizarDia' => ['slug' => 'produccion_cierre:decide', 'json' => $json],
             'reabrirDia' => ['slug' => 'produccion_cierre:decide', 'json' => $json],
             'dashboardOperaciones' => ['all' => ['produccion:view', 'produccion_dashboard:view']],
+            'pago' => ['slug' => 'produccion_pago:view'],
+            'guardarTarifa' => ['slug' => 'produccion_pago:edit'],
+        ],
+        'compras' => [
+            'index' => ['all' => ['compras:view', 'compras_registro:view']],
+            'store' => ['slug' => 'compras_registro:create'],
+            'kardex' => ['all' => ['compras:view', 'compras_kardex:view']],
+            'buscarProducto' => ['slug' => 'compras_registro:create', 'json' => $json],
+        ],
+        'caja' => [
+            'index' => ['all' => ['caja:view', 'caja_cierre:view']],
+            'cerrar' => ['slug' => 'caja_cierre:decide'],
+        ],
+        'informes' => [
+            'index' => ['all' => ['informes:view', 'informes_mes:view']],
         ],
         'usuarios' => [
             'index' => ['all' => ['configuracion:view', 'usuarios_lista:view']],

@@ -108,7 +108,7 @@ switch ($action) {
 
     case 'ventas':
         $controller = new VentaController($db);
-        $allowedMethods = ['procesar', 'factura', 'historial', 'edit', 'update', 'delete', 'rotuloEnvio', 'obtenerHistorial', 'index'];
+        $allowedMethods = ['procesar', 'factura', 'historial', 'edit', 'update', 'delete', 'rotuloEnvio', 'obtenerHistorial', 'cambiarTalla', 'resolucion', 'guardarResolucion', 'guardarCertificado', 'emitirDian', 'enviarDian', 'notaCredito', 'enviarNota', 'index'];
         if (!in_array($method, $allowedMethods, true)) {
             $method = 'index';
         }
@@ -118,11 +118,41 @@ switch ($action) {
 
     case 'clientes':
         $controller = new ClienteController($db);
-        $allowedMethods = ['store', 'update', 'delete', 'historial', 'buscar', 'crearRapido', 'getCliente', 'index'];
+        $allowedMethods = ['store', 'update', 'delete', 'historial', 'buscar', 'crearRapido', 'getCliente', 'abonar', 'deudas', 'index'];
         if (!in_array($method, $allowedMethods, true)) {
             $method = 'index';
         }
         exigir_ruta('clientes', $method);
+        $controller->{$method}();
+        break;
+
+    case 'compras':
+        $controller = new CompraController($db);
+        $allowedMethods = ['store', 'kardex', 'buscarProducto', 'index'];
+        if (!in_array($method, $allowedMethods, true)) {
+            $method = 'index';
+        }
+        exigir_ruta('compras', $method);
+        $controller->{$method}();
+        break;
+
+    case 'caja':
+        $controller = new CajaController($db);
+        $allowedMethods = ['cerrar', 'index'];
+        if (!in_array($method, $allowedMethods, true)) {
+            $method = 'index';
+        }
+        exigir_ruta('caja', $method);
+        $controller->{$method}();
+        break;
+
+    case 'informes':
+        $controller = new InformeController($db);
+        $allowedMethods = ['index'];
+        if (!in_array($method, $allowedMethods, true)) {
+            $method = 'index';
+        }
+        exigir_ruta('informes', $method);
         $controller->{$method}();
         break;
 
@@ -153,7 +183,7 @@ switch ($action) {
         $allowedMethods = ['guardarRegistro', 'guardarOperacion', 'eliminarOperacion', 'guardarRetroceso',
                           'getRetrocesos', 'getHistorialOperacion', 'getOperaciones', 'getOperariasDelDia',
                           'buscarOperarias', 'generarCodigoOperacion', 'getResumenDia', 'finalizarDia', 'reabrirDia',
-                          'dashboardOperaciones', 'verificarDiaFinalizado', 'index'];
+                          'dashboardOperaciones', 'verificarDiaFinalizado', 'pago', 'guardarTarifa', 'index'];
         if (!in_array($method, $allowedMethods, true)) {
             $method = 'index';
         }

@@ -111,7 +111,7 @@ function permisos_url_de($workspaceKey) {
 }
 
 function permisos_url_inicio() {
-    $orden = ['dashboard', 'productos', 'ventas', 'clientes', 'gastos', 'agenda', 'produccion', 'configuracion'];
+    $orden = ['dashboard', 'productos', 'compras', 'ventas', 'caja', 'informes', 'clientes', 'gastos', 'agenda', 'produccion', 'configuracion'];
     foreach ($orden as $modulo) {
         if (puedeVerModulo($modulo)) {
             $url = permisos_url_de($modulo);
