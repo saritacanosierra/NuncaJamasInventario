@@ -485,6 +485,11 @@ function permisos_rutas() {
             'crear' => ['slug' => 'roles_matriz:edit'],
             'slugs' => ['any' => 'ver_rol_para_usuario', 'json' => $json],
         ],
+        'wordpress' => [
+            'index' => ['slug' => 'roles_matriz:edit'],
+            'guardar' => ['slug' => 'roles_matriz:edit'],
+            'probar' => ['slug' => 'roles_matriz:edit'],
+        ],
         'sesion' => [
             'me' => ['json' => $json],
         ],

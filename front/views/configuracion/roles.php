@@ -31,6 +31,9 @@ function permisos_por_accion($grupo) {
         <?php if (puedeVerModulo('configuracion') && tienePermiso('usuarios_lista:view')): ?>
             <a class="btn btn-outline-secondary" href="<?php echo BASE_URL; ?>index.php?action=usuarios">Usuarios</a>
         <?php endif; ?>
+        <?php if (tienePermiso('roles_matriz:edit')): ?>
+            <a class="btn btn-outline-secondary" href="<?php echo BASE_URL; ?>index.php?action=wordpress">WordPress</a>
+        <?php endif; ?>
     </div>
 
     <div class="row g-4">

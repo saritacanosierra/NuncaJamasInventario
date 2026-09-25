@@ -13,6 +13,9 @@ if (!isset($roles) || !is_array($roles)) {
             <?php if (tienePermiso('roles_matriz:view')): ?>
                 <a class="btn btn-outline-secondary me-2" href="<?php echo BASE_URL; ?>index.php?action=roles">Roles</a>
             <?php endif; ?>
+            <?php if (tienePermiso('roles_matriz:edit')): ?>
+                <a class="btn btn-outline-secondary me-2" href="<?php echo BASE_URL; ?>index.php?action=wordpress">WordPress</a>
+            <?php endif; ?>
             <?php if (tienePermiso('usuarios_lista:create')): ?>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoUsuario">
                 <i class="bi bi-plus-circle"></i> Nuevo Usuario

@@ -15,6 +15,7 @@ dist-ssr
 *.local
 back/config/mail.local.php
 back/config/db.local.php
+back/config/wordpress.local.php
 back/config/dian.local.php
 back/storage/dian/
 

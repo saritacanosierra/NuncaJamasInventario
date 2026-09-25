@@ -84,6 +84,16 @@ switch ($action) {
         $controller->{$method}();
         break;
 
+    case 'wordpress':
+        $controller = new WordpressController($db);
+        $allowedMethods = ['guardar', 'probar', 'index'];
+        if (!in_array($method, $allowedMethods, true)) {
+            $method = 'index';
+        }
+        exigir_ruta('wordpress', $method);
+        $controller->{$method}();
+        break;
+
     case 'dashboard':
         $controller = new DashboardController($db);
         $allowedMethods = ['getMetaDiaria', 'index'];

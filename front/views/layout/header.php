@@ -32,6 +32,7 @@
             'Producción'   => 'produccion.css',
             'Usuarios'     => 'configuracion.css',
             'Roles'        => 'configuracion.css',
+            'WordPress'    => 'configuracion.css',
             'Compras'      => 'compras.css',
             'Kardex'       => 'compras.css',
             'Caja'         => 'caja.css',
