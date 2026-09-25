@@ -22,15 +22,16 @@ class CajaController {
     }
 
     public function cerrar() {
+        $fecha = trim($_POST['fecha'] ?? '');
+        $destino = $this->destinoTrasCierre($fecha);
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('index.php?action=caja');
         }
-        exigir_csrf_redirect('index.php?action=caja');
+        exigir_csrf_redirect($destino);
 
-        $fecha = trim($_POST['fecha'] ?? '');
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
             $_SESSION['error'] = 'La fecha del cierre no es válida';
-            redirect('index.php?action=caja');
+            redirect($destino);
         }
 
         $resultado = $this->cierre->cerrar([
@@ -46,6 +47,27 @@ class CajaController {
         } else {
             $_SESSION['error'] = $resultado['error'];
         }
-        redirect('index.php?action=caja&fecha=' . urlencode($fecha));
+        redirect($destino);
+    }
+
+    private function destinoTrasCierre($fecha) {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+            $fecha = date('Y-m-d');
+        }
+        if (($_POST['volver'] ?? '') !== 'gastos') {
+            return 'index.php?action=caja&fecha=' . urlencode($fecha);
+        }
+        $qs = 'index.php?action=gastos&fecha_caja=' . urlencode($fecha);
+        foreach (['fecha_desde', 'fecha_hasta'] as $clave) {
+            $valor = trim((string) ($_POST[$clave] ?? ''));
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $valor)) {
+                $qs .= '&' . $clave . '=' . urlencode($valor);
+            }
+        }
+        $categoria = trim((string) ($_POST['categoria'] ?? ''));
+        if ($categoria !== '' && strlen($categoria) <= 100) {
+            $qs .= '&categoria=' . urlencode($categoria);
+        }
+        return $qs;
     }
 }

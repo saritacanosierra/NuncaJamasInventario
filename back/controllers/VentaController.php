@@ -78,7 +78,7 @@ class VentaController {
             redirect('index.php?action=ventas');
         }
         
-        // El precio de caja es el valor de venta más el IVA del 19%.
+        // El precio guardado es lo que cobra la caja. El IVA del 19% va dentro de ese valor.
         $subtotal = 0;
         $detallesVenta = [];
         foreach ($carrito as $item) {
@@ -88,15 +88,14 @@ class VentaController {
                 continue;
             }
             $producto = $this->productoModel->getById($productoId);
-            $base = $producto ? (float) $producto['precio_venta'] : (float) ($item['base'] ?? 0);
-            $unitario = (int) round($base);
-            $subtotal += $unitario * $cantidad;
+            $precio = $producto ? (int) round((float) $producto['precio_venta']) : (int) round((float) ($item['precio'] ?? 0));
+            $subtotal += $precio * $cantidad;
             $detallesVenta[] = [
                 'producto_id' => $productoId,
                 'talla_id' => (int) ($item['talla_id'] ?? 0),
                 'cantidad' => $cantidad,
-                'precio_unitario' => $unitario,
-                'subtotal' => $unitario * $cantidad,
+                'precio_unitario' => $precio,
+                'subtotal' => $precio * $cantidad,
             ];
         }
         
@@ -104,10 +103,10 @@ class VentaController {
         $caja = $this->totalesDeCaja(
             $subtotal,
             $descuento,
-            iva_de($subtotal - $descuentoTope),
+            0,
             $_POST['domicilio'] ?? 0,
             $_POST['empaque'] ?? 0,
-            false
+            true
         );
         $subtotal = $caja['subtotal'];
         $descuento = $caja['descuento'];
@@ -115,7 +114,11 @@ class VentaController {
         if ((float) $caja['domicilio'] > 0 || $domicilioContra || $pagoContraEntrega) {
             $conDomicilio = $conDomicilio || (float) $caja['domicilio'] > 0 || $domicilioContra;
         }
-        $partes = $this->partesDePago($metodoPago, $total, $pagoContraEntrega, $_POST, true);
+        $cobrarAhora = $total;
+        if ($domicilioContra && !$pagoContraEntrega) {
+            $cobrarAhora = max(0, $total - (float) $caja['domicilio']);
+        }
+        $partes = $this->partesDePago($metodoPago, $cobrarAhora, $pagoContraEntrega, $_POST, true);
         if ($partes['error'] !== '') {
             $this->responderVenta(false, $partes['error']);
         }
@@ -690,7 +693,7 @@ class VentaController {
             $efectivo = $total;
             $devuelta = round($recibido - $total, 2);
             if ($devuelta < -0.009) {
-                $error = 'El billete no alcanza para el total.';
+                $error = 'El billete no alcanza para lo que se cobra ahora.';
             }
         } elseif ($metodo === 'Tarjeta') {
             $tarjeta = $total;

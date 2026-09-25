@@ -6,7 +6,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 <div class="main-container pos">
     <div class="pos-cabecera">
         <div>
-            <h2 class="mb-0"><i class="bi bi-cart-check"></i> Caja</h2>
+            <h2 class="mb-0"><i class="bi bi-cart-check"></i> Caja<?php $ayuda = 'Caja del día. Escanea el código o busca la prenda, elige cliente y forma de pago, y cobra. Nueva venta abre otro ticket. El reloj abre las ventas ya hechas.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         </div>
         <div class="d-flex align-items-center gap-2">
             <?php if (tienePermiso('ventas_historial:view')): ?>
@@ -75,7 +75,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
         <div class="pos-cobro">
             <div class="card pos-ticket">
                 <div class="pos-ticket-cabeza">
-                    <h5 class="mb-0"><i class="bi bi-receipt"></i> Ticket</h5>
+                    <h5 class="mb-0"><i class="bi bi-receipt"></i> Ticket<?php $ayuda = 'El precio de la prenda ya incluye el IVA. Si la pones a $20.000, la caja cobra $20.000. El domicilio y el empaque se suman aparte y no llevan IVA.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h5>
                     <span class="pos-cuenta" id="pos_cuenta">0 prendas</span>
                 </div>
                 <div class="table-responsive pos-ticket-lista">
@@ -164,12 +164,12 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                         <tr>
                             <th scope="row"><label for="descuento_venta">Descuento</label></th>
                             <td>
-                                <input type="number" id="descuento_venta" value="0" min="0" step="1" inputmode="numeric" title="Se resta del precio sin IVA. El 19% se calcula sobre lo que queda.">
+                                <input type="number" id="descuento_venta" value="0" min="0" step="1" inputmode="numeric" title="Se resta del precio de la prenda. El IVA incluido se calcula sobre lo que queda.">
                                 <span id="descuento_aplicado" class="pos-dato-oculto">$0</span>
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row">IVA 19%</th>
+                            <th scope="row">IVA incluido</th>
                             <td>
                                 <span id="iva_aplicado">$0</span>
                                 <input type="hidden" id="iva_venta" value="0">
@@ -195,6 +195,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                         </tr>
                     </tbody>
                 </table>
+                <p class="small text-muted mb-2">Domicilio en 0: pagaron solo el producto o es recogida en tienda. Si escribes un valor, ese domicilio entra en la factura.</p>
 
                 <details class="pos-mas">
                     <summary>Nota de entrega</summary>
@@ -281,17 +282,22 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 
 <?php
 $modalId = 'modalObservacionesCobro';
-$title = '<i class="bi bi-chat-left-text"></i> Observaciones';
-$body = '<p class="mb-3">Aquí puedes dejar la nota del envío. Indica si el pedido se envía y el domicilio se paga contra entrega, o si todo el pedido se paga contra entrega.</p>'
-    . '<div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="obs_domicilio_contra">'
-    . '<label class="form-check-label" for="obs_domicilio_contra">El pedido se envía y el domicilio se paga contra entrega</label></div>'
-    . '<div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="obs_pedido_contra">'
-    . '<label class="form-check-label" for="obs_pedido_contra">Todo el pedido se paga contra entrega</label></div>'
-    . '<label for="obs_valor_domicilio" class="form-label">Valor del domicilio</label>'
+$title = '<i class="bi bi-chat-left-text"></i> Cómo sale el pedido';
+$body = '<p class="mb-3">Elige una sola opción. Abajo se ve qué se cobra ahora y qué queda pendiente.</p>'
+    . '<div class="form-check mb-2"><input class="form-check-input" type="radio" name="obs_modo_entrega" id="obs_recogida" value="recogida" checked>'
+    . '<label class="form-check-label" for="obs_recogida">Recogida en tienda. Pagaron solo el producto y lo recogen aquí.</label></div>'
+    . '<div class="form-check mb-2"><input class="form-check-input" type="radio" name="obs_modo_entrega" id="obs_domicilio_factura" value="factura">'
+    . '<label class="form-check-label" for="obs_domicilio_factura">El domicilio se paga con esta factura, junto con el pedido.</label></div>'
+    . '<div class="form-check mb-2"><input class="form-check-input" type="radio" name="obs_modo_entrega" id="obs_domicilio_contra" value="domicilio_contra">'
+    . '<label class="form-check-label" for="obs_domicilio_contra">El pedido ya está pago. El domicilio se cobra contra entrega.</label></div>'
+    . '<div class="form-check mb-3"><input class="form-check-input" type="radio" name="obs_modo_entrega" id="obs_pedido_contra" value="pedido_contra">'
+    . '<label class="form-check-label" for="obs_pedido_contra">El pedido y el domicilio están por pagar. Se cobran contra entrega.</label></div>'
+    . '<p class="small mb-3" id="obs_explicacion"></p>'
+    . '<div id="obs_bloque_domicilio"><label for="obs_valor_domicilio" class="form-label">Valor del domicilio</label>'
     . '<input type="number" class="form-control mb-2" id="obs_valor_domicilio" min="0" step="1" value="0">'
-    . '<p class="small text-muted mb-3">Si el domicilio se cobra contra entrega, este valor igual entra en el total de la factura.</p>'
-    . '<label for="obs_texto" class="form-label">Observaciones</label>'
-    . '<textarea class="form-control" id="obs_texto" rows="3" placeholder="Ej.: El domicilio se paga contra entrega. Llamar antes de llegar."></textarea>';
+    . '<p class="small text-muted mb-3">En 0 solo va el producto. Si escribes un valor, ese domicilio entra en la factura.</p></div>'
+    . '<label for="obs_texto" class="form-label">Nota para quien entrega</label>'
+    . '<textarea class="form-control" id="obs_texto" rows="3" placeholder="Ej.: Llamar antes de llegar. Torre 2, apto 301."></textarea>';
 $footer = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> Cancelar</button>'
     . '<button type="button" class="btn btn-primary" id="btnAceptarCobro"><i class="bi bi-check-circle"></i> Aceptar y facturar</button>';
 $size = '';
@@ -304,7 +310,16 @@ require BASE_DIR . '/front/views/components/modal.php';
     window.BASE_URL = '<?php echo BASE_URL; ?>';
 </script>
 <!-- JavaScript del módulo de ventas -->
-<script src="<?php echo BASE_URL; ?>front/public/js/ventas.js?v=16"></script>
+<?php
+$scriptPartes = [
+    'front/public/js/ventas/estado.js',
+    'front/public/js/ventas/tickets.js',
+    'front/public/js/ventas/productos.js',
+    'front/public/js/ventas/cobro.js',
+];
+$scriptVersion = '21';
+require BASE_DIR . '/front/views/components/script_partes.php';
+?>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>
 

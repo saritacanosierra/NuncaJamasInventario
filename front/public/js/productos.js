@@ -49,13 +49,13 @@ document.addEventListener('click', function (evento) {
     }
 });
 
-function pesosIva(base) {
-    const valor = Math.round(parseFloat(base) || 0);
-    const iva = Math.round(valor * 0.19);
+function pesosIva(precio) {
+    const valor = Math.round(parseFloat(precio) || 0);
+    const iva = valor <= 0 ? 0 : Math.round(valor * 0.19 / 1.19);
     const texto = function (numero) {
         return '$' + Math.round(numero).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
-    return 'En caja ' + texto(valor + iva) + ' · IVA 19% ' + texto(iva);
+    return 'Cobras ' + texto(valor) + '. El IVA incluido es ' + texto(iva) + '.';
 }
 
 function pintarAyudaIva(input) {
@@ -116,7 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Prevenir doble envío
             if (isSubmitting) {
-                console.warn('Formulario ya se está enviando, ignorando segundo envío');
                 return false;
             }
             
@@ -235,7 +234,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const productoId = btnEditar.getAttribute('data-id');
             if (!productoId) {
-                console.error('No se encontró el ID del producto');
                 return;
             }
             
@@ -424,7 +422,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const modalNuevaCategoriaElement = document.getElementById('modalNuevaCategoria');
             
             if (!modalNuevaCategoriaElement) {
-                console.error('Modal nueva categoría no encontrado en el DOM');
                 return;
             }
             
@@ -569,7 +566,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error al eliminar categoría:', error);
                 alert('Error al eliminar categoría. Por favor, intente nuevamente.');
                 btn.disabled = false;
                 btn.innerHTML = textoOriginal;

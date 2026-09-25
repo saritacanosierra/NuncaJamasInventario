@@ -67,4 +67,5 @@ if (!isset($facturasPendientes) || !is_array($facturasPendientes)) {
         </tbody>
     </table>
 </div>
+<?php require BASE_DIR . '/front/views/components/paginacion.php'; ?>
 <?php endif; ?>

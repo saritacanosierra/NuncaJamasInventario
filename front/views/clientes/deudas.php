@@ -9,7 +9,7 @@ if (!isset($deudores) || !is_array($deudores)) {
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-1"><i class="bi bi-wallet2"></i> Quienes deben</h2>
+            <h2 class="mb-1"><i class="bi bi-wallet2"></i> Quienes deben<?php $ayuda = 'Cada fila es una factura fiada. El abono se anota en esa factura y baja lo que falta por cobrar. El fiado no entra al cajón hasta que se abona.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
             <p class="mb-0 text-muted">Cada fila es una factura fiada. El abono queda asociado a esa factura.</p>
         </div>
         <a href="<?php echo BASE_URL; ?>index.php?action=clientes" class="btn btn-secondary">

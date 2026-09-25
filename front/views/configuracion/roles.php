@@ -2,6 +2,12 @@
 $pageTitle = 'Roles';
 require_once BASE_DIR . '/front/views/layout/header.php';
 
+if (!isset($roles) || !is_array($roles)) {
+    $roles = [];
+}
+if (!isset($rol) || !is_array($rol)) {
+    $rol = null;
+}
 $asignadosMapa = array_fill_keys($asignados ?? [], true);
 $secciones = [];
 foreach (permisos_catalogo() as $grupo) {
@@ -21,7 +27,7 @@ function permisos_por_accion($grupo) {
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-shield-lock"></i> Roles</h2>
+        <h2><i class="bi bi-shield-lock"></i> Roles<?php $ayuda = 'Cada rol es un paquete de permisos. Elige uno a la izquierda, marca lo que puede hacer y guarda. Sin el permiso del menú, el módulo no aparece.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <?php if (puedeVerModulo('configuracion') && tienePermiso('usuarios_lista:view')): ?>
             <a class="btn btn-outline-secondary" href="<?php echo BASE_URL; ?>index.php?action=usuarios">Usuarios</a>
         <?php endif; ?>

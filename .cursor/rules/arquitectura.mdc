@@ -24,3 +24,9 @@ No abras un árbol `backend/` o `frontend/` paralelo. El proyecto ya separa las 
 Antes de crear una función, busca si ya existe en el módulo, en `models/` o en `helpers/`. Reutilízala.
 
 Un archivo no mezcla dos módulos. Un cambio que necesite otro módulo lo llama; no reimplementa su lógica.
+
+Un archivo de una sola pantalla no concentra tareas distintas. Si pasa de unas 400 líneas, se parte en la carpeta del módulo, un archivo por motivo, sin mover la lógica a otro módulo.
+
+- El JavaScript de una pantalla vive en `public/js/{modulo}/`. La vista carga esas partes en orden con `script_partes.php`. El navegador comparte el `let` de la primera parte con las siguientes.
+- Un modelo largo se parte en traits dentro de `models/`. La clase queda con los datos y los `use`. Quien ya llama al modelo no cambia.
+- No dejes el archivo largo y la copia partida. La vista usa solo las partes.

@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.text().then(text => {
                     // Verificar si la respuesta es HTML (error de PHP)
                     if (text.trim().startsWith('<') || text.includes('<br') || text.includes('<b>')) {
-                        console.error('Respuesta HTML recibida:', text);
                         throw new Error('Error del servidor: La respuesta contiene HTML en lugar de JSON. Esto generalmente indica un error de conexión a la base de datos o un error de PHP. Verifique la configuración de la base de datos.');
                     }
                     
@@ -36,7 +35,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     try {
                         return JSON.parse(text);
                     } catch (e) {
-                        console.error('Error al parsear JSON:', text);
                         throw new Error('Error: La respuesta del servidor no es JSON válido. ' + text.substring(0, 200));
                     }
                 });
@@ -58,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 alert('Error al cargar los datos del cliente:\n\n' + error.message);
             });
     };
@@ -119,7 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 alert('Error al actualizar el cliente. Por favor, intente nuevamente.');
                 btnGuardar.disabled = false;
                 btnGuardar.innerHTML = '<i class="bi bi-save"></i> <span id="btnGuardarTexto">Actualizar Cliente</span>';
@@ -146,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.text().then(text => {
                     // Verificar si la respuesta es HTML (error de PHP)
                     if (text.trim().startsWith('<') || text.includes('<br') || text.includes('<b>')) {
-                        console.error('Respuesta HTML recibida:', text);
                         throw new Error('Error del servidor: La respuesta contiene HTML en lugar de JSON. Esto generalmente indica un error de conexión a la base de datos o un error de PHP.');
                     }
                     
@@ -154,7 +149,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     try {
                         return JSON.parse(text);
                     } catch (e) {
-                        console.error('Error al parsear JSON:', text);
                         throw new Error('Error: La respuesta del servidor no es JSON válido. ' + text.substring(0, 200));
                     }
                 });
@@ -171,7 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 alert('Error al crear el cliente:\n\n' + error.message);
                 btnGuardar.disabled = false;
                 btnGuardar.innerHTML = '<i class="bi bi-save"></i> <span id="btnGuardarTexto">Guardar Cliente</span>';
@@ -272,7 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     data = JSON.parse(txt);
                 } catch (e) {
-                    console.error('Error al parsear JSON:', e);
                     return;
                 }
                 
@@ -324,7 +316,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 tbody.innerHTML = html;
             })
             .catch(err => {
-                console.error('Error al buscar clientes:', err);
             });
     }
     

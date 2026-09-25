@@ -5,7 +5,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-people"></i> Gestión de Clientes</h2>
+        <h2><i class="bi bi-people"></i> Gestión de Clientes<?php $ayuda = 'Personas que compran. Nuevo Cliente las registra. Quienes deben abre las facturas fiadas que aún no se han pagado.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <div class="d-flex align-items-center gap-2">
             <?php if (tienePermiso('clientes_fiado:view')): ?>
             <a class="btn btn-outline-primary" href="<?php echo BASE_URL; ?>index.php?action=clientes&method=deudas">
@@ -113,6 +113,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     </tbody>
                 </table>
             </div>
+            <?php require BASE_DIR . '/front/views/components/paginacion.php'; ?>
         </div>
     </div>
     <?php if (tienePermiso('clientes_fiado:view')): ?>
@@ -194,6 +195,6 @@ require_once BASE_DIR . '/front/views/layout/header.php';
     window.BASE_URL = '<?php echo BASE_URL; ?>';
 </script>
 <!-- JavaScript del módulo de clientes -->
-<script src="<?php echo BASE_URL; ?>front/public/js/clientes.js?v=5"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/clientes.js?v=6"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>

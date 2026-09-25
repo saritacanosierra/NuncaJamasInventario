@@ -1,11 +1,14 @@
 <?php
 $pageTitle = 'Usuarios';
 require_once BASE_DIR . '/front/views/layout/header.php';
+if (!isset($roles) || !is_array($roles)) {
+    $roles = [];
+}
 ?>
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-people"></i> Usuarios</h2>
+        <h2><i class="bi bi-people"></i> Usuarios<?php $ayuda = 'Personas que entran al sistema. Nuevo Usuario crea la cuenta. Roles define qué puede ver y hacer cada uno.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <div>
             <?php if (tienePermiso('roles_matriz:view')): ?>
                 <a class="btn btn-outline-secondary me-2" href="<?php echo BASE_URL; ?>index.php?action=roles">Roles</a>
@@ -81,6 +84,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     </tbody>
                 </table>
             </div>
+            <?php require BASE_DIR . '/front/views/components/paginacion.php'; ?>
         </div>
     </div>
 </div>
@@ -209,7 +213,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
     ?>;
 </script>
 <!-- JavaScript del módulo de usuarios -->
-<script src="<?php echo BASE_URL; ?>front/public/js/usuarios.js?v=4"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/usuarios.js?v=5"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>
 

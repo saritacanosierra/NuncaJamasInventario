@@ -17,7 +17,7 @@ $GLOBALS['db'] = $db;
 $action = $_GET['action'] ?? 'login';
 $method = $_GET['method'] ?? 'index';
 
-$rutasPublicas = ['login', 'logout', 'recuperar'];
+$rutasPublicas = ['login', 'logout', 'recuperar', 'escritorio'];
 if (!empty($_SESSION['usuario_id']) && !in_array($action, $rutasPublicas, true)) {
     if (!permisos_cargar_en_sesion($db, (int) $_SESSION['usuario_id'])) {
         $_SESSION = [];
@@ -160,7 +160,7 @@ switch ($action) {
         $controller = new GastoController($db);
         $allowedMethods = ['store', 'update', 'delete', 'getGasto', 'obtenerCategorias', 'crearCategoria',
                           'actualizarCategoria', 'eliminarCategoria', 'getCategoria', 'storeInversion',
-                          'getInversion', 'updateInversion', 'deleteInversion', 'obtenerHistorial', 'index'];
+                          'getInversion', 'updateInversion', 'deleteInversion', 'obtenerHistorial', 'descargar', 'index'];
         if (!in_array($method, $allowedMethods, true)) {
             $method = 'index';
         }
@@ -189,6 +189,11 @@ switch ($action) {
         }
         exigir_ruta('produccion', $method);
         $controller->{$method}();
+        break;
+
+    case 'escritorio':
+        $controller = new EscritorioController();
+        $controller->descargar();
         break;
 
     default:

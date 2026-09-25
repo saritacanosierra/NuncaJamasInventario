@@ -8,7 +8,7 @@ if (!isset($categorias) || !is_array($categorias)) {
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-box-seam"></i> Gestión de Productos</h2>
+        <h2><i class="bi bi-box-seam"></i> Gestión de Productos<?php $ayuda = 'Aquí están las prendas. Busca por nombre, color, talla o código. Nuevo Producto la crea. El precio que escribes es lo que cobra la caja: el IVA del 19% va dentro de ese valor.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <?php if (tienePermiso('productos_categorias:view') || tienePermiso('productos_catalogo:create')): ?>
         <div>
             <?php if (tienePermiso('productos_categorias:view')): ?>
@@ -131,7 +131,7 @@ if (!isset($categorias) || !is_array($categorias)) {
                                                      class="img-thumbnail img-producto-thumb" 
                                                      data-imagen="<?php echo htmlspecialchars($rutaRelativa); ?>"
                                                      title="Ver imagen completa"
-                                                     onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling && this.nextElementSibling.style.display='inline';"
+                                                     onerror="this.onerror=null; this.style.display='none'; if (this.nextElementSibling) this.nextElementSibling.style.display='inline';"
                                                      loading="lazy">
                                                 <i class="bi bi-image text-muted icon-foto-tabla" style="display:none;" title="Error al cargar imagen"></i>
                                         <?php 
@@ -178,8 +178,8 @@ if (!isset($categorias) || !is_array($categorias)) {
                                     <td><?php echo htmlspecialchars($producto['categoria_nombre'] ?? 'N/A'); ?></td>
                                     <td><?php echo pesos($producto['precio_costo']); ?></td>
                                     <td>
-                                        <strong><?php echo pesos(precio_con_iva($producto['precio_venta'])); ?></strong>
-                                        <div class="small text-muted">Venta <?php echo pesos($producto['precio_venta']); ?> · IVA <?php echo pesos(iva_de($producto['precio_venta'])); ?></div>
+                                        <strong><?php echo pesos($producto['precio_venta']); ?></strong>
+                                        <div class="small text-muted">IVA incluido <?php echo pesos(iva_incluido_en($producto['precio_venta'])); ?></div>
                                     </td>
                                     <td>
                                         <span class="badge <?php 
@@ -231,6 +231,7 @@ if (!isset($categorias) || !is_array($categorias)) {
                     </tbody>
                 </table>
             </div>
+            <?php require BASE_DIR . '/front/views/components/paginacion.php'; ?>
         </div>
     </div>
 </div>
@@ -420,6 +421,6 @@ require_once BASE_DIR . '/front/views/components/modal.php';
     window.BASE_URL = '<?php echo BASE_URL; ?>';
 </script>
 <!-- JavaScript del módulo de productos -->
-<script src="<?php echo BASE_URL; ?>front/public/js/productos.js?v=7"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/productos.js?v=9"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>

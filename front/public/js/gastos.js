@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function inicializarGastos() {
     // Verificar que Bootstrap esté cargado
     if (typeof bootstrap === 'undefined') {
-        console.error('Bootstrap no está cargado. Los modales no funcionarán.');
         return;
     }
     
@@ -42,7 +41,6 @@ function inicializarGastos() {
     
     // Verificar que los elementos existan
     if (!modalNuevoGastoEl) {
-        console.warn('Modal modalNuevoGasto no encontrado');
     }
     
     // Función auxiliar para obtener o crear instancia del modal
@@ -84,7 +82,6 @@ function inicializarGastos() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 alert('Error al cargar los datos del gasto');
             });
     };
@@ -143,7 +140,6 @@ function inicializarGastos() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     alert('Error al actualizar el gasto. Por favor, intente nuevamente.');
                     btnGuardar.disabled = false;
                     btnGuardar.innerHTML = '<i class="bi bi-save"></i> <span id="btnGuardarGastoTexto">Actualizar Gasto</span>';
@@ -191,7 +187,6 @@ function inicializarGastos() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     alert('Error al crear el gasto. Por favor, intente nuevamente.');
                     btnGuardar.disabled = false;
                     btnGuardar.innerHTML = '<i class="bi bi-save"></i> <span id="btnGuardarGastoTexto">Guardar Gasto</span>';
@@ -266,7 +261,6 @@ function inicializarGastos() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     alert('Error al cargar los datos de la inversión');
                 });
         };
@@ -323,7 +317,6 @@ function inicializarGastos() {
                         }
                     })
                     .catch(error => {
-                        console.error('Error:', error);
                         alert('Error al actualizar la inversión');
                         btnGuardarInversion.disabled = false;
                         btnGuardarInversion.innerHTML = '<i class="bi bi-save"></i> <span id="btnGuardarInversionTexto">Actualizar Inversión</span>';
@@ -369,7 +362,6 @@ function inicializarGastos() {
                         }
                     })
                     .catch(error => {
-                        console.error('Error:', error);
                         alert('Error al crear la inversión');
                         btnGuardarInversion.disabled = false;
                         btnGuardarInversion.innerHTML = '<i class="bi bi-save"></i> <span id="btnGuardarInversionTexto">Guardar Inversión</span>';
@@ -396,13 +388,16 @@ function inicializarGastos() {
     }
     
     // ========== GESTIÓN DE HISTORIAL ==========
+    let historialCargado = null;
     const modalHistorialEl = document.getElementById('modalHistorial');
     if (modalHistorialEl) {
         // Cargar historial al abrir el modal
         modalHistorialEl.addEventListener('show.bs.modal', function() {
             cargarHistorial();
+            armarDescargas();
         });
     }
+    armarDescargas();
     
     // Función para convertir mes a español
     function mesEnEspanol(mesAnio) {
@@ -434,98 +429,74 @@ function inicializarGastos() {
         return mesAnio;
     }
     
+    function pesosHistorial(valor) {
+        const numero = Math.round(parseFloat(valor || 0));
+        const signo = numero < 0 ? '-' : '';
+        return signo + '$' + Math.abs(numero).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    function anioDelFiltro() {
+        const alcance = document.getElementById('alcance_descarga');
+        const anio = document.getElementById('anio_descarga');
+        if (!alcance || alcance.value !== 'anio' || !anio) {
+            return '';
+        }
+        return String(anio.value || '');
+    }
+
+    function pintarTablaHistorial(id, lista, esAnio) {
+        const tabla = document.getElementById(id);
+        if (!tabla) {
+            return;
+        }
+        const anio = anioDelFiltro();
+        const filas = (lista || []).filter(function (item) {
+            if (!anio || esAnio) {
+                return true;
+            }
+            return String(item.mes || '').indexOf(anio + '-') === 0;
+        });
+        if (!filas.length) {
+            tabla.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay datos</td></tr>';
+            return;
+        }
+        let html = '';
+        filas.forEach(function (item) {
+            const etiqueta = esAnio ? String(item.anio || '') : mesEnEspanol(item.mes_nombre || item.mes);
+            html += '<tr><td>' + (esAnio ? '<strong>' + escapeHtml(etiqueta) + '</strong>' : escapeHtml(etiqueta)) + '</td>';
+            html += '<td class="text-end"><strong>' + pesosHistorial(item.total) + '</strong></td>';
+            html += '<td class="text-center"><span class="badge bg-secondary">' + (item.cantidad || 0) + '</span></td></tr>';
+        });
+        tabla.innerHTML = html;
+    }
+
+    function pintarHistorial() {
+        const data = historialCargado || {};
+        pintarTablaHistorial('tablaGastosMes', data.gastos_por_mes, false);
+        pintarTablaHistorial('tablaInversionesMes', data.inversiones_por_mes, false);
+        pintarTablaHistorial('tablaVentasMes', data.ventas_por_mes, false);
+        pintarTablaHistorial('tablaGastosAnio', data.gastos_por_anio, true);
+        pintarTablaHistorial('tablaInversionesAnio', data.inversiones_por_anio, true);
+        pintarTablaHistorial('tablaVentasAnio', data.ventas_por_anio, true);
+    }
+
     function cargarHistorial() {
         fetch((BASE_URL_GASTOS || window.BASE_URL || '') + 'index.php?action=gastos&method=obtenerHistorial')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Gastos por mes
-                    let htmlGastosMes = '';
-                    if (data.gastos_por_mes && data.gastos_por_mes.length > 0) {
-                        data.gastos_por_mes.forEach(item => {
-                            const mesNombre = mesEnEspanol(item.mes_nombre || item.mes);
-                            htmlGastosMes += `
-                                <tr>
-                                    <td>${escapeHtml(mesNombre)}</td>
-                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
-                                    <td class="text-center"><span class="badge bg-secondary">${item.cantidad || 0}</span></td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        htmlGastosMes = '<tr><td colspan="3" class="text-center text-muted">No hay datos</td></tr>';
-                    }
-                    const tablaGastosMes = document.getElementById('tablaGastosMes');
-                    if (tablaGastosMes) tablaGastosMes.innerHTML = htmlGastosMes;
-                    
-                    // Inversiones por mes
-                    let htmlInversionesMes = '';
-                    if (data.inversiones_por_mes && data.inversiones_por_mes.length > 0) {
-                        data.inversiones_por_mes.forEach(item => {
-                            const mesNombre = mesEnEspanol(item.mes_nombre || item.mes);
-                            htmlInversionesMes += `
-                                <tr>
-                                    <td>${escapeHtml(mesNombre)}</td>
-                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
-                                    <td class="text-center"><span class="badge bg-secondary">${item.cantidad || 0}</span></td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        htmlInversionesMes = '<tr><td colspan="3" class="text-center text-muted">No hay datos</td></tr>';
-                    }
-                    const tablaInversionesMes = document.getElementById('tablaInversionesMes');
-                    if (tablaInversionesMes) tablaInversionesMes.innerHTML = htmlInversionesMes;
-                    
-                    // Gastos por año
-                    let htmlGastosAnio = '';
-                    if (data.gastos_por_anio && data.gastos_por_anio.length > 0) {
-                        data.gastos_por_anio.forEach(item => {
-                            htmlGastosAnio += `
-                                <tr>
-                                    <td><strong>${item.anio || ''}</strong></td>
-                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
-                                    <td class="text-center"><span class="badge bg-secondary">${item.cantidad || 0}</span></td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        htmlGastosAnio = '<tr><td colspan="3" class="text-center text-muted">No hay datos</td></tr>';
-                    }
-                    const tablaGastosAnio = document.getElementById('tablaGastosAnio');
-                    if (tablaGastosAnio) tablaGastosAnio.innerHTML = htmlGastosAnio;
-                    
-                    // Inversiones por año
-                    let htmlInversionesAnio = '';
-                    if (data.inversiones_por_anio && data.inversiones_por_anio.length > 0) {
-                        data.inversiones_por_anio.forEach(item => {
-                            htmlInversionesAnio += `
-                                <tr>
-                                    <td><strong>${item.anio || ''}</strong></td>
-                                    <td class="text-end"><strong>$${parseFloat(item.total || 0).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong></td>
-                                    <td class="text-center"><span class="badge bg-secondary">${item.cantidad || 0}</span></td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        htmlInversionesAnio = '<tr><td colspan="3" class="text-center text-muted">No hay datos</td></tr>';
-                    }
-                    const tablaInversionesAnio = document.getElementById('tablaInversionesAnio');
-                    if (tablaInversionesAnio) tablaInversionesAnio.innerHTML = htmlInversionesAnio;
+                    historialCargado = data;
+                    pintarHistorial();
                 } else {
-                    console.error('Error al cargar historial');
                 }
             })
             .catch(error => {
-                console.error('Error al cargar historial:', error);
-                const tablaGastosMes = document.getElementById('tablaGastosMes');
-                const tablaInversionesMes = document.getElementById('tablaInversionesMes');
-                const tablaGastosAnio = document.getElementById('tablaGastosAnio');
-                const tablaInversionesAnio = document.getElementById('tablaInversionesAnio');
-                if (tablaGastosMes) tablaGastosMes.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error al cargar datos</td></tr>';
-                if (tablaInversionesMes) tablaInversionesMes.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error al cargar datos</td></tr>';
-                if (tablaGastosAnio) tablaGastosAnio.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error al cargar datos</td></tr>';
-                if (tablaInversionesAnio) tablaInversionesAnio.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error al cargar datos</td></tr>';
+                ['tablaGastosMes', 'tablaInversionesMes', 'tablaVentasMes', 'tablaGastosAnio', 'tablaInversionesAnio', 'tablaVentasAnio'].forEach(function (id) {
+                    const tabla = document.getElementById(id);
+                    if (tabla) {
+                        tabla.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error al cargar datos</td></tr>';
+                    }
+                });
             });
     }
     
@@ -579,7 +550,6 @@ function inicializarGastos() {
                 }
             })
             .catch(error => {
-                console.error('Error al cargar categorías:', error);
                 if (tablaCategorias) tablaCategorias.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error al cargar categorías</td></tr>';
             });
     }
@@ -643,7 +613,6 @@ function inicializarGastos() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 alert('Error al cargar la categoría');
             });
     };
@@ -677,7 +646,6 @@ function inicializarGastos() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             alert('Error al eliminar la categoría');
         });
             }
@@ -721,7 +689,6 @@ function inicializarGastos() {
                     btnGuardarCategoria.innerHTML = '<i class="bi bi-save"></i> Guardar';
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     alert('Error al actualizar la categoría');
                     btnGuardarCategoria.disabled = false;
                     btnGuardarCategoria.innerHTML = '<i class="bi bi-save"></i> Guardar';
@@ -751,13 +718,54 @@ function inicializarGastos() {
                     btnGuardarCategoria.innerHTML = '<i class="bi bi-save"></i> Guardar';
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     alert('Error al crear la categoría');
                     btnGuardarCategoria.disabled = false;
                     btnGuardarCategoria.innerHTML = '<i class="bi bi-save"></i> Guardar';
                 });
             }
         });
+    }
+
+    function armarDescargas() {
+        const mes = document.getElementById('mes_descarga');
+        const anio = document.getElementById('anio_descarga');
+        const alcance = document.getElementById('alcance_descarga');
+        const caja = document.getElementById('descargasMes');
+        const campoMes = document.getElementById('campo_mes_descarga');
+        const campoAnio = document.getElementById('campo_anio_descarga');
+        if (!caja) {
+            return;
+        }
+        const esAnio = alcance && alcance.value === 'anio';
+        if (campoMes) {
+            campoMes.hidden = esAnio;
+        }
+        if (campoAnio) {
+            campoAnio.hidden = !esAnio;
+        }
+        const periodo = esAnio
+            ? 'alcance=anio&anio=' + encodeURIComponent(anio ? anio.value : '')
+            : 'alcance=mes&mes=' + encodeURIComponent(mes ? mes.value : '');
+        caja.querySelectorAll('a[data-tipo]').forEach(function (enlace) {
+            const tipo = enlace.getAttribute('data-tipo');
+            enlace.href = (BASE_URL_GASTOS || window.BASE_URL || '') + 'index.php?action=gastos&method=descargar&tipo=' + encodeURIComponent(tipo) + '&' + periodo;
+        });
+        if (historialCargado) {
+            pintarHistorial();
+        }
+    }
+
+    const mesDescarga = document.getElementById('mes_descarga');
+    const anioDescarga = document.getElementById('anio_descarga');
+    const alcanceDescarga = document.getElementById('alcance_descarga');
+    if (mesDescarga) {
+        mesDescarga.addEventListener('change', armarDescargas);
+    }
+    if (anioDescarga) {
+        anioDescarga.addEventListener('input', armarDescargas);
+    }
+    if (alcanceDescarga) {
+        alcanceDescarga.addEventListener('change', armarDescargas);
     }
 }
 

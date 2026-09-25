@@ -2,8 +2,15 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title><?php echo $pageTitle ?? 'Sistema de Inventario'; ?> - Ropa Infantil</title>
+    <link rel="manifest" href="<?php echo BASE_URL; ?>manifest.webmanifest">
+    <link rel="icon" href="<?php echo BASE_URL; ?>front/public/img/icon-192.png" sizes="192x192">
+    <meta name="theme-color" content="#FCD1D1">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nunca Jamás">
+    <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>front/public/img/icon-192.png">
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -12,7 +19,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- CSS global -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>front/public/css/style.css?v=16">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>front/public/css/style.css?v=19">
     <!-- CSS por vista -->
     <?php if (!empty($pageTitle)): ?>
         <?php
@@ -129,6 +136,14 @@
                     <?php endif; ?>
                 </ul>
                 <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" data-instalar="pc" href="<?php echo BASE_URL; ?>index.php?action=escritorio&method=descargar">
+                            <i class="bi bi-pc-display"></i> App para PC
+                        </a>
+                        <button type="button" class="nav-link d-none" data-instalar="movil">
+                            <i class="bi bi-phone"></i> App del celular
+                        </button>
+                    </li>
                     <?php if (puedeVerModulo('configuracion')): ?>
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo BASE_URL . htmlspecialchars(permisos_url_de('configuracion')); ?>" title="Configuración">

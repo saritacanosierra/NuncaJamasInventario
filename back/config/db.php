@@ -28,6 +28,16 @@ class Database {
      */
     public function getConnection() {
         $this->conn = null;
+        $local = __DIR__ . '/db.local.php';
+        if (is_file($local)) {
+            $cfg = require $local;
+            if (is_array($cfg)) {
+                $this->host = (string) ($cfg['host'] ?? $this->host);
+                $this->db_name = (string) ($cfg['db_name'] ?? $this->db_name);
+                $this->username = (string) ($cfg['username'] ?? $this->username);
+                $this->password = (string) ($cfg['password'] ?? $this->password);
+            }
+        }
 
         try {
             // Conexión simple y compatible con StackCP

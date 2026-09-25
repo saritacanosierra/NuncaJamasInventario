@@ -228,6 +228,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.defaultPrevented) {
                 return;
             }
+            if ((form.getAttribute('method') || 'get').toLowerCase() === 'get') {
+                return;
+            }
             const submitBtn = form.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
@@ -245,6 +248,103 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+function iniciarPaginacion(nav) {
+    const caja = nav.previousElementSibling;
+    const tabla = caja ? caja.querySelector('table') : null;
+    const cuerpo = tabla ? tabla.tBodies[0] : null;
+    if (!cuerpo) {
+        return;
+    }
+    const porPagina = parseInt(nav.dataset.por, 10) || 10;
+    const anterior = nav.querySelector('.paginacion-anterior');
+    const siguiente = nav.querySelector('.paginacion-siguiente');
+    const numeros = nav.querySelector('.paginacion-paginas');
+    const resumen = nav.querySelector('.paginacion-resumen');
+    let pagina = 1;
+
+    function filas() {
+        return Array.from(cuerpo.rows).filter(function (fila) {
+            return !fila.querySelector('td[colspan]');
+        });
+    }
+
+    function aplicar() {
+        const todas = filas();
+        todas.forEach(function (fila) {
+            fila.classList.remove('fuera-pagina');
+        });
+        const visibles = todas.filter(function (fila) {
+            return fila.style.display !== 'none';
+        });
+        const paginas = Math.max(1, Math.ceil(visibles.length / porPagina));
+        if (pagina > paginas) {
+            pagina = paginas;
+        }
+        if (pagina < 1) {
+            pagina = 1;
+        }
+        const desde = (pagina - 1) * porPagina;
+        visibles.forEach(function (fila, indice) {
+            fila.classList.toggle('fuera-pagina', indice < desde || indice >= desde + porPagina);
+        });
+        nav.hidden = paginas < 2;
+        anterior.disabled = pagina <= 1;
+        siguiente.disabled = pagina >= paginas;
+        numeros.innerHTML = '';
+        let inicio = Math.max(1, pagina - 2);
+        let fin = Math.min(paginas, inicio + 4);
+        inicio = Math.max(1, fin - 4);
+        for (let numero = inicio; numero <= fin; numero += 1) {
+            const boton = document.createElement('button');
+            boton.type = 'button';
+            boton.className = 'btn btn-sm ' + (numero === pagina ? 'btn-primary' : 'btn-outline-secondary');
+            boton.textContent = String(numero);
+            boton.addEventListener('click', function () {
+                pagina = numero;
+                aplicar();
+            });
+            numeros.appendChild(boton);
+        }
+        if (visibles.length === 0) {
+            resumen.textContent = '';
+            return;
+        }
+        const hasta = Math.min(visibles.length, desde + porPagina);
+        resumen.textContent = (desde + 1) + '–' + hasta + ' de ' + visibles.length;
+    }
+
+    anterior.addEventListener('click', function () {
+        if (pagina > 1) {
+            pagina -= 1;
+            aplicar();
+        }
+    });
+    siguiente.addEventListener('click', function () {
+        pagina += 1;
+        aplicar();
+    });
+    new MutationObserver(function () {
+        pagina = 1;
+        aplicar();
+    }).observe(cuerpo, { childList: true });
+    nav._aplicar = function () {
+        aplicar();
+    };
+    aplicar();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.paginacion').forEach(iniciarPaginacion);
+});
+
+document.addEventListener('input', function () {
+    document.querySelectorAll('.paginacion').forEach(function (nav) {
+        if (typeof nav._aplicar === 'function') {
+            nav._aplicar();
+        }
+    });
+});
+
 // Popovers de Bootstrap
 document.addEventListener('DOMContentLoaded', function() {
     const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
@@ -252,4 +352,179 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Popover(popoverTriggerEl);
     });
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+    let flotante = null;
+    let activa = null;
+    let cerrarLuego = null;
+
+    function ocultar() {
+        clearTimeout(cerrarLuego);
+        if (flotante) {
+            flotante.remove();
+            flotante = null;
+        }
+        if (activa) {
+            const boton = activa.querySelector('.ayuda-icono');
+            if (boton) {
+                boton.setAttribute('aria-expanded', 'false');
+            }
+            activa = null;
+        }
+    }
+
+    function mostrar(ayuda) {
+        const origen = ayuda.querySelector('.ayuda-tarjeta');
+        const boton = ayuda.querySelector('.ayuda-icono');
+        if (!origen || !boton) {
+            return;
+        }
+        if (activa === ayuda && flotante) {
+            return;
+        }
+        ocultar();
+        activa = ayuda;
+        boton.setAttribute('aria-expanded', 'true');
+        flotante = origen.cloneNode(true);
+        flotante.classList.add('ayuda-tarjeta-flotante');
+        document.body.appendChild(flotante);
+        const rect = boton.getBoundingClientRect();
+        const margen = 12;
+        let left = rect.left;
+        let top = rect.bottom + 8;
+        const ancho = flotante.offsetWidth;
+        const alto = flotante.offsetHeight;
+        if (left + ancho > window.innerWidth - margen) {
+            left = Math.max(margen, window.innerWidth - ancho - margen);
+        }
+        if (top + alto > window.innerHeight - margen) {
+            top = Math.max(margen, rect.top - alto - 8);
+        }
+        flotante.style.left = left + 'px';
+        flotante.style.top = top + 'px';
+        flotante.addEventListener('mouseenter', function () {
+            clearTimeout(cerrarLuego);
+        });
+        flotante.addEventListener('mouseleave', programarCierre);
+    }
+
+    function programarCierre() {
+        clearTimeout(cerrarLuego);
+        cerrarLuego = setTimeout(ocultar, 160);
+    }
+
+    document.addEventListener('mouseover', function (evento) {
+        const ayuda = evento.target.closest('.ayuda');
+        if (!ayuda) {
+            return;
+        }
+        clearTimeout(cerrarLuego);
+        mostrar(ayuda);
+    });
+
+    document.addEventListener('mouseout', function (evento) {
+        if (!activa) {
+            return;
+        }
+        const hacia = evento.relatedTarget;
+        if (hacia && (activa.contains(hacia) || (flotante && flotante.contains(hacia)))) {
+            return;
+        }
+        if (evento.target.closest('.ayuda') === activa || (flotante && flotante.contains(evento.target))) {
+            programarCierre();
+        }
+    });
+
+    document.addEventListener('focusin', function (evento) {
+        const ayuda = evento.target.closest('.ayuda');
+        if (ayuda) {
+            mostrar(ayuda);
+        }
+    });
+
+    document.addEventListener('keydown', function (evento) {
+        if (evento.key === 'Escape') {
+            ocultar();
+        }
+    });
+
+    document.addEventListener('click', function (evento) {
+        if (!window.matchMedia('(hover: none)').matches) {
+            return;
+        }
+        const boton = evento.target.closest('.ayuda-icono');
+        if (boton) {
+            evento.preventDefault();
+            const ayuda = boton.closest('.ayuda');
+            if (activa === ayuda) {
+                ocultar();
+            } else {
+                mostrar(ayuda);
+            }
+            return;
+        }
+        if (!evento.target.closest('.ayuda-tarjeta-flotante')) {
+            ocultar();
+        }
+    });
+
+    window.addEventListener('scroll', ocultar, true);
+    window.addEventListener('resize', ocultar);
+});
+
+(function () {
+    let avisoInstalar = null;
+
+    window.addEventListener('beforeinstallprompt', function (evento) {
+        evento.preventDefault();
+        avisoInstalar = evento;
+    });
+
+    function esMovil() {
+        const ua = navigator.userAgent || '';
+        if (/Android|iPhone|iPad|iPod/i.test(ua)) {
+            return true;
+        }
+        if (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua)) {
+            return true;
+        }
+        return window.matchMedia('(max-width: 1024px) and (pointer: coarse)').matches;
+    }
+
+    function enPantallaInicio() {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const pcs = document.querySelectorAll('[data-instalar="pc"]');
+        const moviles = document.querySelectorAll('[data-instalar="movil"]');
+        if (!pcs.length && !moviles.length) {
+            return;
+        }
+        if (enPantallaInicio()) {
+            pcs.forEach(function (el) { el.classList.add('d-none'); });
+            moviles.forEach(function (el) { el.classList.add('d-none'); });
+            return;
+        }
+        if (esMovil()) {
+            pcs.forEach(function (el) { el.classList.add('d-none'); });
+            moviles.forEach(function (el) { el.classList.remove('d-none'); });
+        }
+        moviles.forEach(function (boton) {
+            boton.addEventListener('click', function () {
+                if (avisoInstalar) {
+                    const pendiente = avisoInstalar;
+                    avisoInstalar = null;
+                    pendiente.prompt();
+                    return;
+                }
+                const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+                    || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent));
+                aviso(ios
+                    ? 'En Safari toca Compartir y luego Agregar a inicio. El icono de Nunca Jamás queda en la pantalla y abre la app. Hace falta internet.'
+                    : 'En Chrome abre el menú de tres puntos y toca Instalar aplicación o Agregar a la pantalla principal. El icono queda en el celular y abre la app. Hace falta internet.');
+            });
+        });
+    });
+})();
 

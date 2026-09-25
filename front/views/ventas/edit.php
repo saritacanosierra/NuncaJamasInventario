@@ -37,7 +37,7 @@ $ivaIncluidoEdicion = (float) $venta['iva'] > 0 && abs($ivaSumadoEdicion - round
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-pencil"></i> Editar Venta - <?php echo htmlspecialchars($venta['numero_factura']); ?></h2>
+        <h2><i class="bi bi-pencil"></i> Editar Venta - <?php echo htmlspecialchars($venta['numero_factura']); ?><?php $ayuda = 'Corrige esta factura. Al guardar se actualizan el total y el inventario de las prendas que cambies.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <a href="<?php echo BASE_URL; ?>index.php?action=ventas&method=historial" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Volver al Historial
         </a>
@@ -299,7 +299,7 @@ $ivaIncluidoEdicion = (float) $venta['iva'] > 0 && abs($ivaSumadoEdicion - round
                                     data-color="<?php echo htmlspecialchars($producto['color']); ?>"
                                     data-talla="<?php echo htmlspecialchars($tallaOpcion['talla']); ?>"
                                     data-talla-id="<?php echo (int) $tallaOpcion['id']; ?>"
-                                    data-precio="<?php echo $ivaIncluidoEdicion ? precio_con_iva($producto['precio_venta']) : $producto['precio_venta']; ?>"
+                                    data-precio="<?php echo (int) round($producto['precio_venta']); ?>"
                                     data-stock="<?php echo (int) $tallaOpcion['stock']; ?>">
                                 <?php echo htmlspecialchars($producto['nombre']); ?> - 
                                 <?php echo htmlspecialchars($producto['color']); ?> - 

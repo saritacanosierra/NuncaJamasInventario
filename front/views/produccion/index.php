@@ -13,7 +13,7 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
     <div class="produccion-admin-bar mb-3">
         <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
         <div>
-            <h2 class="mb-1"><i class="bi bi-gear-wide-connected"></i> Día de producción</h2>
+            <h2 class="mb-1"><i class="bi bi-gear-wide-connected"></i> Día de producción<?php $ayuda = 'Anota quién trabajó y qué hizo. Nueva operaria la suma al día y luego Guardar en el día. Nueva operación registra cada trabajo. Cerrar día de la empresa bloquea a todas y solo se hace una vez.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
             <p class="prod-ayuda">Para sumar a alguien: <strong>Nueva operaria</strong> y luego <strong>Guardar en el día</strong>. Cada trabajo se anota con <strong>Nueva operación</strong>. <strong>Cerrar día de la empresa</strong> bloquea a todas y solo se hace una vez.</p>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -411,7 +411,19 @@ $fecha = $_GET['fecha'] ?? $fechaActual;
     <?php endif; ?>
 </script>
 <!-- JavaScript del módulo de producción -->
-<script src="<?php echo BASE_URL; ?>front/public/js/produccion.js?v=6"></script>
+<?php
+$scriptPartes = [
+    'front/public/js/produccion/estado.js',
+    'front/public/js/produccion/operarias.js',
+    'front/public/js/produccion/operaciones.js',
+    'front/public/js/produccion/registro.js',
+    'front/public/js/produccion/cronometro.js',
+    'front/public/js/produccion/guardado.js',
+    'front/public/js/produccion/cierre.js',
+];
+$scriptVersion = '9';
+require BASE_DIR . '/front/views/components/script_partes.php';
+?>
 <?php if (!ve_produccion_ajena()): ?>
 <script src="<?php echo BASE_URL; ?>front/public/js/produccion-operario.js?v=5"></script>
 <?php endif; ?>

@@ -39,8 +39,13 @@
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
-    <script src="<?php echo BASE_URL; ?>front/public/js/main.js?v=4"></script>
+    <script src="<?php echo BASE_URL; ?>front/public/js/main.js?v=8"></script>
     <script src="<?php echo BASE_URL; ?>front/public/js/permisos.js?v=3"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(<?php echo json_encode(BASE_URL . 'sw.js'); ?>);
+        }
+    </script>
 </body>
 </html>
 

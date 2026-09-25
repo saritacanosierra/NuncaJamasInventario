@@ -33,7 +33,7 @@ foreach ($tareasMes as $tarea) {
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-calendar-check"></i> Agenda y Tareas</h2>
+        <h2><i class="bi bi-calendar-check"></i> Agenda y Tareas<?php $ayuda = 'Tareas del mes. Elige un día en el calendario y anota lo que hay que hacer. Nueva Tarea la guarda en el día elegido.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <?php if (tienePermiso('agenda_tareas:create')): ?>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaTarea">
             <i class="bi bi-plus-circle"></i> Nueva Tarea
@@ -285,7 +285,7 @@ foreach ($tareasMes as $tarea) {
     window.FECHA_SELECCIONADA = '<?php echo $fechaSeleccionada; ?>';
 </script>
 <!-- JavaScript del módulo de agenda -->
-<script src="<?php echo BASE_URL; ?>front/public/js/agenda.js?v=2"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/agenda.js?v=4"></script>
 
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>
 

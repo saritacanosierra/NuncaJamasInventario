@@ -30,11 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
         BASE_URL_AGENDA += '/';
     }
     
-    // Log para debugging (solo en desarrollo)
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        console.log('BASE_URL_AGENDA:', BASE_URL_AGENDA);
-    }
-    
     const form = document.getElementById('formNuevaTarea');
     const btnGuardar = document.getElementById('btnGuardarTarea');
     const btnGuardarTexto = document.getElementById('btnGuardarTareaTexto');
@@ -67,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 alert('Error al cargar los datos de la tarea');
             });
     };
@@ -119,7 +113,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     alert('Error al actualizar la tarea');
                     btnGuardar.disabled = false;
                     btnGuardar.innerHTML = '<i class="bi bi-save"></i> <span id="btnGuardarTareaTexto">Actualizar Tarea</span>';
@@ -145,7 +138,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.text().then(text => {
                         // Verificar si la respuesta es HTML (error de PHP)
                         if (text.trim().startsWith('<') || text.includes('<br') || text.includes('<b>') || text.includes('<!DOCTYPE')) {
-                            console.error('Respuesta HTML recibida:', text);
                             throw new Error('Error del servidor: La respuesta contiene HTML en lugar de JSON. Esto generalmente indica un error de conexión a la base de datos o un error de PHP. Verifique la configuración de la base de datos.');
                         }
                         
@@ -153,7 +145,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         try {
                             return JSON.parse(text);
                         } catch (e) {
-                            console.error('Error al parsear JSON:', text);
                             throw new Error('Error: La respuesta del servidor no es JSON válido. ' + text.substring(0, 200));
                         }
                     });
@@ -169,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     alert('Error al crear la tarea:\n\n' + error.message);
                     btnGuardar.disabled = false;
                     btnGuardar.innerHTML = '<i class="bi bi-save"></i> <span id="btnGuardarTareaTexto">Guardar Tarea</span>';
@@ -213,7 +203,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 alert('Error al completar la tarea');
                 const checkbox = document.querySelector(`input[onchange*="${tareaId}"]`);
                 if (checkbox) checkbox.checked = false;
@@ -280,7 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             alert('Error al eliminar la tarea');
         });
             }

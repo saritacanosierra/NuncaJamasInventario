@@ -7,7 +7,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
 <link rel="stylesheet" href="<?php echo BASE_URL; ?>front/public/css/dashboard.css?v=<?php echo time(); ?>">
 
 <div class="main-container">
-    <h2 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h2>
+    <h2 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard<?php $ayuda = 'Resumen del negocio. Arriba ves el valor del inventario, lo que está por agotarse, las ventas y los gastos del mes. Más abajo está el detalle del día, la semana y el punto de equilibrio.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
     
     <!-- Métricas principales -->
     <div class="row g-3 mb-4">
@@ -15,7 +15,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             <div class="metric-card metric-card-primary">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-2">Inventario Total</h6>
+                        <h6 class="mb-2">Inventario Total<?php $ayuda = 'Suma del precio de venta de las prendas que hay en stock.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h6>
                         <h3 class="mb-0"><?php echo pesos($inventario_total ?? 0); ?></h3>
                     </div>
                     <i class="bi bi-box-seam display-6"></i>
@@ -27,7 +27,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             <div class="metric-card metric-card-warning">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-2">Productos por Agotarse</h6>
+                        <h6 class="mb-2">Productos por Agotarse<?php $ayuda = 'Prendas a las que les queda poco stock. Revisa la lista de abajo para reponer.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h6>
                         <h3 class="mb-0"><?php echo count($productos_agotarse ?? []); ?></h3>
                     </div>
                     <i class="bi bi-exclamation-triangle display-6"></i>
@@ -39,7 +39,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             <div class="metric-card metric-card-success">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-2">Ventas del Mes</h6>
+                        <h6 class="mb-2">Ventas del Mes<?php $ayuda = 'Total cobrado en las ventas de este mes, con IVA y domicilio incluidos.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h6>
                         <h3 class="mb-0"><?php echo pesos($ventas_mes['total_ingresos'] ?? 0); ?></h3>
                     </div>
                     <i class="bi bi-cart-check display-6"></i>
@@ -51,7 +51,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
             <div class="metric-card metric-card-danger">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-2">Gastos del Mes</h6>
+                        <h6 class="mb-2">Gastos del Mes<?php $ayuda = 'Plata que salió este mes y no vuelve: arriendo, servicios y otros gastos. No incluye las inversiones.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h6>
                         <h3 class="mb-0"><?php echo pesos($gastos_mes['total'] ?? 0); ?></h3>
                     </div>
                     <i class="bi bi-cash-stack display-6"></i>
@@ -219,7 +219,8 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <i class="bi bi-exclamation-triangle"></i> Productos con Stock Bajo
                 </div>
                 <div class="card-body card-body-scroll-400">
-                    <?php if (empty($productos_agotarse ?? [])): ?>
+                    <?php $productos_agotarse = $productos_agotarse ?? []; ?>
+                    <?php if ($productos_agotarse === []): ?>
                         <p class="text-center text-muted">No hay productos con stock bajo</p>
                     <?php else: ?>
                         <ul class="list-group list-group-flush">
@@ -242,7 +243,8 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <i class="bi bi-trophy"></i> Productos Más Vendidos
                 </div>
                 <div class="card-body card-body-scroll-400">
-                    <?php if (empty($productos_mas_vendidos ?? [])): ?>
+                    <?php $productos_mas_vendidos = $productos_mas_vendidos ?? []; ?>
+                    <?php if ($productos_mas_vendidos === []): ?>
                         <p class="text-center text-muted">No hay productos vendidos aún</p>
                     <?php else: ?>
                         <ul class="list-group list-group-flush">
@@ -394,8 +396,7 @@ let actualizandoMeta = false;
 function actualizarMetaDiaria() {
     // Prevenir llamadas simultáneas
     if (actualizandoMeta) {
-        console.log('Actualización de meta ya en progreso, omitiendo...');
-        return;
+                return;
     }
     
     actualizandoMeta = true;

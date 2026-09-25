@@ -33,11 +33,6 @@ document.addEventListener('DOMContentLoaded', function () {
             decirCompra('Escribe la prenda, la talla y la cantidad.');
             return;
         }
-        if (!productoId && categoria === '') {
-            decirCompra('Elige la categoría. «Elige categoría» no cuenta: abre la lista y marca una, por ejemplo vestidos o shorts.');
-            document.getElementById('categoria_compra').focus();
-            return;
-        }
         decirCompra('');
         lineas.push({
             producto_id: productoId,

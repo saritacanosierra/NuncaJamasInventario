@@ -29,7 +29,7 @@ $nombresEstado = [
 
 <div class="main-container informe-mes">
     <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-        <h2><i class="bi bi-graph-up"></i> Informe del mes</h2>
+        <h2><i class="bi bi-graph-up"></i> Informe del mes<?php $ayuda = 'Resumen del mes: ventas, gastos, cierres y facturas. Cambia el mes y pulsa Guardar PDF para imprimirlo.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Guardar PDF</button>
     </div>
 

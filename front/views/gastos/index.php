@@ -8,16 +8,21 @@ if (!isset($categorias) || !is_array($categorias)) {
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-        <h2 class="mb-0"><i class="bi bi-cash-stack"></i> Gastos e inversiones</h2>
+        <h2 class="mb-0"><i class="bi bi-cash-stack"></i> Gastos e inversiones<?php $ayuda = 'Un gasto es plata que sale y no vuelve, como el arriendo. Una inversión es plata que queda en el negocio, como telas o mercancía. Historial descarga el mes o el año en PDF. Cierre de caja cuenta el efectivo del día.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <div class="d-flex align-items-center gap-2">
             <?php if (tienePermiso('gastos_categorias:view')): ?>
             <button type="button" class="btn btn-outline-secondary btn-icono" data-bs-toggle="modal" data-bs-target="#modalCategoriasGastos" title="Categorías">
                 <i class="bi bi-tags"></i>
             </button>
             <?php endif; ?>
+            <?php if (tienePermiso('caja:view') && tienePermiso('caja_cierre:view')): ?>
+            <a class="btn btn-outline-primary" href="<?php echo BASE_URL; ?>index.php?action=caja">
+                <i class="bi bi-safe"></i> Cierre de caja
+            </a>
+            <?php endif; ?>
             <?php if (tienePermiso('gastos_historial:view')): ?>
-            <button type="button" class="btn btn-outline-info btn-icono" data-bs-toggle="modal" data-bs-target="#modalHistorial" title="Historial">
-                <i class="bi bi-clock-history"></i>
+            <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#modalHistorial">
+                <i class="bi bi-clock-history"></i> Historial
             </button>
             <?php endif; ?>
             <?php if (tienePermiso('compras_registro:view') || tienePermiso('compras:view')): ?>
@@ -42,7 +47,7 @@ if (!isset($categorias) || !is_array($categorias)) {
         <div class="col-md-6">
             <div class="card bg-danger">
                 <div class="card-body">
-                    <h5><i class="bi bi-cash-stack"></i> Total de Gastos del Periodo</h5>
+                    <h5><i class="bi bi-cash-stack"></i> Total de Gastos del Periodo<?php $ayuda = 'Suma de los gastos del filtro de arriba. No incluye inversiones ni compras de mercancía.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h5>
                     <h2><?php echo pesos($totalGastos['total'] ?? 0); ?></h2>
                     <small><?php echo $totalGastos['cantidad'] ?? 0; ?> gastos registrados</small>
                 </div>
@@ -51,7 +56,7 @@ if (!isset($categorias) || !is_array($categorias)) {
         <div class="col-md-6">
             <div class="card bg-success">
                 <div class="card-body">
-                    <h5><i class="bi bi-graph-up"></i> Total de Inversiones del Periodo</h5>
+                    <h5><i class="bi bi-graph-up"></i> Total de Inversiones del Periodo<?php $ayuda = 'Suma de las inversiones del filtro, incluidas las compras de producto pagadas en este periodo.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h5>
                     <h2><?php echo pesos($totalInversiones['total'] ?? 0); ?></h2>
                     <small><?php echo $totalInversiones['cantidad'] ?? 0; ?> inversiones registradas</small>
                 </div>
@@ -197,6 +202,7 @@ if (!isset($categorias) || !is_array($categorias)) {
                     </tbody>
                 </table>
             </div>
+            <?php require BASE_DIR . '/front/views/components/paginacion.php'; ?>
         </div>
     </div>
     <?php endif; ?>
@@ -257,6 +263,7 @@ if (!isset($categorias) || !is_array($categorias)) {
                     </tbody>
                 </table>
             </div>
+            <?php require BASE_DIR . '/front/views/components/paginacion.php'; ?>
         </div>
     </div>
 </div>
@@ -477,11 +484,40 @@ new Chart(ctxInversiones, {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalHistorialLabel">
-                    <i class="bi bi-clock-history"></i> Historial de Gastos e Inversiones
+                    <i class="bi bi-clock-history"></i> Historial del mes<?php $ayuda = 'Elige un mes o el año completo. Cada botón descarga un PDF que no se puede editar: gastos, ingresos, inversiones, todos los movimientos o las prendas vendidas.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label" for="alcance_descarga">Periodo</label>
+                                <select class="form-select" id="alcance_descarga">
+                                    <option value="mes">Un mes</option>
+                                    <option value="anio">Año completo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3" id="campo_mes_descarga">
+                                <label class="form-label" for="mes_descarga">Mes</label>
+                                <input type="month" class="form-control" id="mes_descarga" value="<?php echo date('Y-m'); ?>">
+                            </div>
+                            <div class="col-md-3" id="campo_anio_descarga" hidden>
+                                <label class="form-label" for="anio_descarga">Año</label>
+                                <input type="number" class="form-control" id="anio_descarga" min="2000" max="2100" value="<?php echo date('Y'); ?>">
+                            </div>
+                        </div>
+                        <p class="text-muted mt-3 mb-3">Cada venta suma su total, aunque sea fiado. El abono es el dinero que después entró de esa deuda. El precio de las prendas vendidas separa la base y el IVA del 19 %. Puedes bajar un mes o el año completo, en PDF.</p>
+                        <div class="d-flex flex-wrap gap-2" id="descargasMes">
+                            <a class="btn btn-outline-danger" data-tipo="gastos" href="<?php echo BASE_URL; ?>index.php?action=gastos&amp;method=descargar&amp;tipo=gastos&amp;mes=<?php echo date('Y-m'); ?>"><i class="bi bi-download"></i> Gastos</a>
+                            <a class="btn btn-outline-success" data-tipo="ingresos" href="<?php echo BASE_URL; ?>index.php?action=gastos&amp;method=descargar&amp;tipo=ingresos&amp;mes=<?php echo date('Y-m'); ?>"><i class="bi bi-download"></i> Ingresos</a>
+                            <a class="btn btn-outline-primary" data-tipo="inversion" href="<?php echo BASE_URL; ?>index.php?action=gastos&amp;method=descargar&amp;tipo=inversion&amp;mes=<?php echo date('Y-m'); ?>"><i class="bi bi-download"></i> Inversiones</a>
+                            <a class="btn btn-outline-secondary" data-tipo="movimientos" href="<?php echo BASE_URL; ?>index.php?action=gastos&amp;method=descargar&amp;tipo=movimientos&amp;mes=<?php echo date('Y-m'); ?>"><i class="bi bi-download"></i> Todos los movimientos</a>
+                            <a class="btn btn-outline-info" data-tipo="productos" href="<?php echo BASE_URL; ?>index.php?action=gastos&amp;method=descargar&amp;tipo=productos&amp;mes=<?php echo date('Y-m'); ?>"><i class="bi bi-download"></i> Productos vendidos</a>
+                        </div>
+                    </div>
+                </div>
                 <ul class="nav nav-tabs mb-4" id="historialTabs" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="mes-tab" data-bs-toggle="tab" data-bs-target="#mes" type="button" role="tab">
@@ -499,7 +535,7 @@ new Chart(ctxInversiones, {
                     <!-- Tab Por Mes -->
                     <div class="tab-pane fade show active" id="mes" role="tabpanel">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <h6 class="text-danger"><i class="bi bi-cash-stack"></i> Gastos por Mes</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover">
@@ -518,7 +554,7 @@ new Chart(ctxInversiones, {
                                     </table>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <h6 class="text-success"><i class="bi bi-graph-up"></i> Inversiones por Mes</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover">
@@ -537,13 +573,32 @@ new Chart(ctxInversiones, {
                                     </table>
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <h6 class="text-primary"><i class="bi bi-receipt"></i> Ventas por Mes</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Mes</th>
+                                                <th class="text-end">Total</th>
+                                                <th class="text-center">Cantidad</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tablaVentasMes">
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted">Cargando...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
                     <!-- Tab Por Año -->
                     <div class="tab-pane fade" id="anio" role="tabpanel">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <h6 class="text-danger"><i class="bi bi-cash-stack"></i> Gastos por Año</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover">
@@ -562,7 +617,7 @@ new Chart(ctxInversiones, {
                                     </table>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <h6 class="text-success"><i class="bi bi-graph-up"></i> Inversiones por Año</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover">
@@ -574,6 +629,25 @@ new Chart(ctxInversiones, {
                                             </tr>
                                         </thead>
                                         <tbody id="tablaInversionesAnio">
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted">Cargando...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-primary"><i class="bi bi-receipt"></i> Ventas por Año</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Año</th>
+                                                <th class="text-end">Total</th>
+                                                <th class="text-center">Cantidad</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tablaVentasAnio">
                                             <tr>
                                                 <td colspan="3" class="text-center text-muted">Cargando...</td>
                                             </tr>
@@ -665,5 +739,5 @@ new Chart(ctxInversiones, {
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>
 
 <!-- JavaScript del módulo de gastos (debe cargarse después de Bootstrap) -->
-<script src="<?php echo BASE_URL; ?>front/public/js/gastos.js?v=3"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/gastos.js?v=6"></script>
 

@@ -15,7 +15,7 @@ $nombresTipo = [
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-        <h2 class="mb-0"><i class="bi bi-journal-text"></i> Kardex</h2>
+        <h2 class="mb-0"><i class="bi bi-journal-text"></i> Kardex<?php $ayuda = 'Entradas y salidas de una prenda: ventas, compras, cambios de talla y anulaciones. Escribe el id y pulsa Ver.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <a class="btn btn-secondary" href="<?php echo BASE_URL; ?>index.php?action=compras">
             <i class="bi bi-arrow-left"></i> Compras
         </a>

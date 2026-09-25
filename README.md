@@ -1,12 +1,16 @@
-# Inventario — una sola aplicación
+# Nunca Jamás
 
-La aplicación que corre es el inventario PHP. El prototipo React de esta carpeta ya no forma parte del sistema.
+Inventario, caja y producción. Entra por `index.php`.
 
-Hay una sola copia, en `C:\xampp\htdocs\inventario`:
+En local se abre en http://localhost:8080/inventario/ con la base `inventario_ropa_infantil`.
 
-- `back` — configuración, controladores, modelos y ayudas
-- `front` — vistas, CSS, JavaScript e imágenes
+## Subir a Imagina Colombia
 
-Se abre en [http://localhost:8080/inventario/](http://localhost:8080/inventario/).
+1. En cPanel elige PHP 8.2 o 8.3.
+2. Crea la base MySQL y un usuario con todos los privilegios sobre esa base.
+3. En phpMyAdmin importa la base de XAMPP con sus datos. `docs/schema.sql` solo crea las tablas vacías, sin usuarios.
+4. Sube esta carpeta a `public_html`. No subas `.git` ni `.cursor`.
+5. Copia `back/config/db.local.example.php` como `back/config/db.local.php` y escribe el usuario de cPanel.
+6. Activa el SSL del dominio.
 
-Las carpetas `back` y `front` de este repositorio apuntan a esa misma aplicación. Un cambio aquí es el cambio de la app que está en marcha.
+La recuperación de contraseña usa `back/config/mail.local.php`. La factura no se envía a la DIAN.

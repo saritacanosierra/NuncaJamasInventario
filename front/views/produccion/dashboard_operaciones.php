@@ -1,13 +1,19 @@
 <?php
 $pageTitle = 'Dashboard de Operaciones';
 require_once BASE_DIR . '/front/views/layout/header.php';
+if (!isset($fechaInicio) || !is_string($fechaInicio) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaInicio)) {
+    $fechaInicio = date('Y-m-01');
+}
+if (!isset($fechaFin) || !is_string($fechaFin) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaFin)) {
+    $fechaFin = date('Y-m-t');
+}
 ?>
 
 <link rel="stylesheet" href="<?php echo BASE_URL; ?>front/public/css/dashboard.css?v=<?php echo time(); ?>">
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-speedometer2"></i> Rendimiento del taller</h2>
+        <h2><i class="bi bi-speedometer2"></i> Rendimiento del taller<?php $ayuda = 'Cuántas piezas hizo cada operaria entre las dos fechas.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <div class="d-flex gap-2 align-items-center">
             <input type="date" id="fechaInicio" class="form-control" value="<?php echo $fechaInicio; ?>" 
                    onchange="actualizarDashboard()" style="width: auto;">

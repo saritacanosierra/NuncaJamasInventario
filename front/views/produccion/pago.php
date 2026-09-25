@@ -30,7 +30,7 @@ foreach ($liquidacion as $fila) {
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-cash-coin"></i> Pago por pieza</h2>
+        <h2><i class="bi bi-cash-coin"></i> Pago por pieza<?php $ayuda = 'Lo que se debe pagar por las piezas hechas entre las dos fechas, según la tarifa de cada operación.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <a href="<?php echo BASE_URL; ?>index.php?action=produccion" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Producción
         </a>

@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const usuarioId = btnEditar.getAttribute('data-id');
             if (!usuarioId) {
-                console.error('No se encontró el ID del usuario');
                 return;
             }
             
@@ -24,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.text().then(text => {
                         // Verificar si la respuesta es HTML (error de PHP)
                         if (text.trim().startsWith('<') || text.includes('<br') || text.includes('<b>')) {
-                            console.error('Respuesta HTML recibida:', text);
                             throw new Error('Error del servidor: La respuesta contiene HTML en lugar de JSON. Esto generalmente indica un error de conexión a la base de datos o un error de PHP. Verifique la configuración de la base de datos.');
                         }
                         
@@ -32,7 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         try {
                             return JSON.parse(text);
                         } catch (e) {
-                            console.error('Error al parsear JSON:', text);
                             throw new Error('Error: La respuesta del servidor no es JSON válido. ' + text.substring(0, 200));
                         }
                     });
@@ -59,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     alert('Error al cargar el usuario:\n\n' + error.message);
                 });
         }

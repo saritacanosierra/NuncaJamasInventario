@@ -132,6 +132,10 @@ class Compra {
         if ($color === '') {
             $color = 'Sin color';
         }
+        $categoriaId = (int) ($linea['categoria_id'] ?? 0);
+        if ($categoriaId < 1) {
+            $categoriaId = $this->categoriaAccesorios();
+        }
         $id = $producto->create([
             'codigo_barras' => $codigo,
             'nombre' => $linea['nombre'],
@@ -140,7 +144,7 @@ class Compra {
             'talla' => $linea['talla'],
             'precio_costo' => $linea['costo_unitario'],
             'precio_venta' => $linea['costo_unitario'],
-            'categoria_id' => (int) $linea['categoria_id'],
+            'categoria_id' => $categoriaId,
             'stock' => 0,
             'stock_minimo' => 0,
             'estado' => 'Disponible',
@@ -155,6 +159,22 @@ class Compra {
             'stock' => (int) $linea['cantidad'],
         ]]);
         return (int) $id;
+    }
+
+    private function categoriaAccesorios() {
+        $stmt = $this->conn->prepare(
+            'SELECT id FROM categorias WHERE LOWER(TRIM(nombre)) = :nombre AND activa = 1 LIMIT 1'
+        );
+        $stmt->bindValue(':nombre', 'accesorios');
+        $stmt->execute();
+        $id = (int) $stmt->fetchColumn();
+        if ($id > 0) {
+            return $id;
+        }
+        return (int) (new Categoria($this->conn))->create([
+            'nombre' => 'Accesorios',
+            'descripcion' => 'Prendas compradas sin otra categoría',
+        ]);
     }
 
     private function siguienteNumero() {

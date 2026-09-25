@@ -38,6 +38,12 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <div class="mt-3 text-center">
                         <a href="<?php echo BASE_URL; ?>index.php?action=recuperar">¿Olvidaste tu contraseña?</a>
                     </div>
+                    <div class="mt-2 text-center">
+                        <a data-instalar="pc" href="<?php echo BASE_URL; ?>index.php?action=escritorio&method=descargar">Descargar para este PC</a>
+                        <button type="button" class="btn btn-outline-primary w-100 d-none" data-instalar="movil">
+                            <i class="bi bi-phone"></i> Instalar en este celular
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

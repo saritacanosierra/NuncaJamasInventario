@@ -486,14 +486,196 @@ class GastoController {
         $gastosPorAnio = $this->gastoModel->getGastosPorAnio();
         $inversionesPorMes = $inversionModel->getInversionesPorMes();
         $inversionesPorAnio = $inversionModel->getInversionesPorAnio();
+        $ventaModel = new Venta($this->db);
+        $ventasPorMes = $ventaModel->getVentasPorMes();
+        $ventasPorAnio = $ventaModel->getVentasPorAnio();
         
         echo json_encode([
             'success' => true,
             'gastos_por_mes' => $gastosPorMes,
             'gastos_por_anio' => $gastosPorAnio,
             'inversiones_por_mes' => $inversionesPorMes,
-            'inversiones_por_anio' => $inversionesPorAnio
+            'inversiones_por_anio' => $inversionesPorAnio,
+            'ventas_por_mes' => $ventasPorMes,
+            'ventas_por_anio' => $ventasPorAnio
         ]);
+        exit;
+    }
+
+    public function descargar() {
+        requireAuth();
+
+        $alcance = ($_GET['alcance'] ?? 'mes') === 'anio' ? 'anio' : 'mes';
+        if ($alcance === 'anio') {
+            $etiqueta = trim($_GET['anio'] ?? '');
+            if (!preg_match('/^\d{4}$/', $etiqueta)) {
+                $_SESSION['error'] = 'El año no es válido';
+                redirect('index.php?action=gastos');
+            }
+            $desde = $etiqueta . '-01-01';
+            $hasta = $etiqueta . '-12-31';
+        } else {
+            $etiqueta = trim($_GET['mes'] ?? date('Y-m'));
+            if (!preg_match('/^\d{4}-\d{2}$/', $etiqueta)) {
+                $_SESSION['error'] = 'El mes no es válido';
+                redirect('index.php?action=gastos');
+            }
+            [$anio, $numero] = array_map('intval', explode('-', $etiqueta));
+            $desde = sprintf('%04d-%02d-01', $anio, $numero);
+            $hasta = date('Y-m-t', strtotime($desde));
+        }
+        $tipo = $_GET['tipo'] ?? '';
+        $permitidos = ['gastos', 'ingresos', 'inversion', 'movimientos', 'productos'];
+        if (!in_array($tipo, $permitidos, true)) {
+            $_SESSION['error'] = 'Esa descarga no existe';
+            redirect('index.php?action=gastos');
+        }
+
+        $modelo = new MovimientoMes($this->db);
+        [$archivo, $columnas, $filas] = $this->archivoDelMes($modelo, $tipo, $etiqueta, $desde, $hasta);
+        $titulos = [
+            'gastos' => 'Gastos',
+            'ingresos' => 'Ingresos',
+            'inversion' => 'Inversiones',
+            'movimientos' => 'Movimientos',
+            'productos' => 'Productos vendidos',
+        ];
+        $periodo = 'Nunca Jamás. Del ' . date('d/m/Y', strtotime($desde)) . ' al ' . date('d/m/Y', strtotime($hasta)) . '.';
+        $this->enviarPdf($archivo, $titulos[$tipo], $periodo, $columnas, $filas);
+    }
+
+    private function archivoDelMes($modelo, $tipo, $mes, $desde, $hasta) {
+        if ($tipo === 'gastos') {
+            $filas = [];
+            foreach ($modelo->gastos($desde, $hasta) as $fila) {
+                $filas[] = [
+                    date('d/m/Y', strtotime($fila['fecha'])),
+                    $fila['concepto'],
+                    $fila['categoria'],
+                    pesos($fila['monto']),
+                    $fila['descripcion'] ?? '',
+                ];
+            }
+            return ['gastos-' . $mes . '.pdf', ['Fecha', 'Concepto', 'Categoría', 'Monto', 'Descripción'], $filas];
+        }
+
+        if ($tipo === 'inversion') {
+            $filas = [];
+            foreach ($modelo->inversiones($desde, $hasta) as $fila) {
+                $filas[] = [
+                    date('d/m/Y', strtotime($fila['fecha'])),
+                    $fila['concepto'],
+                    $fila['categoria'],
+                    pesos($fila['monto']),
+                    $fila['descripcion'] ?? '',
+                ];
+            }
+            return ['inversiones-' . $mes . '.pdf', ['Fecha', 'Concepto', 'Categoría', 'Monto', 'Descripción'], $filas];
+        }
+
+        if ($tipo === 'ingresos') {
+            $filas = [];
+            foreach ($modelo->ingresos($desde, $hasta) as $fila) {
+                $filas[] = [
+                    date('d/m/Y', strtotime($fila['fecha_venta'])),
+                    $fila['numero_factura'],
+                    $fila['nombre_completo'],
+                    $fila['metodo_pago'],
+                    pesos($fila['subtotal']),
+                    pesos($fila['descuento']),
+                    pesos($fila['iva']),
+                    pesos($fila['domicilio']),
+                    pesos($fila['empaque']),
+                    pesos($fila['total']),
+                    pesos($fila['pago_efectivo']),
+                    pesos($fila['pago_transferencia']),
+                    pesos($fila['pago_tarjeta']),
+                    ((int) $fila['pago_contra_entrega'] === 1) ? 'Sí' : 'No',
+                ];
+            }
+            return ['ingresos-' . $mes . '.pdf', ['Fecha', 'Factura', 'Cliente', 'Método', 'Subtotal', 'Descuento', 'IVA', 'Domicilio', 'Empaque', 'Total', 'Efectivo', 'Transferencia', 'Tarjeta', 'Contra entrega'], $filas];
+        }
+
+        if ($tipo === 'productos') {
+            $filas = [];
+            foreach ($modelo->productosVendidos($desde, $hasta) as $fila) {
+                $precio = (int) round($fila['precio_unitario']);
+                $ivaLinea = iva_incluido_en($precio);
+                $cantidad = (int) $fila['cantidad'];
+                $filas[] = [
+                    date('d/m/Y', strtotime($fila['fecha_venta'])),
+                    $fila['numero_factura'],
+                    $fila['nombre_completo'],
+                    $fila['nombre'],
+                    $fila['color'],
+                    $fila['talla'],
+                    $cantidad,
+                    pesos($precio),
+                    pesos($ivaLinea),
+                    pesos($fila['subtotal']),
+                ];
+            }
+            return ['productos-vendidos-' . $mes . '.pdf', ['Fecha', 'Factura', 'Cliente', 'Producto', 'Color', 'Talla', 'Cantidad', 'Precio', 'IVA incluido', 'Subtotal'], $filas];
+        }
+
+        $filas = [];
+        foreach ($modelo->ingresos($desde, $hasta) as $fila) {
+            $filas[] = [
+                date('Y-m-d', strtotime($fila['fecha_venta'])),
+                'Venta',
+                $fila['numero_factura'] . ' · ' . $fila['nombre_completo'],
+                $fila['metodo_pago'],
+                pesos($fila['total']),
+                '',
+            ];
+        }
+        foreach ($modelo->abonos($desde, $hasta) as $fila) {
+            $factura = $fila['numero_factura'] ? $fila['numero_factura'] . ' · ' : '';
+            $filas[] = [
+                date('Y-m-d', strtotime($fila['creado_en'])),
+                'Abono',
+                $factura . $fila['nombre_completo'],
+                $fila['nota'] ?? '',
+                pesos($fila['monto']),
+                '',
+            ];
+        }
+        foreach ($modelo->gastos($desde, $hasta) as $fila) {
+            $filas[] = [
+                $fila['fecha'],
+                'Gasto',
+                $fila['concepto'],
+                $fila['categoria'],
+                '',
+                pesos($fila['monto']),
+            ];
+        }
+        foreach ($modelo->inversiones($desde, $hasta) as $fila) {
+            $filas[] = [
+                $fila['fecha'],
+                'Inversión',
+                $fila['concepto'],
+                $fila['categoria'],
+                '',
+                pesos($fila['monto']),
+            ];
+        }
+        usort($filas, function ($a, $b) {
+            return [$a[0], $a[1]] <=> [$b[0], $b[1]];
+        });
+        foreach ($filas as &$fila) {
+            $fila[0] = date('d/m/Y', strtotime($fila[0]));
+        }
+        unset($fila);
+        return ['movimientos-' . $mes . '.pdf', ['Fecha', 'Tipo', 'Detalle', 'Referencia', 'Entrada', 'Salida'], $filas];
+    }
+
+    private function enviarPdf($archivo, $titulo, $periodo, $columnas, $filas) {
+        $pdf = (new PdfTabla())->documento($titulo, $periodo, $columnas, $filas);
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . $archivo . '"');
+        header('Content-Length: ' . strlen($pdf));
+        echo $pdf;
         exit;
     }
 

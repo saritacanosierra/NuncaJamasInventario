@@ -77,13 +77,15 @@ $logoPath = BASE_URL . 'front/public/img/logo-nunca-jamas.jpg';
             <?php if (!$esFiado): ?>
             <div class="estado-pago">
                 <div class="estado-pago-title">Estado de Pago</div>
-                <?php if ($pagado): ?>
+                <?php if ($pagado && $domicilioContra): ?>
+                <div class="estado-sello estado-sello-pendiente">Pedido pagado. Cobrar el domicilio</div>
+                <?php elseif ($pagado): ?>
                 <div class="checkbox-pago">
                     <input type="checkbox" id="pagado" checked disabled>
-                    <label for="pagado">Pagado</label>
+                    <label for="pagado"><?php echo ((float) ($venta['domicilio'] ?? 0) > 0) ? 'Pagado, con el domicilio' : 'Pagado. Recogida o solo el producto'; ?></label>
                 </div>
                 <?php else: ?>
-                <div class="estado-sello estado-sello-pendiente">Pago contra entrega</div>
+                <div class="estado-sello estado-sello-pendiente"><?php echo ((float) ($venta['domicilio'] ?? 0) > 0) ? 'Cobrar el pedido y el domicilio' : 'Cobrar el pedido'; ?></div>
                 <?php endif; ?>
             </div>
             <?php endif; ?>

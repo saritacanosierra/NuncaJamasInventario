@@ -50,8 +50,8 @@ class CompraController {
             $nombre = trim($linea['nombre'] ?? '');
             $talla = trim($linea['talla'] ?? '');
             $categoriaId = (int) ($linea['categoria_id'] ?? 0);
-            if ($cantidad < 1 || $costo < 0 || ($productoId < 1 && ($nombre === '' || $talla === '' || $categoriaId < 1))) {
-                $_SESSION['error'] = 'Cada prenda necesita talla, cantidad y, si es nueva, una categoría.';
+            if ($cantidad < 1 || $costo < 0 || ($productoId < 1 && ($nombre === '' || $talla === ''))) {
+                $_SESSION['error'] = 'Cada prenda necesita nombre, talla y cantidad.';
                 redirect('index.php?action=compras');
             }
             $subtotal = round($costo * $cantidad, 2);

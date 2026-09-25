@@ -1,11 +1,14 @@
 <?php
 $pageTitle = 'Compras';
 require_once BASE_DIR . '/front/views/layout/header.php';
+if (!isset($categorias) || !is_array($categorias)) {
+    $categorias = [];
+}
 ?>
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-        <h2 class="mb-0"><i class="bi bi-bag-plus"></i> Compras de producto</h2>
+        <h2 class="mb-0"><i class="bi bi-bag-plus"></i> Compras de producto<?php $ayuda = 'Registra lo que compras a un proveedor. Las prendas entran al inventario y el valor queda como inversión. Si no eliges categoría, la prenda va a Accesorios.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <div class="d-flex align-items-center gap-2">
             <?php if (puedeVerModulo('gastos')): ?>
             <a class="btn btn-secondary" href="<?php echo BASE_URL; ?>index.php?action=gastos">
@@ -71,7 +74,7 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     <div class="col-md-2">
                         <label class="form-label" for="categoria_compra">Categoría</label>
                         <select class="form-select" id="categoria_compra">
-                            <option value="">Elige categoría</option>
+                            <option value="">Opcional</option>
                             <?php foreach ($categorias as $categoria): ?>
                             <option value="<?php echo (int) $categoria['id']; ?>"><?php echo htmlspecialchars($categoria['nombre']); ?></option>
                             <?php endforeach; ?>
@@ -143,9 +146,10 @@ require_once BASE_DIR . '/front/views/layout/header.php';
                     </tbody>
                 </table>
             </div>
+            <?php require BASE_DIR . '/front/views/components/paginacion.php'; ?>
         </div>
     </div>
 </div>
 
-<script src="<?php echo BASE_URL; ?>front/public/js/compras.js?v=4"></script>
+<script src="<?php echo BASE_URL; ?>front/public/js/compras.js?v=5"></script>
 <?php require_once BASE_DIR . '/front/views/layout/footer.php'; ?>

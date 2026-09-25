@@ -8,7 +8,7 @@ if (!isset($clientes) || !is_array($clientes)) {
 
 <div class="main-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-clock-history"></i> Historial de Ventas</h2>
+        <h2><i class="bi bi-clock-history"></i> Historial de Ventas<?php $ayuda = 'Facturas ya hechas. Filtra por fecha o cliente. En cada fila puedes ver la factura, editarla o cambiar la talla, según tu permiso.'; require BASE_DIR . '/front/views/components/ayuda.php'; ?></h2>
         <div>
             <button type="button" class="btn btn-outline-info btn-icono me-2" data-bs-toggle="modal" data-bs-target="#modalHistorialVentas" title="Historial">
                 <i class="bi bi-clock-history"></i>
@@ -150,6 +150,7 @@ if (!isset($clientes) || !is_array($clientes)) {
                     </tbody>
                 </table>
             </div>
+            <?php require BASE_DIR . '/front/views/components/paginacion.php'; ?>
         </div>
     </div>
 </div>
@@ -232,8 +233,7 @@ function buscarClienteHistorial(termino) {
     fetch(`${BASE_URL}index.php?action=clientes&method=buscar&termino=${encodeURIComponent(termino)}`)
         .then(r => r.text())
         .then(txt => {
-            console.log('Respuesta buscarCliente (texto crudo):', txt);
-            let data;
+                        let data;
             try {
                 data = JSON.parse(txt);
             } catch (e) {

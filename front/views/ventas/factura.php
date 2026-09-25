@@ -106,15 +106,26 @@ $nitFactura = !empty($resolucion['nit']) ? $resolucion['nit'] : $remitente['cedu
                     <?php else: ?>
                         <p class="mb-1"><strong>Estado de Pago:</strong> <span class="badge bg-success badge-sm">Pagado</span></p>
                     <?php endif; ?>
-                    <?php 
-                    $conDomicilio = isset($venta['con_domicilio']) && ($venta['con_domicilio'] == 1 || $venta['con_domicilio'] === '1' || $venta['con_domicilio'] === true);
-                    if ($conDomicilio): 
+                    <?php
+                    $domicilioValorFactura = (float) ($venta['domicilio'] ?? 0);
+                    $domicilioContraFactura = !empty($venta['domicilio_contra_entrega']);
+                    if ($pagoContraEntrega) {
+                        $entregaTxt = $domicilioValorFactura > 0
+                            ? 'El pedido y el domicilio se cobran contra entrega.'
+                            : 'El pedido se cobra contra entrega.';
+                    } elseif ($domicilioContraFactura) {
+                        $entregaTxt = 'El pedido ya está pago. El domicilio se cobra contra entrega.';
+                    } elseif ($domicilioValorFactura > 0) {
+                        $entregaTxt = 'El domicilio se pagó con esta factura.';
+                    } else {
+                        $entregaTxt = 'Recogida en tienda. Solo se cobró el producto.';
+                    }
+                    $conDomicilio = $domicilioValorFactura > 0 || $domicilioContraFactura || $pagoContraEntrega;
                     ?>
-                        <p class="mb-1"><strong>Domicilio:</strong> <span class="badge bg-info badge-sm">Con Domicilio</span></p>
+                        <p class="mb-1"><strong>Entrega:</strong> <?php echo htmlspecialchars($entregaTxt); ?></p>
                         <?php if (!empty($venta['observaciones_domicilio'])): ?>
                             <p class="mb-0"><strong>Observaciones:</strong> <small><?php echo htmlspecialchars($venta['observaciones_domicilio']); ?></small></p>
                         <?php endif; ?>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -183,6 +194,21 @@ $nitFactura = !empty($resolucion['nit']) ? $resolucion['nit'] : $remitente['cedu
                         <td colspan="3" class="text-end"><strong class="h5">TOTAL:</strong></td>
                         <td class="text-end"><strong class="h4"><?php echo pesos($venta['total']); ?></strong></td>
                     </tr>
+                    <?php if (!empty($pagoContraEntrega)): ?>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Por cobrar contra entrega:</strong></td>
+                        <td class="text-end"><strong><?php echo pesos($venta['total']); ?></strong></td>
+                    </tr>
+                    <?php elseif ($domicilioPorCobrar && empty($pagoContraEntrega)): ?>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Cobrado ahora:</strong></td>
+                        <td class="text-end"><strong><?php echo pesos(max(0, (float) $venta['total'] - (float) $venta['domicilio'])); ?></strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Por cobrar contra entrega:</strong></td>
+                        <td class="text-end"><strong><?php echo pesos($venta['domicilio']); ?></strong></td>
+                    </tr>
+                    <?php endif; ?>
                 </tfoot>
             </table>
         </div>

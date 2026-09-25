@@ -118,7 +118,7 @@ function permisos_catalogo() {
             item_permiso('gastos_categorias:delete', 'Eliminar categoría', 'Elimina una categoría de gasto.'),
         ]),
         grupo_permiso('gastos_historial', 'Historial de gastos', 'Operación', 'gastos', 'subview', [
-            item_permiso('gastos_historial:view', 'Ver historial', 'Abre el resumen de gastos e inversiones por mes y por año.'),
+            item_permiso('gastos_historial:view', 'Ver historial', 'Abre el resumen por mes y descarga gastos, ingresos, inversiones, movimientos y las prendas vendidas.'),
         ]),
 
         grupo_permiso('agenda', 'Agenda', 'Operación', 'agenda', 'workspace', [
@@ -428,6 +428,7 @@ function permisos_rutas() {
             'eliminarCategoria' => ['slug' => 'gastos_categorias:delete', 'json' => $json],
             'getCategoria' => ['slug' => 'gastos_categorias:edit', 'json' => $json],
             'obtenerHistorial' => ['all' => ['gastos:view', 'gastos_historial:view'], 'json' => $json],
+            'descargar' => ['all' => ['gastos:view', 'gastos_historial:view']],
         ],
         'agenda' => [
             'index' => ['all' => ['agenda:view', 'agenda_tareas:view']],
